@@ -210,8 +210,9 @@ function C:UpdateMinimap()
     local g = HHT.db.general
     btn:SetShown(g.minimap and true or false)
     local rad = math.rad(g.minimapAngle or 215)
+    local r = Minimap:GetWidth() / 2 + 5
     btn:ClearAllPoints()
-    btn:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * 80, math.sin(rad) * 80)
+    btn:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * r, math.sin(rad) * r)
 end
 
 function C:BuildMinimap()
@@ -244,7 +245,7 @@ function C:BuildMinimap()
         self:SetScript("OnUpdate", function()
             local mx, my = Minimap:GetCenter()
             local cx, cy = GetCursorPosition()
-            local s = UIParent:GetEffectiveScale()
+            local s = Minimap:GetEffectiveScale()
             HHT.db.general.minimapAngle = math.deg(math.atan2(cy / s - my, cx / s - mx))
             C:UpdateMinimap()
         end)
