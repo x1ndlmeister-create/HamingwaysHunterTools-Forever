@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hamingway's HunterTools - The hunter's Swiss army knife</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#0f1113; --panel:#1b1e22; --panel2:#23272c; --bronze:#b88646; --gold:#ffd100; --green:#abd473; --text:#e9e9e9; --grey:#9a9a9a; --line:#3a3326; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,sans-serif; line-height:1.55; }
+  a { color:inherit; }
+
+  /* top bar */
+  nav { position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:6px; padding:8px 18px; background:rgba(15,17,19,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
+  nav .brand { font-weight:700; color:var(--green); margin-right:auto; letter-spacing:.3px; }
+  nav a.l { text-decoration:none; color:var(--grey); padding:4px 10px; border-radius:4px; font-size:.92em; }
+  nav a.l:hover { color:var(--text); background:var(--panel2); }
+  .lang { display:flex; gap:6px; margin-left:10px; }
+  .lang button { background:var(--panel); color:var(--text); border:1px solid var(--bronze); border-radius:4px; padding:4px 12px; cursor:pointer; font:inherit; font-size:.9em; }
+  .lang button.on { background:var(--bronze); color:#111; font-weight:700; }
+
+  /* hero */
+  .hero { text-align:center; padding:48px 16px 28px; background:
+      radial-gradient(ellipse 60% 60% at 18% 40%, rgba(171,212,115,.18), transparent 70%),
+      radial-gradient(ellipse 50% 60% at 85% 30%, rgba(184,134,70,.18), transparent 70%); }
+  .hero img { width:100%; max-width:1100px; border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.7), 0 0 0 1px var(--line); }
+  .hero h1 { margin:26px 0 4px; font-size:clamp(1.9em,5vw,3.2em); letter-spacing:.5px; }
+  .hero h1 b { color:var(--green); }
+  .hero .tag { font-size:clamp(1.1em,2.6vw,1.6em); color:var(--gold); font-weight:600; margin:0 0 10px; }
+  .hero .sub { max-width:720px; margin:0 auto; color:#cfcfcf; font-size:1.05em; }
+  .cta { display:inline-block; margin-top:22px; padding:11px 28px; border-radius:6px; background:linear-gradient(#c9964f,#9c6f33); color:#161106; font-weight:700; text-decoration:none; box-shadow:0 4px 18px rgba(184,134,70,.35); }
+  .cta:hover { filter:brightness(1.12); }
+
+  /* stats */
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; max-width:1100px; margin:34px auto 0; padding:0 16px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 10px; text-align:center; }
+  .stat b { display:block; font-size:2em; color:var(--green); line-height:1.1; }
+  .stat span { color:var(--grey); font-size:.92em; }
+
+  main { max-width:1100px; margin:0 auto; padding:0 16px 40px; }
+  h2.sec { margin:64px 0 6px; font-size:1.9em; color:var(--gold); }
+  p.lead { margin:0 0 22px; color:#cfcfcf; max-width:760px; }
+
+  /* module tiles */
+  .tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(235px,1fr)); gap:12px; }
+  .tile { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--c,var(--bronze)); border-radius:8px; padding:11px 14px; }
+  .tile h4 { margin:0; font-size:1em; color:var(--text); }
+  .tile p { margin:2px 0 0; font-size:.86em; color:var(--grey); line-height:1.4; }
+  .tile.cmb { --c:#e0943d; } .tile.pet { --c:#abd473; } .tile.gear { --c:#66b3e6; } .tile.map { --c:#c183ff; }
+  .legend { display:flex; flex-wrap:wrap; gap:16px; margin:0 0 14px; font-size:.88em; color:var(--grey); }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+
+  /* feature sections */
+  .feat { display:grid; grid-template-columns:1.45fr 1fr; gap:34px; align-items:center; margin:74px 0 0; }
+  .feat.rev { grid-template-columns:1fr 1.45fr; }
+  .feat.rev .shot { order:2; }
+  .shot img { width:100%; display:block; border-radius:12px; box-shadow:0 14px 44px rgba(0,0,0,.65), 0 0 0 1px var(--line); }
+  .shot.glow { position:relative; }
+  .shot.glow::before { content:""; position:absolute; inset:-6% -4%; background:radial-gradient(ellipse at center, rgba(171,212,115,.16), transparent 68%); z-index:-1; }
+  .txt .kick { color:var(--bronze); text-transform:uppercase; letter-spacing:2px; font-size:.78em; font-weight:700; }
+  .txt h3 { margin:2px 0 8px; font-size:1.6em; color:var(--green); line-height:1.2; }
+  .txt p { margin:0 0 12px; color:#d3d3d3; }
+  ul.f { list-style:none; margin:0; padding:0; }
+  ul.f li { position:relative; padding:3px 0 3px 22px; color:#dedede; font-size:.96em; }
+  ul.f li::before { content:""; position:absolute; left:3px; top:.82em; width:7px; height:7px; background:var(--green); transform:rotate(45deg); }
+  ul.f li.sep { margin-top:8px; padding-left:0; color:var(--bronze); font-weight:700; font-size:.82em; letter-spacing:1.5px; text-transform:uppercase; }
+  ul.f li.sep::before { display:none; }
+  .wide { margin:74px 0 0; }
+  .wide .shot { margin-bottom:22px; }
+  .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:4px 32px; }
+
+  /* install */
+  .box { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px 26px; margin-top:16px; }
+  .box h3 { margin:0 0 8px; color:var(--green); }
+  code { background:#0b0c0d; border:1px solid var(--line); border-radius:4px; padding:1px 6px; color:var(--gold); font-family:Consolas,monospace; font-size:.92em; }
+  .two { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+  footer { text-align:center; color:var(--grey); font-size:.85em; padding:10px 16px 44px; }
+
+  @media (max-width:820px) { .feat, .feat.rev { grid-template-columns:1fr; gap:18px; } .feat.rev .shot { order:0; } nav a.l { display:none; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">Hamingway's HunterTools</span>
+  <a class="l" href="#glance" data-de="Überblick">Overview</a>
+  <a class="l" href="#combat" data-de="Kampf">Combat</a>
+  <a class="l" href="#pets" data-de="Tiere">Pets</a>
+  <a class="l" href="#map" data-de="Karte">Map</a>
+  <a class="l" href="#install" data-de="Installation">Install</a>
+  <div class="lang"><button id="bEn" class="on" type="button">EN</button><button id="bDe" type="button">DE</button></div>
+</nav>
+
+<header class="hero">
+  <img src="images/hero.png" alt="Hamingway's HunterTools">
+  <h1>Hamingway's <b>HunterTools</b></h1>
+  <p class="tag" data-de="Das Schweizer Taschenmesser des Jägers">The hunter's Swiss army knife</p>
+  <p class="sub" data-de="Schlag-Timer, Warnungen, Munition, Tiere, Makros und Karte in einem Addon für WoW Forever. Jedes Modul lässt sich ein- und ausschalten und anpassen.">Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. Every module can be switched on or off and adjusted.</p>
+  <a class="cta" href="#install" data-de="Jetzt installieren">Get started</a>
+  <div class="stats">
+    <div class="stat"><b>17</b><span data-de="Module">modules</span></div>
+    <div class="stat"><b>18</b><span data-de="fertige Makros">ready-made macros</span></div>
+    <div class="stat"><b>EN + DE</b><span data-de="komplett zweisprachig">fully bilingual</span></div>
+    <div class="stat"><b>100%</b><span data-de="ein- und ausschaltbar">toggleable and adjustable</span></div>
+  </div>
+</header>
+
+<main>
+
+<h2 class="sec" id="glance" data-de="Alles auf einen Blick">Everything at a glance</h2>
+<p class="lead" data-de="17 Module, die du einzeln aktivierst. Was du nicht brauchst, bleibt aus und kostet nichts." >17 modules you switch on one by one. Whatever you do not need stays off.</p>
+<div class="legend">
+  <span><i style="background:#e0943d"></i><span data-de="Kampf">Combat</span></span>
+  <span><i style="background:#66b3e6"></i><span data-de="Ausrüstung und Werkzeuge">Gear and tools</span></span>
+  <span><i style="background:#abd473"></i><span data-de="Tiere">Pets</span></span>
+  <span><i style="background:#c183ff"></i><span data-de="Karte">Map</span></span>
+</div>
+<div class="tiles">
+  <div class="tile cmb"><h4 data-de="Schlag-Timer">Swing timer</h4><p data-de="Balken für Automatischen Schuss und Nahkampf mit Reichweitenanzeige.">Auto Shot and melee bars with range state.</p></div>
+  <div class="tile cmb"><h4 data-de="Distanz">Distance</h4><p data-de="Zieldistanz in Stufen, Nahkampf und tote Zone.">Target distance in bands, melee and dead zone.</p></div>
+  <div class="tile cmb"><h4 data-de="Zauberleiste">Cast bar</h4><p data-de="Eigene Zauberleiste mit Symbol, Name und Zeit.">Player cast bar with icon, name and time.</p></div>
+  <div class="tile cmb"><h4 data-de="Bedrohung">Threat</h4><p data-de="Bedrohungsanzeige und Aggro-Warnung.">Threat meter and aggro warning.</p></div>
+  <div class="tile cmb"><h4 data-de="Warnungen">Warnings</h4><p data-de="Symbole bei fehlendem Aspekt, Aura des Volltreffers, Mal des Jägers und Tier.">Icons for missing aspect, Trueshot Aura, Hunter's Mark and pet.</p></div>
+  <div class="tile cmb"><h4 data-de="Abklingzeiten">Cooldowns</h4><p data-de="Abklingzeit-Symbole für deine Jäger-Zauber.">Cooldown icons for your hunter spells.</p></div>
+  <div class="tile gear"><h4 data-de="Munition">Ammo</h4><p data-de="Pfeil- und Kugelzähler mit Warnung und Dungeon-Erinnerung.">Arrow and bullet counter with low ammo warning and dungeon reminder.</p></div>
+  <div class="tile gear"><h4 data-de="Tier füttern">Pet feeder</h4><p data-de="Ein Klick füttert das Tier. Futterwahl und Sperrliste pro Tier.">Click to feed your pet. Per-pet food choice and blacklist.</p></div>
+  <div class="tile gear"><h4 data-de="Makros">Macros</h4><p data-de="Legt Charaktermakros für Tier, Schüsse, Fallen, Aspekte und mehr an.">Creates character macros for pet handling, shots, traps, aspects and more.</p></div>
+  <div class="tile gear"><h4 data-de="Einlullen-Ansage">Tranq announcer</h4><p data-de="Meldet den Einlullenden Schuss im Chat.">Announces Tranquilizing Shot in chat.</p></div>
+  <div class="tile pet"><h4 data-de="Tierstatus">Pet status</h4><p data-de="Tierporträt, Lebensbalken und Zufriedenheit.">Pet portrait, health bar and happiness.</p></div>
+  <div class="tile pet"><h4 data-de="Tierdatenbank">Pet database</h4><p data-de="Tierfähigkeiten, Ränge, lehrende Tiere und Kartenpunkte.">Pet abilities, ranks, teaching beasts and map pins.</p></div>
+  <div class="tile pet"><h4 data-de="Tierbeobachtung">Beast watch</h4><p data-de="Tooltip-Infos, Hinweise zu seltenen Tieren und Wunschliste, Richtungspfeil.">Tooltip info, rare and wishlist alerts, discovery tracking and a direction arrow.</p></div>
+  <div class="tile pet"><h4 data-de="Fähigkeits-Hinweise">Pet ability alerts</h4><p data-de="Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann.">Popup when a beast nearby teaches a higher ability rank your pet can learn.</p></div>
+  <div class="tile map"><h4 data-de="Stallmeister">Stable masters</h4><p data-de="Stallmeister auf der Weltkarte, eingebaute Liste, lernt fehlende dazu.">Stable masters on the world map from a built-in list; learns missing ones.</p></div>
+  <div class="tile map"><h4 data-de="Munitionshändler">Ammo vendors</h4><p data-de="Munitionshändler auf der Karte, Wegpunkt zum nächsten.">Ammo vendors on the world map, waypoint to the nearest one.</p></div>
+  <div class="tile map"><h4 data-de="Kartenknopf">Map button</h4><p data-de="Knopf oben links an der Weltkarte mit Schaltern für die Ebenen.">A button at the top left of the world map with switches for the layers.</p></div>
+</div>
+
+<!-- COMBAT -->
+<h2 class="sec" id="combat" data-de="Kampf">Combat</h2>
+<p class="lead" data-de="Alles, was du im Gefecht sehen willst, im Blick und trotzdem aufgeräumt." >Everything you want to see mid-fight, in view and still tidy.</p>
+
+<section class="feat">
+  <div class="shot glow"><img src="images/swing_distance.png" alt="Swing timer and distance"></div>
+  <div class="txt">
+    <div class="kick" data-de="Schlag-Timer und Distanz">Swing timer and distance</div>
+    <h3 data-de="Immer wissen, wann der nächste Schuss kommt">Always know when the next shot lands</h3>
+    <ul class="f">
+      <li class="sep" data-de="Schlag-Timer">Swing timer</li>
+      <li data-de="Balken für Automatischen Schuss und Waffenhand, mit Bezeichnung und Restzeit">Auto Shot and main hand bars with label and remaining time</li>
+      <li data-de="Reichweitentext: Nahkampf, Fernkampf, Tote Zone, Zu weit, jeweils mit eigener Farbe">Range state text: Melee, Ranged, Dead zone, Too far, each with its own colour</li>
+      <li data-de="Fernkampfbalken wird in der toten Zone rot">Ranged bar turns red in the dead zone</li>
+      <li data-de="Füllen oder Leeren, Funke, Rand, Hintergrundtransparenz">Fill or drain mode, spark, border, background opacity</li>
+      <li data-de="Breite, Höhe, Abstand und jede Farbe einstellbar">Width, height, spacing and every colour adjustable</li>
+      <li class="sep" data-de="Distanz">Distance</li>
+      <li data-de="Zieldistanz in Stufen: Nahkampf, tote Zone, nah, mittel, fern, maximale Reichweite, außer Reichweite">Target distance in bands: melee, dead zone, near, middle, far, max range, out of range</li>
+      <li data-de="Drei Darstellungen: Segmente, Symbol-Abzeichen oder nur Text">Three layouts: segments, badge or text only</li>
+      <li data-de="Pulsieren und Ton beim Betreten der toten Zone">Pulse and sound when entering the dead zone</li>
+      <li data-de="Quadratisches oder rundes Symbol, Größe, Farben je Stufe">Square or round icon, size, a colour for every band</li>
+    </ul>
+  </div>
+</section>
+
+<section class="feat rev">
+  <div class="shot glow"><img src="images/cast_threat.png" alt="Cast bar and threat"></div>
+  <div class="txt">
+    <div class="kick" data-de="Zauberleiste und Bedrohung">Cast bar and threat</div>
+    <h3 data-de="Zaubern im Blick, Aggro unter Kontrolle">Casts in view, aggro under control</h3>
+    <ul class="f">
+      <li class="sep" data-de="Zauberleiste">Cast bar</li>
+      <li data-de="Symbol, Zaubername, Restzeit und Funke">Spell icon, name, remaining time and spark</li>
+      <li data-de="Unterscheidet Zauber und Kanalisierung">Tells casts and channels apart</li>
+      <li data-de="Blizzards Standard-Zauberleiste lässt sich ausblenden">Can hide the default cast bar</li>
+      <li data-de="Breite, Höhe, Rand und Hintergrund einstellbar">Width, height, border and background adjustable</li>
+      <li class="sep" data-de="Bedrohung">Threat</li>
+      <li data-de="Bedrohungsbalken mit Beschriftung und Prozentwert">Threat bar with label and percent</li>
+      <li data-de="Warnt ab einem Prozentwert deiner Wahl, bevor du Aggro ziehst">Warns at a percentage you choose, before you pull aggro</li>
+      <li data-de="Meldung beim Aggro-Gewinn, Ton und Blinken bei hoher Bedrohung">Alert when you gain aggro, sound and blink at high threat</li>
+      <li data-de="Nur in Gruppe oder mit Tier; ausblendbar ohne Bedrohung">Only in a group or with pet; hide when there is no threat</li>
+    </ul>
+  </div>
+</section>
+
+<section class="feat">
+  <div class="shot glow"><img src="images/warnings.png" alt="Warnings and cooldowns"></div>
+  <div class="txt">
+    <div class="kick" data-de="Warnungen und Abklingzeiten">Warnings and cooldowns</div>
+    <h3 data-de="Nie wieder den Aspekt vergessen">Never forget your aspect again</h3>
+    <ul class="f">
+      <li class="sep" data-de="Warnungen">Warnings</li>
+      <li data-de="Kein Aspekt aktiv oder nicht der bevorzugte Aspekt">No aspect active, or not your preferred aspect</li>
+      <li data-de="Aura des Volltreffers fehlt">Trueshot Aura missing</li>
+      <li data-de="Mal des Jägers fehlt: nur bei Elite und Bossen oder bei jedem Gegner">Hunter's Mark missing: elites and bosses only, or every enemy</li>
+      <li data-de="Tier fehlt oder ist tot, mit dem passenden Zauber als Symbol">Pet missing or dead, with the matching spell as icon</li>
+      <li data-de="Aktiven Aspekt anzeigen, Blinken, Ton, im Kampf ausblendbar">Show the active aspect, blink, sound, hide in combat</li>
+      <li class="sep" data-de="Abklingzeiten">Cooldowns</li>
+      <li data-de="Vorgabe: Schnellfeuer, Zorn des Wilden, Einschüchterung, Streuschuss, Fallen, Totstellen, Abschreckung und mehr; Liste frei änderbar">Default: Rapid Fire, Bestial Wrath, Intimidation, Scatter Shot, traps, Feign Death, Deterrence and more; the list is freely editable</li>
+      <li data-de="Alle, nur auf Abklingzeit oder nur bereit; Zahlen, Ausgrauen, Namen">All, only on cooldown or only ready; numbers, grey-out, spell names</li>
+      <li data-de="Tastenbelegung deiner Leisten auf dem Symbol">Action bar key shown on the icon</li>
+      <li data-de="Richtung, Symbole pro Zeile, Rand- und Symbolgröße">Grow direction, icons per row, border and icon size</li>
+    </ul>
+  </div>
+</section>
+
+<section class="feat rev">
+  <div class="shot glow"><img src="images/ammo_feeder.png" alt="Ammo and pet feeder"></div>
+  <div class="txt">
+    <div class="kick" data-de="Munition und Tier füttern">Ammo and pet feeding</div>
+    <h3 data-de="Nie ohne Pfeile, nie ohne Futter">Never out of arrows, never out of food</h3>
+    <ul class="f">
+      <li class="sep" data-de="Munition">Ammo</li>
+      <li data-de="Zählt Taschen, Köcher und Munitionsplatz, Pfeile und Kugeln getrennt">Counts bags, quiver and the ammo slot, arrows and bullets separately</li>
+      <li data-de="Anzeige für die benötigte Munition oder für alle">Show the ammo your weapon needs, or all of it</li>
+      <li data-de="Warnung unter einer Grenze: rot, Blinken, Ton">Low warning below a limit: red, blink, sound</li>
+      <li data-de="Erinnerung beim Betreten eines Dungeons und beim Bereitschaftscheck">Reminder when entering a dungeon and on ready check</li>
+      <li data-de="Klick: andere Munition wählen und anlegen; Liste aller Munition">Click: choose and equip other ammo; list of all ammunition</li>
+      <li data-de="Munitionshändler auf der Karte zeigen, Wegpunkt zum nächsten">Show ammo vendors on the map, waypoint to the nearest</li>
+      <li class="sep" data-de="Tier füttern">Pet feeder</li>
+      <li data-de="Klick füttert, Rechtsklick wählt das Futter, Umschalt-Klick sperrt">Click feeds, right-click picks the food, Shift-click blacklists</li>
+      <li data-de="Futterwahl und Sperrliste pro Tier">Food choice and blacklist per pet</li>
+      <li data-de="Immer anzeigen oder nur wenn das Tier nicht zufrieden ist">Always show, or only when the pet is not happy</li>
+      <li data-de="Hält das Makro HHT Feed aktuell">Keeps the HHT Feed macro up to date</li>
+    </ul>
+  </div>
+</section>
+
+<!-- PETS -->
+<h2 class="sec" id="pets" data-de="Tiere">Pets</h2>
+<p class="lead" data-de="Vom Zähmen bis zum Stall: dein Begleiter und alles Wissen über Tiere an einem Ort." >From taming to the stable: your companion and everything about beasts in one place.</p>
+
+<section class="feat">
+  <div class="shot glow"><img src="images/petstatus.png" alt="Pet status"></div>
+  <div class="txt">
+    <div class="kick" data-de="Tierstatus">Pet status</div>
+    <h3 data-de="Dein Begleiter, immer im Blick">Your companion, always in view</h3>
+    <ul class="f">
+      <li data-de="Porträt mit Stufe, Lebensbalken mit Name">Portrait with level, health bar with name</li>
+      <li data-de="Fokus, Erfahrung und Trainingspunkte, Loyalität">Focus, experience and training points, loyalty</li>
+      <li data-de="Zufriedenheitsanzeige: zufrieden, neutral, unzufrieden">Happiness indicator: happy, content, unhappy</li>
+      <li data-de="Tierfähigkeiten mit Abklingzeit und Automatik-Ring">Pet abilities with cooldown and auto-cast ring</li>
+      <li data-de="Ein Klick auf das Porträt öffnet die Tierdatenbank">Click the portrait to open the pet database</li>
+      <li data-de="Rund oder eckig, Größe und jede Leiste einstellbar">Round or square, size and every bar adjustable</li>
+    </ul>
+  </div>
+</section>
+
+<section class="feat rev">
+  <div class="shot glow"><img src="images/petdex.png" alt="Pet database"></div>
+  <div class="txt">
+    <div class="kick" data-de="Tierdatenbank">Pet database</div>
+    <h3 data-de="Das Wissen über jedes Tier">What there is to know about every beast</h3>
+    <ul class="f">
+      <li data-de="Vier Reiter: Tiere, Fähigkeiten, Mein Begleiter, Stall">Four tabs: Beasts, Abilities, My pet, Stable</li>
+      <li data-de="Familie, Stufe, Angriffstempo, Zone und gelehrte Fähigkeiten je Tier">Family, level, attack speed, zone and taught abilities per beast</li>
+      <li data-de="Suche nach Name, Familie, Zone oder Fähigkeit, dazu Filter">Search by name, family, zone or ability, plus filters</li>
+      <li data-de="Markierungen: gezähmt (+), Wunschliste (*), gesehen">Marks: tamed (+), wishlist (*), seen</li>
+      <li data-de="Angriffstempo wird beim Zähmen gemessen; ein ~ bedeutet Classic-Basiswert">Attack speed is measured when you tame; a ~ marks the Classic base value</li>
+      <li data-de="3D-Modell-Vorschau">3D model preview</li>
+      <li data-de="Auf der Karte zeigen und Wegpunkt setzen">Show on the map and set a waypoint</li>
+      <li data-de="Tierdaten exportieren und importieren, um sie zu teilen">Export and import beast data to share it</li>
+    </ul>
+  </div>
+</section>
+
+<section class="feat">
+  <div class="shot glow"><img src="images/watch.png" alt="Beast watch and alerts"></div>
+  <div class="txt">
+    <div class="kick" data-de="Tierbeobachtung und Hinweise">Beast watch and alerts</div>
+    <h3 data-de="Nie wieder an einem seltenen Tier vorbeilaufen">Never run past a rare beast again</h3>
+    <ul class="f">
+      <li class="sep" data-de="Tierbeobachtung">Beast watch</li>
+      <li data-de="Tooltip zeigt Zähmbarkeit, Familie, Stufe, Tempo und gelehrte Fähigkeiten">Tooltip shows tameable info, family, level, speed and taught abilities</li>
+      <li data-de="Markiert Tiere als gesehen und, nach dem Zähmen, als gezähmt">Marks beasts as seen and, after taming, as tamed</li>
+      <li data-de="Popup bei seltenen Tieren und Wunschlisten-Tieren; auch in der Nähe bekannter Spawns">Popup for rare and wishlist beasts; also close to known spawns</li>
+      <li data-de="Knöpfe: anvisieren, Karte, Pfeil, Wunschliste, Pause">Buttons: target, map, arrow, wishlist, pause</li>
+      <li data-de="Richtungspfeil zum seltenen Tier, Größe einstellbar">Direction arrow to the rare beast, adjustable size</li>
+      <li data-de="Nur Tiere bis zu deiner Stufe, Ton, auch in Dungeons, Wiederholungs-Pause">Only beasts up to your level, sound, inside dungeons, repeat delay</li>
+      <li class="sep" data-de="Fähigkeits-Hinweise">Pet ability alerts</li>
+      <li data-de="Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann">Popup when a nearby beast teaches a higher rank your pet can learn</li>
+      <li data-de="Nur für das aktive Tier oder für jedes Tier, das du benutzt hast">For the active pet only, or every pet you have used</li>
+    </ul>
+  </div>
+</section>
+
+<!-- MAP -->
+<h2 class="sec" id="map" data-de="Karte">Map</h2>
+<p class="lead" data-de="Wichtige Orte auf der Weltkarte, ein Klick bis zum Wegpunkt." >The places that matter on the world map, one click to a waypoint.</p>
+
+<section class="feat rev">
+  <div class="shot glow"><img src="images/map.png" alt="World map"></div>
+  <div class="txt">
+    <div class="kick" data-de="Karte">World map</div>
+    <h3 data-de="Händler und Stallmeister sofort finden">Find vendors and stable masters instantly</h3>
+    <ul class="f">
+      <li data-de="Kartenknopf oben links mit Schaltern für die Ebenen">Map button at the top left with switches for the layers</li>
+      <li data-de="Ebene Munitionshändler, wahlweise nach Munitionsart und nur eigene Fraktion">Ammo vendor layer, by ammo kind and own faction only</li>
+      <li data-de="Ebene Stallmeister aus einer eingebauten Liste; fehlende werden beim Besuch gelernt">Stable master layer from a built-in list; missing ones are learned when you visit them</li>
+      <li data-de="Wegpunkt zum nächsten Händler oder Stallmeister">Waypoint to the nearest vendor or stable master</li>
+      <li data-de="Tiere aus der Tierdatenbank auf der Karte zeigen">Show beasts from the pet database on the map</li>
+      <li data-de="Jede Ebene einzeln abschaltbar">Every layer can be switched off on its own</li>
+    </ul>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<h2 class="sec" id="tools" data-de="Werkzeuge">Tools</h2>
+<section class="wide">
+  <div class="shot glow"><img src="images/macros.png" alt="Macros"></div>
+  <div class="txt">
+    <div class="kick" data-de="Makros">Macros</div>
+    <h3 data-de="18 fertige Makros, ein Ziehen auf die Leiste">18 ready-made macros, one drag to the bar</h3>
+    <div class="cols">
+      <ul class="f">
+        <li data-de="5 Tier-Makros: Ein-Tasten-Makro (wiederbeleben, rufen oder heilen), Rufen/Wegschicken, Heilen, Wiederbeleben, Füttern">5 pet macros: one-button (revive, call or mend), call or dismiss, mend, revive, feed</li>
+        <li data-de="13 Jäger-Makros: Angriff, Mal, Aspekt, Falle, Nahkampf, Totstellen, Kiten, Knurren, Zähmen, Spurensuche, Burst, Munition, Stall">13 hunter macros: attack, mark, aspect, trap, melee, feign, kite, growl, tame, track, burst, ammo, stable</li>
+      </ul>
+      <ul class="f">
+        <li data-de="Umschalt und Strg wählen Varianten, zum Beispiel andere Aspekte oder Fallen">Shift and Ctrl pick variants, for example other aspects or traps</li>
+        <li data-de="Makros lassen sich direkt aus der Liste auf die Leiste ziehen">Drag macros straight from the list onto your bar</li>
+        <li data-de="Das Futter-Makro bleibt mit der Futterwahl des Tiers aktuell">The feed macro stays in sync with the pet's food choice</li>
+        <li data-de="Einlullen-Ansage: meldet den Einlullenden Schuss in einen Chatkanal deiner Wahl, mit eigenem Text und Testknopf">Tranq announcer: announces Tranquilizing Shot to a chat channel of your choice, with your own text and a test button</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="shot glow"><img src="images/settings.png" alt="Settings"></div>
+  <div class="txt">
+    <div class="kick" data-de="Einstellungen">Settings</div>
+    <h3 data-de="Alles ein- und ausschaltbar, alles anpassbar">Everything toggleable, everything adjustable</h3>
+    <div class="cols">
+      <ul class="f">
+        <li data-de="Jedes Modul hat einen eigenen Schalter und eine eigene Seite">Every module has its own switch and its own page</li>
+        <li data-de="Eigene Größe und Transparenz je Modul, dazu global für alle">Own scale and opacity per module, plus global values for all</li>
+        <li data-de="Anzeige nur im Kampf, mit Ziel oder immer">Show always, in combat, with a target, or both</li>
+        <li data-de="Alle Farben der Balken wählbar">All bar colours adjustable</li>
+      </ul>
+      <ul class="f">
+        <li data-de="Rahmen entsperren, mit der Maus verschieben, wieder sperren">Unlock frames, move them with the mouse, lock again</li>
+        <li data-de="Position oder einzelne Module zurücksetzen">Reset positions or single modules</li>
+        <li data-de="Sprache: automatisch, Englisch oder Deutsch">Language: automatic, English or German</li>
+        <li data-de="Einstellungen als eine Textzeile exportieren und importieren">Export and import all settings as one line of text</li>
+        <li data-de="Minimap-Knopf">Minimap button</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<h2 class="sec" id="install" data-de="Installation">Install</h2>
+<div class="two">
+  <div class="box">
+    <h3 data-de="In drei Schritten">In three steps</h3>
+    <ul class="f">
+      <li data-de="Ordner HamingwaysHunterTools nach Interface\AddOns kopieren">Copy the <code>HamingwaysHunterTools</code> folder to <code>Interface\AddOns</code></li>
+      <li data-de="Spiel komplett neu starten; /reload reicht bei neuen Dateien nicht">Start the game completely; <code>/reload</code> is not enough for new files</li>
+      <li data-de="Mit /hht die Einstellungen öffnen">Type <code>/hht</code> to open the settings</li>
+    </ul>
+  </div>
+  <div class="box">
+    <h3 data-de="Befehle">Commands</h3>
+    <ul class="f">
+      <li><code>/hht</code> <span data-de="Einstellungen öffnen">open the settings</span></li>
+      <li><code>/hht unlock</code> / <code>/hht lock</code> <span data-de="Rahmen entsperren oder sperren">unlock or lock the frames</span></li>
+      <li><code>/hht reset</code> <span data-de="Positionen zurücksetzen">reset the positions</span></li>
+      <li><code>/hht petinfo</code> <span data-de="Tierfähigkeiten des aktiven Tiers ausgeben">print the active pet's abilities</span></li>
+    </ul>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <p data-de="Die Bilder sind Illustrationen des Layouts, keine Screenshots aus dem Spiel.">The pictures are illustrations of the layout, not in-game screenshots.</p>
+  <p data-de="Tier- und Munitionshändler-Daten von Huntmaster (MIT). Stallmeister-Positionen teils von Questie. Siehe Data\NOTICE.txt.">Pet and ammo vendor data from Huntmaster (MIT). Stable master positions partly from Questie. See Data\NOTICE.txt.</p>
+</footer>
+
+<script>
+(function () {
+  var els = Array.prototype.slice.call(document.querySelectorAll('[data-de]'));
+  els.forEach(function (e) { e.setAttribute('data-en', e.innerHTML); });
+  var bEn = document.getElementById('bEn'), bDe = document.getElementById('bDe');
+  function set(l) {
+    document.documentElement.lang = l;
+    els.forEach(function (e) { e.innerHTML = l === 'de' ? e.getAttribute('data-de') : e.getAttribute('data-en'); });
+    bEn.className = l === 'en' ? 'on' : ''; bDe.className = l === 'de' ? 'on' : '';
+    try { localStorage.setItem('hhtlang', l); } catch (x) {}
+  }
+  bEn.onclick = function () { set('en'); }; bDe.onclick = function () { set('de'); };
+  var saved = null; try { saved = localStorage.getItem('hhtlang'); } catch (x) {}
+  set(saved || ((navigator.language || '').indexOf('de') === 0 ? 'de' : 'en'));
+})();
+</script>
+</body>
+</html>

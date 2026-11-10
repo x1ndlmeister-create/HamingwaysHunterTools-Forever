@@ -1,0 +1,43 @@
+## Interface: 16001
+## Title: |cffabd473Hamingway's HunterTools|r
+## Notes: All-in-one hunter toolkit for WoW Forever: swing timer, cooldowns, warnings and more.
+## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Schlag-Timer, Abklingzeiten, Warnungen und mehr.
+## Author: Hamingway
+## Version: 0.1.0
+## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
+
+Widgets.lua
+Form.lua
+Core.lua
+Locale.lua
+Spells.lua
+Icon.lua
+Keybinds.lua
+Range.lua
+Bar.lua
+Modules\Swing.lua
+Modules\Castbar.lua
+Modules\Cooldowns.lua
+Modules\Warnings.lua
+Modules\Threat.lua
+Modules\Distance.lua
+Modules\PetStatus.lua
+Modules\PetFeeder.lua
+Modules\AmmoList.lua
+Modules\Ammo.lua
+Modules\Tranq.lua
+Modules\PetMacros.lua
+Data\PetData.lua
+Data\AmmoVendorData.lua
+Data\StableMasterData.lua
+Data\PetSpeedData.lua
+Modules\PetDex.lua
+Modules\PetMap.lua
+Modules\PetNearby.lua
+Modules\PetWatch.lua
+Modules\PetShare.lua
+Modules\AmmoVendors.lua
+Modules\StableMasters.lua
+Modules\MapButton.lua
+Profile.lua
+Config.lua
