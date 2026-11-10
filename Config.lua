@@ -68,6 +68,16 @@ function C:BuildGeneral(form)
     end, 220)
     form:Button(L("Reload UI"), function() ReloadUI() end, 220)
     form:Button(L("Export / import settings"), function() if HHT.Profile then HHT.Profile.Open() end end, 220)
+
+    form:Header(L("Support"))
+    form:Note(L("Like the addon? Buy me a coffee. Click the field, press Ctrl+C and paste the link into your browser."))
+    local url = "https://buymeacoffee.com/x1ndlmeister"
+    local box = UI.EditBox(form.content, 300, nil)
+    box:SetText(url)
+    box:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    box:SetScript("OnTextChanged", function(self, user) if user then self:SetText(url); self:HighlightText() end end)
+    form:Place(box, 20, 4, 6)
+
     form:Note("v" .. HHT.version .. "  |  /hht  |  /hht unlock  |  /hht lock  |  /hht reset", 0.55, 0.52, 0.45)
 end
 

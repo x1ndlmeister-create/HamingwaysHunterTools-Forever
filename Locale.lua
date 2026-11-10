@@ -56,6 +56,8 @@ HHT:AddGerman({
     ["Shift + left click: pet database."] = "Shift + Linksklick: Begleiter-Datenbank.",
     ["Language changes fully apply after /reload."] = "Sprachwechsel greift vollstaendig nach /reload.",
     ["Settings"] = "Einstellungen",
+    ["Support"] = "Unterstuetzen",
+    ["Like the addon? Buy me a coffee. Click the field, press Ctrl+C and paste the link into your browser."] = "Gefaellt dir das Addon? Spendier mir einen Kaffee. Feld anklicken, Strg+C druecken und den Link im Browser einfuegen.",
     -- shapes / generic choices
     ["Square"] = "Quadrat",
     ["Round"] = "Rund",
