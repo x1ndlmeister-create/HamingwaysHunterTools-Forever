@@ -301,4 +301,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 ## Credits
 
+Like the addon? Buy me a coffee: https://buymeacoffee.com/x1ndlmeister
+
+Gefällt dir das Addon? Spendier mir einen Kaffee: https://buymeacoffee.com/x1ndlmeister
+
 Pet and ammo vendor data from Huntmaster (MIT). Stable master positions are partly from Questie. See `Data\NOTICE.txt`.
