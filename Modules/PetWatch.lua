@@ -242,24 +242,24 @@ function M:Build()
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
-    f.target:SetSize(78, 20)
+    f.target:SetSize(70, 20)
     f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 10, 8)
     f.target:RegisterForClicks("AnyUp")
     StyleButton(f.target, L("Target"))
 
-    f.map = UI.Button(f, 56, 20, L("Map"), function()
+    f.map = UI.Button(f, 48, 20, L("Map"), function()
         if f.beast and PM() then PM():ShowBeasts({ f.beast }, true) end
     end)
     f.map:SetPoint("LEFT", f.target, "RIGHT", 6, 0)
 
-    f.arrowBtn = UI.Button(f, 74, 20, L("Arrow"), function()
+    f.arrowBtn = UI.Button(f, 66, 20, L("Arrow"), function()
         local b = f.beast
         if not b then return end
         if M.track == b then PW.Track(nil) else PW.Track(b) end
     end)
     f.arrowBtn:SetPoint("LEFT", f.map, "RIGHT", 6, 0)
 
-    f.wishBtn = UI.Button(f, 96, 20, L("Wishlist"), function()
+    f.wishBtn = UI.Button(f, 90, 20, L("Wishlist"), function()
         local b, pd = f.beast, PD()
         if not b or not pd then return end
         local on = not pd.IsWish(b.id)

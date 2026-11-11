@@ -20,6 +20,8 @@ HHT:AddGerman({
     ["Warning border"] = "Rahmen Warnung",
     ["Active border"] = "Rahmen aktiv",
     ["Hide warnings in combat"] = "Warnungen im Kampf ausblenden",
+    ["Click a warning to cast the spell"] = "Auf eine Warnung klicken, um den Zauber zu wirken",
+    ["Click: cast %s"] = "Klick: %s wirken",
     ["No aspect"] = "Kein Aspekt",
     ["Warn when another aspect than the preferred one is active"] = "Warnen wenn ein anderer als der bevorzugte Aspekt aktiv ist",
     ["Wrong aspect"] = "Falscher Aspekt",
@@ -39,7 +41,7 @@ local M = HHT:NewModule("warnings", {
     positions = { main = { "CENTER", "CENTER", 0, 120 } },
     defaults = {
         size = 48, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 10, grow = "right",
-        blink = true, sound = false, showText = true, hideInCombat = false,
+        blink = true, sound = false, showText = true, hideInCombat = false, clickCast = true,
         aspectWarn = true, aspectWrong = true, aspectShow = false, aspectMain = "aspectHawk",
         trueshotWarn = true,
         markWarn = true, markTargets = "elite",
@@ -120,6 +122,39 @@ local function Add(list, key, icon, text, warn, spell)
     list[#list + 1] = { key = key, icon = icon, text = text, warn = warn, spell = spell }
 end
 
+-- The secure button sits in a plain holder: its spell can only change out of combat, so in combat the holder hides when the icon no longer matches.
+local function ClickButton(ic)
+    if ic.hhtBtn then return ic.hhtHolder, ic.hhtBtn end
+    if InCombatLockdown() then return end
+    local h = CreateFrame("Frame", nil, ic)
+    h:SetAllPoints(ic)
+    h:SetFrameLevel(ic.over:GetFrameLevel() + 1)
+    local b = CreateFrame("Button", nil, h, "SecureActionButtonTemplate")
+    b:SetAllPoints(h)
+    b:RegisterForClicks("AnyUp")
+    b:SetAttribute("useOnKeyDown", false)
+    b:SetAttribute("type1", "spell")
+    b:SetScript("OnEnter", function(self)
+        if not (GameTooltip and self.spell) or self:GetParent():GetParent():GetAlpha() == 0 then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(string.format(L("Click: cast %s"), self.spell), 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    ic.hhtHolder, ic.hhtBtn = h, b
+    return h, b
+end
+
+function M:ApplyClick(ic, spell)
+    local h, b = ClickButton(ic)
+    if not h then return end
+    if spell and b.spell ~= spell and not InCombatLockdown() then
+        b:SetAttribute("spell1", spell)
+        b.spell = spell
+    end
+    h:SetShown(self.db.clickCast and not HHT:IsUnlocked() and spell ~= nil and b.spell == spell)
+end
+
 function M:Collect()
     local db = self.db
     local list = {}
@@ -135,8 +170,10 @@ function M:Collect()
 
     if Quiet() then return list end
     if db.hideInCombat and HHT.InCombat() then return list end
+    local inCombat = HHT.InCombat()
 
-    if db.aspectWarn or db.aspectShow then
+    -- Auras cannot be read in combat: aura based warnings only run out of combat.
+    if (db.aspectWarn or db.aspectShow) and not inCombat then
         self:PollAspect()
         local cur = self.currentAspect
         if cur then
@@ -147,7 +184,7 @@ function M:Collect()
                 local act = S.Resolve("@" .. cur)
                 Add(list, "aspect", act.icon, "", false, act.name)
             end
-        elseif db.aspectWarn then
+        elseif db.aspectWarn and not inCombat then
             local pref = S.Resolve("@" .. db.aspectMain)
             if not pref.known then
                 for _, key in ipairs(S.Aspects) do
@@ -159,7 +196,7 @@ function M:Collect()
         end
     end
 
-    if db.trueshotWarn then
+    if db.trueshotWarn and not inCombat then
         local rs = S.Resolve("@trueshotAura")
         if rs.known then
             local found = S.AuraByName("player", rs.name, "HELPFUL")
@@ -167,7 +204,7 @@ function M:Collect()
         end
     end
 
-    if db.markWarn and HHT.HasAttackableTarget() then
+    if db.markWarn and not inCombat and HHT.HasAttackableTarget() then
         local rs = S.Resolve("@hunterMark")
         if rs.known then
             local worth = true
@@ -210,7 +247,10 @@ function M:Tick()
     local signature = table.concat(sig, ",")
     if signature == self.sig then
         for i, e in ipairs(list) do
-            if self.icons[i] then HHT.Keys.Apply(self.icons[i], db, e.spell) end
+            if self.icons[i] then
+                HHT.Keys.Apply(self.icons[i], db, e.spell)
+                self:ApplyClick(self.icons[i], e.spell)
+            end
         end
         return
     end
@@ -232,18 +272,22 @@ function M:Tick()
         ic.label:SetTextColor(HHT.Col(db, e.warn and "warn" or "ok"))
         ic:SetBlink(e.warn and db.blink)
         HHT.Keys.Apply(ic, db, e.spell)
+        self:ApplyClick(ic, e.spell)
         local step = (s + sp) * (i - 1)
         ic:ClearAllPoints()
         if db.grow == "right" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", step, 0)
         elseif db.grow == "left" then ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -step, 0)
         elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -step)
         else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, step) end
+        ic:SetAlpha(1)
         ic:Show()
         used = i
     end
     for i = used + 1, #self.icons do
-        self.icons[i]:SetBlink(false)
-        self.icons[i]:Hide()
+        local ic = self.icons[i]
+        ic:SetBlink(false)
+        -- A frame with a secure click button cannot be hidden in combat, so fade it instead.
+        if InCombatLockdown() then ic:SetAlpha(0) else ic:Hide() end
     end
 
     local warns = 0
@@ -268,6 +312,7 @@ function M:BuildOptions(form)
     form:Check(L("Blink warnings"), db, "blink")
     form:Check(L("Play a sound for new warnings"), db, "sound")
     form:Check(L("Hide warnings in combat"), db, "hideInCombat")
+    form:Check(L("Click a warning to cast the spell"), db, "clickCast")
     HHT.Keys.AddOptions(form, db)
     form:Header(L("Aspect"))
     form:Check(L("Warn when no aspect is active"), db, "aspectWarn")

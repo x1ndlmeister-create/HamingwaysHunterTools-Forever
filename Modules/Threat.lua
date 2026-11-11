@@ -46,7 +46,9 @@ function M:OnInit()
     self.flip = false
     HHT:Listen(self, "PLAYER_TARGET_CHANGED", "ResetAlerts")
     HHT:Listen(self, "PLAYER_REGEN_ENABLED", "ResetAlerts")
-    HHT:Every(self, 0.2, M.Tick)
+    HHT:Listen(self, "UNIT_THREAT_LIST_UPDATE", "Tick")
+    HHT:Listen(self, "UNIT_THREAT_SITUATION_UPDATE", "Tick")
+    HHT:Every(self, 0.1, M.Tick)
 end
 
 function M:ResetAlerts()
@@ -163,8 +165,7 @@ function M:Tick()
     end
 
     if db.blink and (tanking or pct >= warnAt) then
-        self.flip = not self.flip
-        bar:SetAlpha(self.flip and 1 or 0.55)
+        bar:SetAlpha((math.floor(GetTime() * 5) % 2 == 0) and 1 or 0.55)
     else
         bar:SetAlpha(1)
     end

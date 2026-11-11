@@ -9,6 +9,9 @@ HHT:AddGerman({
     ["Visibility"] = "Sichtbarkeit",
     ["Only the ammo your weapon uses"] = "Nur Munition der Waffe",
     ["All ammo you carry"] = "Alle mitgefuehrte Munition",
+    ["Count"] = "Anzahl",
+    ["Equipped ammo only"] = "Nur angelegte Munition",
+    ["All ammo of the type"] = "Alle Munition der Art",
     ["Warn below (red, blink, sound)"] = "Warnung unter (rot, Blinken, Ton)",
     ["Only show when ammo is low"] = "Nur bei wenig Munition anzeigen",
     ["Warn when entering a dungeon or on ready check"] = "Warnen beim Betreten eines Dungeons und bei Bereitschaftscheck",
@@ -32,7 +35,7 @@ local M = HHT:NewModule("ammo", {
     positions = { main = { "CENTER", "CENTER", 150, -170 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 8, grow = "right",
-        visibility = "always", mode = "needed", showText = true, blink = true, sound = false,
+        visibility = "always", mode = "needed", countMode = "equipped", showText = true, blink = true, sound = false,
         low = 200, reminder = true, reminderBelow = 400, onlyLow = false,
         colors = {
             normal = { 0.67, 0.83, 0.45 },
@@ -105,6 +108,16 @@ end
 
 function M:MarkDirty()
     self.dirty = true
+end
+
+-- Count and icon the counter shows for a kind: the equipped ammo, or everything of that type.
+function M:Shown(kind)
+    if self.db.countMode == "equipped" then
+        for _, e in ipairs(self.stacks[kind] or {}) do
+            if e.equipped then return e.count, e.icon end
+        end
+    end
+    return self.counts[kind] or 0, nil
 end
 
 function M:Build()
@@ -235,7 +248,7 @@ function M:Remind()
     if not db.reminder or not self.needs then return end
     local now = GetTime()
     if self.lastReminder and now - self.lastReminder < 60 then return end
-    local n = self.counts[self.needs] or 0
+    local n = self:Shown(self.needs)
     if n >= db.reminderBelow then return end
     self.lastReminder = now
     local text = string.format(L("Low on ammo: %d (recommended: %d)"), n, db.reminderBelow)
@@ -277,11 +290,11 @@ function M:Tick()
     local list = {}
     if show then
         for _, kind in ipairs(KINDS) do
-            local n = self.counts[kind]
+            local n, icon = self:Shown(kind)
             if unlocked then
-                list[#list + 1] = { kind = kind, n = (n > 0) and n or 200 }
+                list[#list + 1] = { kind = kind, n = (n > 0) and n or 200, icon = icon }
             elseif self:Visible(kind, n) and not (db.onlyLow and n >= db.low) then
-                list[#list + 1] = { kind = kind, n = n }
+                list[#list + 1] = { kind = kind, n = n, icon = icon }
             end
         end
     end
@@ -290,7 +303,7 @@ function M:Tick()
     local isLow = false
     local sig = { tostring(db.low), tostring(db.onlyLow) }
     for _, e in ipairs(list) do
-        sig[#sig + 1] = e.kind .. e.n
+        sig[#sig + 1] = e.kind .. e.n .. tostring(e.icon)
         if e.n < db.low and (e.kind == self.needs or not self.needs) then isLow = true end
     end
     local signature = table.concat(sig, ",")
@@ -321,7 +334,7 @@ function M:Tick()
         ic.click:EnableMouse(not unlocked)
         local low = e.n < db.low
         ic:Style(s, db.shape, db.borderSize, db.borderAlpha, false)
-        ic:SetIcon(ICONS[e.kind])
+        ic:SetIcon(e.icon or ICONS[e.kind])
         ic:SetBorderColor(HHT.Col(db, low and "low" or "normal"))
         ic:SetDesaturated(e.n == 0)
         ic.label:SetWidth(s + sp)
@@ -356,6 +369,8 @@ function M:BuildOptions(form)
     form:Cycle(L("Show"), db, "mode", {
         { "needed", L("Only the ammo your weapon uses") }, { "all", L("All ammo you carry") } })
     form:Cycle(L("Visibility"), db, "visibility", HHT.VisibilityChoices())
+    form:Cycle(L("Count"), db, "countMode", {
+        { "equipped", L("Equipped ammo only") }, { "all", L("All ammo of the type") } })
     form:Stepper(L("Warn below (red, blink, sound)"), db, "low", 0, 2000, 50)
     form:Check(L("Only show when ammo is low"), db, "onlyLow")
     form:Check(L("Blink warnings"), db, "blink")

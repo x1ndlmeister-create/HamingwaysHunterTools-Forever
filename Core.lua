@@ -388,6 +388,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.StableMasters then HHT.StableMasters.Nearest() end
     elseif msg == "watch" then
         if HHT.PetWatch then HHT.PetWatch.Debug() end
+    elseif msg == "debuffs" then
+        if HHT.Debuffs then HHT.Debuffs:Debug() end
     elseif msg == "petinfo" then
         if HHT.PetDex and HHT.PetDex.Inspect then HHT.PetDex.Inspect() end
     elseif msg == "lock" then
