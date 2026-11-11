@@ -651,6 +651,23 @@ function PD.NewRank(b, fams, ignored)
     return best
 end
 
+-- Best rank this beast teaches that the active pet does not have yet (whatever the hunter already knows).
+function PD.PetGap(b, ignored)
+    local info = PD.PetInfo()
+    if not info or not info.family then return nil end
+    local ranks = PD.petRanks or PD.ScanBook()
+    local best
+    for _, e in ipairs(PD.BeastAbilities(b)) do
+        local pet = ranks[e.a.key] or 0
+        if e.rank > 0 and e.rank > pet and (e.a.all or e.a.famSet[info.family]) and not (ignored and ignored[e.a.key]) then
+            if not best or e.rank > best.rank then
+                best = { a = e.a, rank = e.rank, known = pet, petGap = true, fits = { L(info.family) .. " (" .. (info.name or L("your pet")) .. ")" } }
+            end
+        end
+    end
+    return best
+end
+
 -- ---------------------------------------------------------------------------
 -- Search
 -- ---------------------------------------------------------------------------

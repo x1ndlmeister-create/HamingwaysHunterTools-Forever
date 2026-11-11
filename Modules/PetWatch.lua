@@ -62,7 +62,7 @@ local M = HHT:NewModule("petwatch", {
         tooltip = true, markSeen = true,
         rareAlert = true, wishAlert = true, nearAlert = true, nearYards = 150, onlyMyLevel = true,
         sound = true, duration = 20, repeatMinutes = 10, inInstances = false,
-        arrow = true, arrowAuto = true, arrowSize = 64,
+        arrow = true, arrowAuto = false, arrowSize = 64,
         colors = { border = { 0.75, 0.55, 1 } },
     },
 })
@@ -203,6 +203,12 @@ local function UpdateButtons()
     f.wishBtn.label:SetText((b and PD() and PD().IsWish(b.id)) and L("* Wishlist") or L("Wishlist"))
 end
 
+-- An arrow that started by itself goes away together with its alert.
+local function CloseAlert()
+    if M.frame then M.frame:Hide() end
+    if M.trackAuto then PW.Track(nil) end
+end
+
 function M:Build()
     if self.frame then return end
     local f = CreateFrame("Frame", "HamingwaysHunterToolsPetWatch", UIParent)
@@ -232,7 +238,7 @@ function M:Build()
     f.sub:SetJustifyV("TOP")
     f.sub:SetHeight(30)
 
-    local close = UI.Button(f, 18, 18, "x", function() f:Hide() end)
+    local close = UI.Button(f, 18, 18, "x", CloseAlert)
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
@@ -266,7 +272,7 @@ function M:Build()
     f.snooze = UI.Button(f, 36, 20, "zZ", function()
         snoozeUntil = GetTime() + 900
         HHT.Print(L("Beast alerts paused for 15 minutes."))
-        f:Hide()
+        CloseAlert()
     end)
     f.snooze:SetPoint("LEFT", f.wishBtn, "RIGHT", 6, 0)
 
@@ -375,7 +381,7 @@ end
 
 function M:Tick()
     local f = self.frame
-    if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then f:Hide() end
+    if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then CloseAlert() end
 end
 
 -- data: kind (rare, wish, near), beast, name
@@ -519,16 +525,17 @@ function M:NearTick()
     alerted["near" .. best.id] = now
     self:Show({ kind = bestKind, beast = best, at = now })
     if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
-    if db.arrow and db.arrowAuto and not self.track then PW.Track(best, true) end
+    if db.arrow and db.arrowAuto and not self.track then PW.Track(best, true, true) end
 end
 
 -- ---------------------------------------------------------------------------
 -- Arrow
 -- ---------------------------------------------------------------------------
-function PW.Track(b, quiet)
+function PW.Track(b, quiet, auto)
     if not M.enabled then return end
     if b and not M.db.arrow then return end
     M.track = b
+    M.trackAuto = (b and auto) and true or false
     if b and not quiet then HHT.Print(string.format(L("Arrow points to %s."), b.n)) end
     UpdateButtons()
     M:ArrowTick()

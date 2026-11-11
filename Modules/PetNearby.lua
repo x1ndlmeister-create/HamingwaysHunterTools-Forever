@@ -9,6 +9,8 @@ HHT:AddGerman({
     ["PET ABILITY NEARBY"] = "FAEHIGKEIT IN DER NAEHE",
     ["%s teaches %s %d"] = "%s lehrt %s %d",
     ["You know %s. For: %s."] = "Du kennst %s. Fuer: %s.",
+    ["Your pet knows %s. For: %s."] = "Dein Begleiter kennt %s. Fuer: %s.",
+    ["Also alert for abilities my active pet does not have yet"] = "Auch bei Faehigkeiten hinweisen, die mein aktiver Begleiter noch nicht hat",
     ["rank %d"] = "Rang %d",
     ["no rank yet"] = "noch keinen Rang",
     ["Target"] = "Anvisieren",
@@ -39,7 +41,7 @@ local M = HHT:NewModule("petnearby", {
     desc = "Popup when a beast nearby teaches a higher ability rank your pet can learn.",
     positions = { main = { "TOP", "TOP", 0, -170 } },
     defaults = {
-        showFor = "all", duration = 15, repeatMinutes = 10, sound = true, inInstances = false,
+        showFor = "all", petGap = true, duration = 15, repeatMinutes = 10, sound = true, inInstances = false,
         alertFor = alertFor,
         colors = { border = { 0.67, 0.83, 0.45 } },
     },
@@ -236,13 +238,14 @@ function M:OnUnit(event, unit)
     local fams = PD.MyFamilies(db.showFor == "all")
     if not next(fams) then return end
     local best = PD.NewRank(beast, fams, Ignored(db))
+    if not best and db.petGap then best = PD.PetGap(beast, Ignored(db)) end
     if not best then return end
     alerted[id] = now
     local name = (HHT.SafeBool(UnitExists, unit) and UnitName(unit)) or beast.n
     if HHT.IsSecret(name) or type(name) ~= "string" then name = beast.n end
     local abName = PD.AbilityName(best.a)
     local r = best.a.byRank[best.rank]
-    local sub = string.format(L("You know %s. For: %s."),
+    local sub = string.format(L(best.petGap and "Your pet knows %s. For: %s." or "You know %s. For: %s."),
         best.known > 0 and string.format(L("rank %d"), best.known) or L("no rank yet"), table.concat(best.fits, ", "))
     if r then sub = sub .. " " .. string.format(L("Needs pet level %d"), r.level) .. "." end
     self:Show({
@@ -258,6 +261,7 @@ function M:BuildOptions(form)
     local PD = HHT.PetDex
     form:Header(L("Behavior"))
     form:Cycle(L("Alert for"), db, "showFor", { { "active", L("Active pet only") }, { "all", L("Every pet I have used") } })
+    form:Check(L("Also alert for abilities my active pet does not have yet"), db, "petGap")
     form:Stepper(L("Show for (seconds, 0 = until closed)"), db, "duration", 0, 60, 1)
     form:Stepper(L("Repeat for the same beast after (minutes)"), db, "repeatMinutes", 1, 60, 1)
     form:Check(L("Play a sound"), db, "sound")
