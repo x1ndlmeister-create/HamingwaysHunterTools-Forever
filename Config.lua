@@ -172,6 +172,15 @@ function C:Create()
     w:SetPoint("CENTER")
     w:Hide()
     self.window = w
+    local logoHolder = CreateFrame("Frame", nil, w)
+    logoHolder:SetSize(50, 50)
+    logoHolder:SetPoint("TOPLEFT", w, "TOPLEFT", -14, 14)
+    logoHolder:SetFrameLevel(w:GetFrameLevel() + 20)
+    local logo = logoHolder:CreateTexture(nil, "OVERLAY")
+    logo:SetAllPoints()
+    logo:SetTexture("Interface\\AddOns\\" .. ADDON .. "\\Media\\HHT_Logo")
+    w.title:ClearAllPoints()
+    w.title:SetPoint("TOPLEFT", w, "TOPLEFT", 44, -8)
     if UISpecialFrames then table.insert(UISpecialFrames, "HamingwaysHunterToolsConfig") end
 
     local side = CreateFrame("Frame", nil, w)

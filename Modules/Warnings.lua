@@ -225,11 +225,17 @@ function M:Collect()
             local ok, ex = pcall(UnitExists, "pet")
             local exists
             if ok and not HHT.IsSecret(ex) then exists = ex and true or false end
-            if exists == false then
-                Add(list, "pet", callPet.icon, L("No pet"), true, callPet.name)
-            elseif exists == true and HHT.SafeBool(UnitIsDead, "pet") == true then
-                local rev = S.Resolve("@revivePet")
-                Add(list, "pet", rev.icon, L("Pet dead"), true, rev.name)
+            local rev = S.Resolve("@revivePet")
+            if exists == true then
+                self.petDied = HHT.SafeBool(UnitIsDead, "pet") == true
+                if self.petDied then Add(list, "pet", rev.icon, L("Pet dead"), true, rev.name) end
+            elseif exists == false then
+                -- A dead pet can vanish as a unit: keep offering Revive Pet until a living pet is back.
+                if self.petDied and rev.known then
+                    Add(list, "pet", rev.icon, L("Pet dead"), true, rev.name)
+                else
+                    Add(list, "pet", callPet.icon, L("No pet"), true, callPet.name)
+                end
             end
         end
     end
