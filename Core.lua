@@ -2,7 +2,8 @@
 local ADDON, HHT = ...
 _G.HamingwaysHunterTools = HHT
 
-HHT.version = "0.1.0"
+local GetMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+HHT.version = (GetMeta and GetMeta(ADDON, "Version")) or "?"
 HHT.modules = {}
 HHT.moduleList = {}
 HHT.movables = {}
@@ -96,7 +97,7 @@ function HHT:EachModule(fn)
 end
 
 function HHT:SetEnabled(m, on)
-    on = on and true or false
+    on = (on and not m.wip) and true or false
     m.db.enabled = on
     if on and not m.enabled then
         m.enabled = true
@@ -342,6 +343,7 @@ function HHT:InitDB()
         if defaults.alpha == nil then defaults.alpha = 1.0 end
         if defaults.onlyCombat == nil then defaults.onlyCombat = false end
         Fill(d, defaults)
+        if m.wip then d.enabled = false end
         m.db = d
     end)
 end

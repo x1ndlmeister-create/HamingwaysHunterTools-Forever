@@ -54,6 +54,10 @@ function C:BuildGeneral(form)
 
     form:Header(L("Modules"))
     HHT:EachModule(function(m)
+        if m.wip then
+            form:Note(L(m.name) .. ": " .. L("WIP - coming soon"), 0.55, 0.52, 0.45)
+            return
+        end
         form:Check(L(m.name), m.db, "enabled", function()
             HHT:SetEnabled(m, m.db.enabled)
             C:UpdateSidebar()
@@ -93,12 +97,17 @@ function C:BuildPage(key)
         form = UI.NewForm(parent, function() HHT:RefreshModule(m) end)
         form:Header(L(m.name))
         form:Note(L(m.desc))
-        form:Check(L("Module enabled"), m.db, "enabled", function()
-            HHT:SetEnabled(m, m.db.enabled)
-            C:UpdateSidebar()
-        end)
-        HHT.CommonOptions(m, form)
-        if m.BuildOptions then m:BuildOptions(form) end
+        if m.wip then
+            form:Header(L("WIP - coming soon"))
+            form:Note(L("This module is not available yet and cannot be enabled."))
+        else
+            form:Check(L("Module enabled"), m.db, "enabled", function()
+                HHT:SetEnabled(m, m.db.enabled)
+                C:UpdateSidebar()
+            end)
+            HHT.CommonOptions(m, form)
+            if m.BuildOptions then m:BuildOptions(form) end
+        end
     end
     local page = { frame = parent, form = form }
     self.pages[key] = page
@@ -131,8 +140,9 @@ function C:UpdateSidebar()
             label = L("General")
         else
             local m = HHT.modules[key]
-            on = m.db.enabled
+            on = m.db.enabled and not m.wip
             label = L(m.name)
+            if m.wip then label = label .. " (WIP)" end
         end
         b:SetLabel(label)
         if key == self.current then
