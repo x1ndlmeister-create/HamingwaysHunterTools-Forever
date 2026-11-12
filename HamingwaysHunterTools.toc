@@ -3,7 +3,7 @@
 ## Notes: All-in-one hunter toolkit for WoW Forever: swing timer, cooldowns, warnings and more.
 ## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Schlag-Timer, Abklingzeiten, Warnungen und mehr.
 ## Author: Hamingway
-## Version: 1.0.7
+## Version: 1.0.8
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 
 Widgets.lua

@@ -6,6 +6,7 @@ HHT:AddGerman({
     ["Stable masters"] = "Stallmeister",
     ["Shows stable masters on the world map from a built-in list and learns missing ones."] = "Zeigt Stallmeister aus einer eingebauten Liste auf der Weltkarte und lernt fehlende dazu.",
     ["Show on the world map"] = "Auf der Weltkarte zeigen",
+    ["Also show on the minimap"] = "Auch auf der Minimap zeigen",
     ["Stable masters are learned when you open their stable window. Visit one to add it."] = "Fehlt ein Stallmeister in der Liste, wird er gelernt, sobald du sein Stallfenster oeffnest.",
     ["Built-in list: %d stable masters. Learned by visiting: %d."] = "Eingebaute Liste: %d Stallmeister. Durch Besuch gelernt: %d.",
     ["Forget learned stable masters"] = "Gelernte Stallmeister vergessen",
@@ -21,7 +22,7 @@ local M = HHT:NewModule("stablemasters", {
     name = "Stable masters",
     desc = "Shows stable masters on the world map from a built-in list and learns missing ones.",
     noFrame = true,
-    defaults = { onMap = false, ownFaction = true, learned = {} },
+    defaults = { onMap = false, onMinimap = true, ownFaction = true, learned = {} },
 })
 
 local SM = {}
@@ -111,12 +112,14 @@ if HHT.PetMap then
     HHT.PetMap.AddLayer("stable", "Stable masters",
         function() if M.enabled and M.db and M.db.onMap then return SM.List() end end,
         function() return M.db and M.db.onMap end,
-        function(v) if M.db then M.db.onMap = v and true or false end end)
+        function(v) if M.db then M.db.onMap = v and true or false end end,
+        function() return M.db and M.db.onMinimap ~= false end)
 end
 
 function M:BuildOptions(form)
     local db = self.db
     form:Check(L("Show on the world map"), db, "onMap")
+    form:Check(L("Also show on the minimap"), db, "onMinimap")
     form:Button(L("Stable masters on map"), SM.Show, 240)
     form:Button(L("Waypoint to nearest stable master"), SM.Nearest, 240)
     form:Check(L("Only my faction"), db, "ownFaction")

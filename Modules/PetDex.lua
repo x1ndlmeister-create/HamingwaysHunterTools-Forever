@@ -11,6 +11,7 @@ HHT:AddGerman({
     ["Click the pet portrait to open the database"] = "Klick auf das Begleiter-Portrait oeffnet die Datenbank",
     ["World map"] = "Weltkarte",
     ["Show pins on the world map"] = "Punkte auf der Weltkarte zeigen",
+    ["Also show them on the minimap"] = "Auch auf der Minimap zeigen",
     ["Pin size"] = "Punktgroesse",
     ["Remove all pins"] = "Alle Punkte entfernen",
     ["Known ranks"] = "Bekannte Raenge",
@@ -138,7 +139,7 @@ local M = HHT:NewModule("petdex", {
     desc = "Pet abilities, ranks, teaching beasts and map pins.",
     noFrame = true,
     defaults = {
-        openOnClick = true, pins = true, pinSize = 20, showModel = true,
+        openOnClick = true, pins = true, minimap = true, pinSize = 20, showModel = true,
         showSpeed = true, speedColor = { 0.3, 0.9, 1 }, speed = {},
         sort = "name", sortDesc = false,
         known = {}, pets = {}, seen = {}, tamed = {}, wish = {}, stable = {},
@@ -1582,6 +1583,7 @@ function M:BuildOptions(form)
     form:Button(L("Export / import beast data"), function() if HHT.PetShare then HHT.PetShare.Open() end end, 240)
     form:Header(L("World map"))
     form:Check(L("Show pins on the world map"), db, "pins", function() if HHT.PetMap then HHT.PetMap:Update() end end)
+    form:Check(L("Also show them on the minimap"), db, "minimap")
     form:Check(L("Show 3D view"), db, "showModel", function() PD.Dirty() end)
     form:Stepper(L("Pin size"), db, "pinSize", 10, 40, 2, function() if HHT.PetMap then HHT.PetMap:Update() end end)
     form:Button(L("Remove all pins"), function() if HHT.PetMap then HHT.PetMap:Clear() end end, 240)

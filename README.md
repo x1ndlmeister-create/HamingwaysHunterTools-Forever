@@ -157,6 +157,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Ammo vendor layer, by ammo kind and own faction only
 - Stable master layer from a built-in list; missing ones are learned when you visit them
 - Waypoint to the nearest vendor or stable master
+- Active layers, beasts from the pet database and the rare the arrow points to also show on the minimap (on by default, one switch per layer)
 - Show beasts from the pet database on the map
 - Every layer can be switched off on its own
 
@@ -317,6 +318,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Ebene Munitionshändler, wahlweise nach Munitionsart und nur eigene Fraktion
 - Ebene Stallmeister aus einer eingebauten Liste; fehlende werden beim Besuch gelernt
 - Wegpunkt zum nächsten Händler oder Stallmeister
+- Aktive Ebenen, Tiere aus der Tierdatenbank und das Seltene, auf das der Pfeil zeigt, erscheinen auch auf der Minimap (standardmäßig an, ein Schalter pro Ebene)
 - Tiere aus der Tierdatenbank auf der Karte zeigen
 - Jede Ebene einzeln abschaltbar
 

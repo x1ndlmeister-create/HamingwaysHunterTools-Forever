@@ -119,9 +119,10 @@ end
 
 -- Map layers: toggles in the map button menu. listFn returns entries (same shape as a beast) or nil while off.
 PM.layers, PM.layerDefs = {}, {}
-function PM.AddLayer(key, label, listFn, get, set)
+-- mini (optional) returns true when the layer may also be drawn on the minimap.
+function PM.AddLayer(key, label, listFn, get, set, mini)
     PM.layers[key] = listFn
-    PM.layerDefs[#PM.layerDefs + 1] = { key = key, label = label, get = get, set = set }
+    PM.layerDefs[#PM.layerDefs + 1] = { key = key, label = label, get = get, set = set, mini = mini }
 end
 
 function PM:Update()
@@ -281,6 +282,119 @@ function PM:Nearest(list)
         end
     end
     return best
+end
+
+-- Minimap pins: the same sources as the world map, placed by yard offset from the player.
+-- Diameter of the minimap in yards per zoom level.
+local MINI_OUT = { [0] = 466.67, 400, 333.33, 266.67, 200, 133.33 }
+local MINI_IN = { [0] = 300, 240, 180, 120, 80, 50 }
+local MINI_MAX, MINI_SIZE = 80, 16
+local mini = { pins = {}, pts = {}, map = nil, built = 0, acc = 0 }
+
+local function MiniSources()
+    local out = {}
+    local db, pm = Db(), HHT.modules.petdex
+    if #PM.list > 0 and pm and pm.enabled and db and db.pins and db.minimap ~= false then out[#out + 1] = PM.list end
+    local wm = HHT.modules.petwatch
+    if wm and wm.enabled and wm.track and wm.track.sp and db and db.minimap ~= false then out[#out + 1] = { wm.track } end
+    for _, def in ipairs(PM.layerDefs) do
+        if not def.mini or def.mini() then
+            local l = PM.layers[def.key]()
+            if l and #l > 0 then out[#out + 1] = l end
+        end
+    end
+    return out
+end
+
+local function MiniBuild(map)
+    local pts = {}
+    for _, list in ipairs(MiniSources()) do
+        for _, b in ipairs(list) do
+            for _, m in ipairs(SortedMaps(b)) do
+                for _, pt in ipairs(Points(b, m)) do
+                    local x, y = Convert(m, pt[1], pt[2], map)
+                    if x then pts[#pts + 1] = { b, m, pt[1], pt[2], x, y } end
+                end
+            end
+        end
+    end
+    mini.pts, mini.map = pts, map
+end
+
+local function MiniHide(from)
+    for i = from or 1, #mini.pins do
+        local p = mini.pins[i]
+        if p:IsShown() then p:Hide() end
+        p.beast = nil
+    end
+end
+
+local function MiniPin(i)
+    local p = mini.pins[i]
+    if p then return p end
+    p = NewPin(Minimap)
+    p:SetFrameStrata(Minimap:GetFrameStrata())
+    p:SetFrameLevel(Minimap:GetFrameLevel() + 8)
+    p:SetSize(MINI_SIZE, MINI_SIZE)
+    mini.pins[i] = p
+    return p
+end
+
+local function MiniTick()
+    if not (Minimap and Minimap:IsVisible()) then MiniHide(); return end
+    local map, px, py = PM.PlayerPos()
+    if not map then MiniHide(); return end
+    local now = GetTime()
+    if map ~= mini.map or now - mini.built > 1 then
+        mini.built = now
+        MiniBuild(map)
+    end
+    local pts = mini.pts
+    if #pts == 0 then MiniHide(); return end
+    local zoom = Minimap:GetZoom() or 0
+    local diameter = ((IsIndoors and IsIndoors()) and MINI_IN or MINI_OUT)[zoom] or MINI_OUT[0]
+    local half = (Minimap:GetWidth() or 140) / 2
+    local scale = half * 2 / diameter
+    local cs, sn
+    if GetCVar and GetCVar("rotateMinimap") == "1" and GetPlayerFacing then
+        local f = GetPlayerFacing()
+        if f then cs, sn = math.cos(f), math.sin(f) end
+    end
+    local limit = (half - 2) ^ 2
+    local n = 0
+    for _, e in ipairs(pts) do
+        local dx, dy = PM.Offset(map, px, py, e[5], e[6])
+        local ex, ny = dx, -dy
+        if cs then ex, ny = dx * cs + (-dy) * sn, -dx * sn + (-dy) * cs end
+        local sx, sy = ex * scale, ny * scale
+        if sx * sx + sy * sy <= limit and n < MINI_MAX then
+            n = n + 1
+            local p = MiniPin(n)
+            local b = e[1]
+            if p.beast ~= b then
+                p.tex:SetTexture(b.icon or (Dex() and Dex().FamilyIcon(b.f)))
+                local c = b.color or RARITY[b.r] or { 0.1, 0.1, 0.1 }
+                p.border:SetColor(c[1], c[2], c[3], 1)
+                p.beast = b
+            end
+            p.map, p.x, p.y = e[2], e[3], e[4]
+            p:ClearAllPoints()
+            p:SetPoint("CENTER", Minimap, "CENTER", sx, sy)
+            if not p:IsShown() then p:Show() end
+        end
+    end
+    MiniHide(n + 1)
+end
+
+if Minimap and CreateFrame then
+    local ticker = CreateFrame("Frame")
+    ticker:SetScript("OnUpdate", function(_, dt)
+        mini.acc = mini.acc + dt
+        if mini.acc < 0.05 then return end
+        mini.acc = 0
+        local ok, err = pcall(MiniTick)
+        if not ok and not mini.warned then mini.warned = true; HHT.Print("minimap pins: " .. tostring(err)) end
+    end)
 end
 
 function PM:Debug()

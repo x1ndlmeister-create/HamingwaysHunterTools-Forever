@@ -16,6 +16,7 @@ HHT:AddGerman({
     ["Only my faction"] = "Nur meine Fraktion",
     ["Pins appear on the world map. Click a pin to set a waypoint."] = "Die Punkte erscheinen auf der Weltkarte. Klick auf einen Punkt setzt einen Wegpunkt. Ein- und ausschalten geht auch ueber den Knopf oben links an der Karte.",
     ["Show on the world map"] = "Auf der Weltkarte zeigen",
+    ["Also show on the minimap"] = "Auch auf der Minimap zeigen",
     ["No ammo vendors known here."] = "Hier sind keine Munitionshaendler bekannt.",
     ["Nearest ammo vendor: %s"] = "Naechster Munitionshaendler: %s",
 })
@@ -24,7 +25,7 @@ local M = HHT:NewModule("ammovendors", {
     name = "Ammo vendors",
     desc = "Shows ammo vendors on the world map and sets a waypoint to the nearest one.",
     noFrame = true,
-    defaults = { kind = "auto", ownFaction = true, onMap = false },
+    defaults = { kind = "auto", ownFaction = true, onMap = false, onMinimap = true },
 })
 
 local AV = {}
@@ -90,7 +91,8 @@ if HHT.PetMap then
     HHT.PetMap.AddLayer("ammo", "Ammo vendors",
         function() if M.enabled and M.db and M.db.onMap then return AV.List() end end,
         function() return M.db and M.db.onMap end,
-        function(v) if M.db then M.db.onMap = v and true or false end end)
+        function(v) if M.db then M.db.onMap = v and true or false end end,
+        function() return M.db and M.db.onMinimap ~= false end)
 end
 
 function AV.Nearest()
@@ -111,6 +113,7 @@ end
 function M:BuildOptions(form)
     local db = self.db
     form:Check(L("Show on the world map"), db, "onMap")
+    form:Check(L("Also show on the minimap"), db, "onMinimap")
     form:Button(L("Ammo vendors on map"), AV.Show, 240)
     form:Button(L("Waypoint to nearest vendor"), AV.Nearest, 240)
     form:Note(L("Pins appear on the world map. Click a pin to set a waypoint."))
