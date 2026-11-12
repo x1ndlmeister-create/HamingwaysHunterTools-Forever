@@ -1,4 +1,11 @@
-PetData.lua and AmmoVendorData.lua are derived from the data of the Huntmaster addon.
+Hamingway's HunterTools is licensed under the GNU General Public License v3.0 or later (see LICENSE).
+
+PetData.lua and AmmoVendorData.lua are derived from the data of the Huntmaster addon (MIT, notice below).
+PetData.lua is extended with beast lists from the OneForAll addon (GPL-3) and spawns from Questie.
+
+StableMasterData.lua, FoodVendorData.lua and TrainerData.lua are derived from Questie data (partly GPL-3).
+TrainerData.lua also uses the pet trainer list of the OneForAll addon (GPL-3).
+PetFamilyData.lua values (diet, modifiers) come from wow-petopia.com via the OneForAll addon (GPL-3).
 
 MIT License
 

@@ -81,6 +81,21 @@ HHT:AddGerman({
     ["Teaches: %s"] = "Lehrt: %s",
     ["You know up to rank %d"] = "Du kennst bis Rang %d",
     ["Diet: %s"] = "Nahrung: %s",
+    ["Role"] = "Rolle",
+    ["Armor"] = "Ruestung",
+    ["Damage"] = "Schaden",
+    ["Diet"] = "Nahrung",
+    ["Offense"] = "Angriff",
+    ["Defense"] = "Verteidigung",
+    ["Meat"] = "Fleisch",
+    ["Fish"] = "Fisch",
+    ["Fruit"] = "Obst",
+    ["Bread"] = "Brot",
+    ["Cheese"] = "Kaese",
+    ["Fungus"] = "Pilze",
+    ["Core Hound"] = "Kernhund",
+    ["Health %s, armor %s, damage %s"] = "Leben %s, Ruestung %s, Schaden %s",
+    ["Click: show beasts of that family.  Modifiers are relative to a normal pet."] = "Klick: Tiere dieser Familie zeigen.  Werte im Vergleich zu einem Standard-Begleiter.",
     ["Rare"] = "Selten",
     ["Elite"] = "Elite",
     ["Rare elite"] = "Seltene Elite",
@@ -155,7 +170,7 @@ local FAMILY_ICON = {
     ["Bat"] = "Ability_Hunter_Pet_Bat", ["Bear"] = "Ability_Hunter_Pet_Bear", ["Boar"] = "Ability_Hunter_Pet_Boar",
     ["Bird of Prey"] = "Ability_Hunter_Pet_Owl", ["Carrion Bird"] = "Ability_Hunter_Pet_Vulture",
     ["Cat"] = "Ability_Hunter_Pet_Cat", ["Crab"] = "Ability_Hunter_Pet_Crab", ["Crocolisk"] = "Ability_Hunter_Pet_Crocolisk",
-    ["Dragonhawk"] = "Ability_Hunter_Pet_DragonHawk", ["Fox"] = "Ability_Hunter_Pet_Fox",
+    ["Dragonhawk"] = "Ability_Hunter_Pet_DragonHawk", ["Fox"] = "Ability_Hunter_Pet_Fox", ["Core Hound"] = "Ability_Hunter_Pet_CoreHound",
     ["Gorilla"] = "Ability_Hunter_Pet_Gorilla", ["Hyena"] = "Ability_Hunter_Pet_Hyena",
     ["Nether Ray"] = "Ability_Hunter_Pet_NetherRay", ["Raptor"] = "Ability_Hunter_Pet_Raptor",
     ["Ravager"] = "Ability_Hunter_Pet_Ravager", ["Scorpid"] = "Ability_Hunter_Pet_Scorpid",
@@ -786,7 +801,7 @@ local function AbilityTip(row, a)
 end
 
 local TABS = {}
-local TAB_ORDER = { "beasts", "abilities", "pet", "stable" }
+local TAB_ORDER = { "beasts", "families", "abilities", "pet", "stable" }
 
 -- 3D preview panel on the right side of the window
 local function BuildView()
@@ -869,7 +884,7 @@ end
 local function UpdateModel()
     local p = win and win.view
     if not p then return end
-    local show = M.db.showModel and win.tab ~= "abilities" and win.tab ~= "stable"
+    local show = M.db.showModel and win.tab ~= "abilities" and win.tab ~= "stable" and win.tab ~= "families"
     p:SetShown(show and true or false)
     if not show then return end
     local m = p.model
@@ -1113,6 +1128,82 @@ TABS.stable = {
     end,
 }
 
+local function StatText(v)
+    if not v then return "-" end
+    return string.format("%d%%", math.floor(v * 100 + 0.5))
+end
+
+local function StatColor(v)
+    if not v or v == 1 then return 0.92, 0.94, 0.97 end
+    if v > 1 then return 0.45, 0.9, 0.45 end
+    return 0.95, 0.45, 0.4
+end
+
+-- Lowest and highest attack speed of the known beasts of a family.
+local function FamilySpeed(fam)
+    local lo, hi
+    for _, b in ipairs(beasts) do
+        if b.f == fam then
+            local v = PD.Speed(b.id)
+            if v then
+                lo = (not lo or v < lo) and v or lo
+                hi = (not hi or v > hi) and v or hi
+            end
+        end
+    end
+    return lo, hi
+end
+
+local function DietText(e)
+    local t = {}
+    for _, d in ipairs(e.diet) do t[#t + 1] = L(d) end
+    return table.concat(t, ", ")
+end
+
+TABS.families = {
+    label = "Families",
+    cols = {
+        { "Name", 32, 150 }, { "Role", 186, 76 }, { "Health", 266, 48 }, { "Armor", 318, 48 }, { "Damage", 370, 56 },
+        { "Speed", 430, 64 }, { "Diet", 498, 276 },
+    },
+    hint = "Click: show beasts of that family.  Modifiers are relative to a normal pet.",
+    items = function()
+        local list = {}
+        for _, e in ipairs(HHT.PetFamilyData or {}) do list[#list + 1] = e end
+        table.sort(list, function(x, y) return L(x.n) < L(y.n) end)
+        return list
+    end,
+    paint = function(row, e)
+        row.icon:SetTexture(PD.FamilyIcon(e.n))
+        row.cells[1]:SetText(L(e.n))
+        row.cells[2]:SetText(L(e.role))
+        row.cells[3]:SetText(StatText(e.h))
+        row.cells[3]:SetTextColor(StatColor(e.h))
+        row.cells[4]:SetText(StatText(e.a))
+        row.cells[4]:SetTextColor(StatColor(e.a))
+        row.cells[5]:SetText(StatText(e.d))
+        row.cells[5]:SetTextColor(StatColor(e.d))
+        local lo, hi = FamilySpeed(e.n)
+        row.cells[6]:SetText(lo and ((lo == hi) and string.format("%.1f", lo) or string.format("%.1f-%.1f", lo, hi)) or "-")
+        row.cells[7]:SetText(DietText(e))
+    end,
+    tip = function(row, e)
+        GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L(e.n), 0.67, 0.83, 0.45)
+        GameTooltip:AddLine(L(e.role), 0.9, 0.9, 0.9)
+        if e.h then
+            GameTooltip:AddLine(string.format(L("Health %s, armor %s, damage %s"), StatText(e.h), StatText(e.a), StatText(e.d)), 0.9, 0.9, 0.9)
+        end
+        GameTooltip:AddLine(string.format(L("Diet: %s"), DietText(e)), 0.7, 0.7, 0.7, true)
+        local ab = FamilyAbilityText(e.n)
+        if ab ~= "" then GameTooltip:AddLine(ab, 0.7, 0.7, 0.7, true) end
+        GameTooltip:Show()
+    end,
+    click = function(row, e)
+        PD:Open("beasts", { family = e.n, reset = true })
+    end,
+}
+
 local function FilterActive()
     return filter.text ~= nil and filter.text ~= "" or filter.family or filter.ability or filter.myLevel or filter.newRanks or filter.rare
         or filter.wish or filter.unseen
@@ -1333,7 +1424,7 @@ local function Build()
     Toggle("Wishlist", "wish", 500)
     Toggle("Not seen yet", "unseen", 600)
 
-    for i = 1, 6 do
+    for i = 1, 7 do
         local h = CreateFrame("Button", nil, win)
         h.text = UI.Header(h, "")
         h.text:SetPoint("LEFT", h, "LEFT", 0, 0)
@@ -1363,7 +1454,7 @@ local function Build()
         row.icon:SetPoint("LEFT", row, "LEFT", 4, 0)
         row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
         row.cells = {}
-        for k = 1, 6 do
+        for k = 1, 7 do
             local fs = UI.Text(row, "", 12)
             fs:SetJustifyH("LEFT")
             fs:SetWordWrap(false)

@@ -433,6 +433,14 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.StableMasters then HHT.StableMasters.Show() end
     elseif msg == "stable go" then
         if HHT.StableMasters then HHT.StableMasters.Nearest() end
+    elseif msg == "food" then
+        if HHT.FoodVendors then HHT.FoodVendors.Show() end
+    elseif msg == "food go" then
+        if HHT.FoodVendors then HHT.FoodVendors.Nearest() end
+    elseif msg == "trainer" then
+        if HHT.Trainers then HHT.Trainers.Show() end
+    elseif msg == "trainer go" then
+        if HHT.Trainers then HHT.Trainers.Nearest() end
     elseif msg == "watch" then
         if HHT.PetWatch then HHT.PetWatch.Debug() end
     elseif msg == "debuffs" then

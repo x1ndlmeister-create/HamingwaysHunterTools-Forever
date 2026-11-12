@@ -101,6 +101,9 @@ local function PetDiets()
     return set
 end
 
+-- Shared with the food vendor module.
+HHT.PetFood = { ItemDiet = ITEM_DIET, PetDiets = PetDiets }
+
 local function ItemName(id, link)
     if C_Item and C_Item.GetItemNameByID then
         local ok, n = pcall(C_Item.GetItemNameByID, id)
@@ -411,6 +414,8 @@ function M:BuildOptions(form)
         HHT.Print(L("Blacklist cleared."))
     end, 220)
     form:Check(L("Keep the HHT Feed macro up to date"), db, "syncMacro")
+    form:Button(L("Food vendors on map"), function() if HHT.FoodVendors then HHT.FoodVendors.Show() end end, 220)
+    form:Button(L("Waypoint to nearest food vendor"), function() if HHT.FoodVendors then HHT.FoodVendors.Nearest() end end, 220)
     form:Header(L("Colors"))
     form:Color(L("Happy color"), db.colors, "happy")
     form:Color(L("Content color"), db.colors, "content")

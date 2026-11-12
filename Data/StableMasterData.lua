@@ -1,5 +1,5 @@
 -- Stable master positions. Source: Questie (Questie-Forever), see https://github.com/Questie/Questie/blob/master/LICENSE.md
--- Questie data is partly GPL-3 / all rights reserved: do not publish this file under the addon MIT license.
+-- Questie data is partly GPL-3. See Data/NOTICE.txt.
 
 local ADDON, HHT = ...
 HHT.StableMasterData = {

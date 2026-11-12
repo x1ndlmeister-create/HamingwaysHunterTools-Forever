@@ -2,7 +2,7 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 21 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 22 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
@@ -17,7 +17,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay, Summons |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq announcer |
 | Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint |
-| Map | Stable masters, Ammo vendors, Map button |
+| Map | Stable masters, Ammo vendors, Food vendors, Trainers, Map button |
 
 ### Combat
 
@@ -124,7 +124,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 ![Pet database](images/petdex.png)
 
 **Pet database**
-- Four tabs: Beasts, Abilities, My pet, Stable
+- Five tabs: Beasts, Families, Abilities, My pet, Stable
+- Families tab: diet, damage/health/armor modifier, family abilities and speed per pet family
 - Family, level, attack speed, zone and taught abilities per beast
 - Search by name, family, zone or ability, plus filters
 - Marks: tamed (`+`), wishlist (`*`), seen
@@ -160,11 +161,13 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 ![Minimap](images/minimap.png)
 
-**Map button, Ammo vendors, Stable masters**
+**Map button, Ammo vendors, Stable masters, Food vendors, Trainers**
 - Map button at the top left with switches for the layers
 - Ammo vendor layer, by ammo kind and own faction only
 - Stable master layer from a built-in list; missing ones are learned when you visit them
-- Waypoint to the nearest vendor or stable master
+- Food vendor layer for your current pet's diet; missing vendors are learned when you open their merchant window
+- Trainer layer with hunter trainers and pet trainers together in one category (`/hht trainer`, `/hht trainer go`)
+- Waypoint to the nearest vendor, stable master, food vendor or trainer (`/hht food`, `/hht food go`)
 - Active layers, beasts from the pet database and the rare the arrow points to also show on the minimap (on by default, one switch per layer)
 - Show beasts from the pet database on the map
 - Every layer can be switched off on its own
@@ -371,4 +374,4 @@ Like the addon? Buy me a coffee: https://buymeacoffee.com/x1ndlmeister
 
 Gefällt dir das Addon? Spendier mir einen Kaffee: https://buymeacoffee.com/x1ndlmeister
 
-Pet and ammo vendor data from Huntmaster (MIT). Stable master positions are partly from Questie. See `Data\NOTICE.txt`.
+Licensed under GPL-3.0-or-later (see `LICENSE`). Pet and ammo vendor data from Huntmaster (MIT), beast lists extended from OneForAll (GPL-3) with spawns from Questie. Stable master, food vendor and trainer positions are partly from Questie, pet family stats from wow-petopia.com (via OneForAll). See `Data\NOTICE.txt`.

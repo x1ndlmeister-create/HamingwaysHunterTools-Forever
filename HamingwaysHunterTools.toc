@@ -3,8 +3,9 @@
 ## Notes: All-in-one hunter toolkit for WoW Forever: swing timer, cooldowns, warnings and more.
 ## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Schlag-Timer, Abklingzeiten, Warnungen und mehr.
 ## Author: Hamingway
+## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.0.13
+## Version: 1.0.14
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 
 Widgets.lua
@@ -36,7 +37,10 @@ Modules\PetMacros.lua
 Data\PetData.lua
 Data\AmmoVendorData.lua
 Data\StableMasterData.lua
+Data\FoodVendorData.lua
+Data\TrainerData.lua
 Data\PetSpeedData.lua
+Data\PetFamilyData.lua
 Modules\PetDex.lua
 Modules\PetMap.lua
 Modules\PetNearby.lua
@@ -45,6 +49,8 @@ Modules\PetWatch.lua
 Modules\PetShare.lua
 Modules\AmmoVendors.lua
 Modules\StableMasters.lua
+Modules\FoodVendors.lua
+Modules\Trainers.lua
 Modules\MapButton.lua
 Profile.lua
 VersionCheck.lua
