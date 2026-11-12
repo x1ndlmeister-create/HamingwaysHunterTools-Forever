@@ -75,6 +75,7 @@ local GENERAL_DEFAULTS = {
     lang = "auto",
     minimap = true,
     minimapAngle = 215,
+    versionNotice = true,
     scale = 1.0,
     alpha = 1.0,
 }

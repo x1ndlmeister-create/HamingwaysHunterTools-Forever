@@ -4,7 +4,7 @@
 ## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Schlag-Timer, Abklingzeiten, Warnungen und mehr.
 ## Author: Hamingway
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.0.10
+## Version: 1.0.11
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 
 Widgets.lua
@@ -47,4 +47,5 @@ Modules\AmmoVendors.lua
 Modules\StableMasters.lua
 Modules\MapButton.lua
 Profile.lua
+VersionCheck.lua
 Config.lua

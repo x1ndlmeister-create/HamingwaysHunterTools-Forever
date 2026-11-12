@@ -31,6 +31,8 @@ HHT:AddGerman({
     ["Unlock frames (move with mouse)"] = "Fenster entsperren (mit Maus verschieben)",
     ["Show outline on unlocked frames"] = "Rahmen bei entsperrten Fenstern zeigen",
     ["Minimap button"] = "Minimap-Button",
+    ["Tell me about new versions"] = "Auf neue Versionen hinweisen",
+    ["A newer version (%s) is available on CurseForge. You are using %s."] = "Eine neuere Version (%s) gibt es auf CurseForge. Du nutzt %s.",
     ["Global scale"] = "Globale Groesse",
     ["Global opacity"] = "Globale Deckkraft",
     ["Reset all positions"] = "Alle Positionen zuruecksetzen",

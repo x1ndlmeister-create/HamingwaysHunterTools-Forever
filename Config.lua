@@ -49,6 +49,7 @@ function C:BuildGeneral(form)
     form:Place(unlock, 20, 4, 4)
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
+    form:Check(L("Tell me about new versions"), g, "versionNotice")
     form:Stepper(L("Global scale"), g, "scale", 0.5, 2, 0.05, function() HHT:ApplyAllLooks() end)
     form:Stepper(L("Global opacity"), g, "alpha", 0.1, 1, 0.05, function() HHT:ApplyAllLooks() end)
 
