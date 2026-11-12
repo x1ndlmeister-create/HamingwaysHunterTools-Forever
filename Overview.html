@@ -77,6 +77,8 @@
   ul.f li.sep::before { display:none; }
   .wide { margin:74px 0 0; }
   .wide .shot { margin-bottom:22px; }
+  .trio { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:22px; align-items:center; margin:0 0 26px; }
+  .trio .shot { margin:0; }
   .cols { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:4px 32px; }
 
   /* install */
@@ -220,6 +222,11 @@
   <div class="txt">
     <div class="kick" data-de="Ziel-Debuffs, Proc-Anzeige und Beschwörungen">Target debuffs, proc overlay and summons</div>
     <h3 data-de="Debuffs, Procs und Beschwörungen sehen, auch mitten im Kampf">See debuffs, procs and summons, even mid-fight</h3>
+    <div class="trio">
+      <div class="shot glow"><img src="images/debuffs.png" alt="Target debuffs"></div>
+      <div class="shot glow"><img src="images/procs.png" alt="Proc overlay"></div>
+      <div class="shot glow"><img src="images/summons.png" alt="Summons"></div>
+    </div>
     <div class="cols">
       <ul class="f">
         <li class="sep" data-de="Ziel-Debuffs">Target debuffs</li>
@@ -434,7 +441,7 @@
 
 <footer>
   <p data-de="Gefällt dir das Addon? Über einen Kaffee freue ich mich:">Like the addon? A coffee is always welcome: <a href="https://buymeacoffee.com/x1ndlmeister" target="_blank" rel="noopener">buymeacoffee.com/x1ndlmeister</a></p>
-  <p data-de="Die Bilder sind Illustrationen des Layouts, keine Screenshots aus dem Spiel.">The pictures are illustrations of the layout, not in-game screenshots.</p>
+  <p data-de="Die Bilder zeigen das Addon im Spiel.">The pictures show the addon in game.</p>
   <p data-de="Tier- und Munitionshändler-Daten von Huntmaster (MIT). Stallmeister-Positionen teils von Questie. Siehe Data\NOTICE.txt.">Pet and ammo vendor data from Huntmaster (MIT). Stable master positions partly from Questie. See Data\NOTICE.txt.</p>
 </footer>
 

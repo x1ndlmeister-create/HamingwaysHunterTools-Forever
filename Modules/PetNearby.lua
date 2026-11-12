@@ -210,6 +210,14 @@ function M:Preview()
     }, true)
 end
 
+function M:Test()
+    if not self.frame then return false end
+    self:Preview()
+    self.frame.preview = nil
+    self.frame.hideAt = GetTime() + math.max(8, self.db.duration)
+    return true
+end
+
 local function Ignored(db)
     local t = {}
     for k, v in pairs(db.alertFor) do if not v then t[k] = true end end

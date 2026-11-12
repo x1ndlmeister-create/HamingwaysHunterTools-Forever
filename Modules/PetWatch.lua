@@ -436,6 +436,13 @@ end
 -- ---------------------------------------------------------------------------
 -- Sightings
 -- ---------------------------------------------------------------------------
+function M:Test()
+    if not self.frame then return false end
+    self:Preview()
+    self.frame.preview = nil
+    self.frame.hideAt = GetTime() + math.max(8, self.db.duration)
+    return true
+end
 local function Allowed(db)
     if HHT:IsUnlocked() then return false end
     if GetTime() < snoozeUntil then return false end
@@ -540,6 +547,23 @@ function PW.Track(b, quiet, auto)
     if b and not quiet then HHT.Print(string.format(L("Arrow points to %s."), b.n)) end
     UpdateButtons()
     M:ArrowTick()
+end
+
+-- Points the arrow at a rare from the database, preferably one on the player's map.
+function PW.TestArrow()
+    local pd = PD()
+    if not (pd and M.enabled and M.db.arrow) then return false end
+    local map = PM() and PM().PlayerPos()
+    local pick
+    for _, b in ipairs(pd.beasts) do
+        if b.r and b.sp and next(b.sp) and (not pick or (map and b.sp[map])) then
+            pick = b
+            if map and b.sp[map] then break end
+        end
+    end
+    if not pick then return false end
+    PW.Track(pick)
+    return true
 end
 
 function M:ArrowTick()

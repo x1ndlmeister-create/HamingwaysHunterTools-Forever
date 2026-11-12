@@ -391,12 +391,37 @@ end)
 -- ---------------------------------------------------------------------------
 SLASH_HAMINGWAYSHUNTERTOOLS1 = "/hht"
 SLASH_HAMINGWAYSHUNTERTOOLS2 = "/hamingway"
+
+-- /hht test <name>: shows a feature without having to go somewhere.
+local TESTS = {
+    { "rare", "rare beast alert", function() local m = HHT.modules.petwatch; return m and m.enabled and m:Test() end },
+    { "arrow", "direction arrow to a rare", function() return HHT.PetWatch and HHT.PetWatch.TestArrow() end },
+    { "nearby", "pet ability alert", function() local m = HHT.modules.petnearby; return m and m.enabled and m:Test() end },
+    { "train", "pet training hint", function() local m = HHT.modules.pettrain; return m and m.enabled and m:Test() end },
+    { "minimap", "minimap pins around you", function() return HHT.PetMap and HHT.PetMap:TestMinimap() end },
+}
+
+function HHT.RunTest(what)
+    for _, t in ipairs(TESTS) do
+        if t[1] == what then
+            if not t[3]() then HHT.Print("test " .. what .. ": module is off or not ready.") end
+            return
+        end
+    end
+    local names = {}
+    for _, t in ipairs(TESTS) do names[#names + 1] = t[1] .. " (" .. t[2] .. ")" end
+    HHT.Print("/hht test: " .. table.concat(names, ", "))
+end
+
 SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     if not HHT.db then return end
     msg = (msg or ""):lower():match("^%s*(.-)%s*$")
+    local testWhat = msg:match("^test%s*(.*)$")
     local petSearch = msg:match("^pets%s*(.*)$")
     if petSearch then
         if HHT.PetDex then HHT.PetDex:Toggle(petSearch ~= "" and petSearch or nil) end
+    elseif testWhat then
+        HHT.RunTest(testWhat)
     elseif msg == "petmap" then
         if HHT.PetMap then HHT.PetMap:Debug() end
     elseif msg == "ammo" then

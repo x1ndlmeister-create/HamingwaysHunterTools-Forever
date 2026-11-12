@@ -6,8 +6,6 @@
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
-> The pictures are illustrations of the layout, not in-game screenshots. Replace the files in `images/` with real screenshots under the same names whenever you like.
-
 **Contents:** [English](#english) | [Deutsch](#deutsch) | [Install](#install) | [Credits](#credits)
 
 ## English
@@ -67,11 +65,15 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Action bar key shown on the icon
 - Grow direction, icons per row, border and icon size
 
+![Target debuffs](images/debuffs.png)
+
 **Target debuffs**
 - Serpent Sting and your other debuffs on the target with icon, timer and stacks, also in combat
 - Tracked debuffs get a fixed slot and a red placeholder while they are missing
 - Placeholder on all targets, elites and bosses, or bosses only; optionally blinking
 - Only your debuffs or all, count, size and border adjustable
+
+![Proc overlay](images/procs.png)
 
 **Proc overlay**
 - Big art around your character while a proc or buff is active, also in combat
@@ -82,6 +84,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Sound when it appears; read the ID with `/hht auras`
 - Scan for new procs: short buffs you gain out of combat are added to the list switched off; switch on the ones you want
 - Each proc has its own On/Off switch
+
+![Summons](images/summons.png)
 
 **Summons**
 - Active summons such as Summon Hawk with icon and remaining time, also in combat
@@ -143,6 +147,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup when a nearby beast teaches a higher rank your pet can learn
 - For the active pet only, or every pet you have used
 
+![Pet training hint](images/pettrain.png)
+
 **Pet training hint**
 - Popup when your pet can learn ability ranks you already know
 - A Learn button per ability trains the rank right away
@@ -151,6 +157,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 ### Map
 
 ![World map](images/map.png)
+
+![Minimap](images/minimap.png)
 
 **Map button, Ammo vendors, Stable masters**
 - Map button at the top left with switches for the layers

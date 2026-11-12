@@ -318,6 +318,10 @@ local function MiniBuild(map)
             end
         end
     end
+    local t = mini.test
+    if t and GetTime() < t.stop and t.map == map then
+        for _, e in ipairs(t.pts) do pts[#pts + 1] = e end
+    end
     mini.pts, mini.map = pts, map
 end
 
@@ -395,6 +399,28 @@ if Minimap and CreateFrame then
         local ok, err = pcall(MiniTick)
         if not ok and not mini.warned then mini.warned = true; HHT.Print("minimap pins: " .. tostring(err)) end
     end)
+end
+
+-- Fixed test pins around the player's current position, shown for a minute.
+function PM:TestMinimap()
+    local map, px, py = PM.PlayerPos()
+    if not map then return false end
+    local w, h = PM.Offset(map, 0, 0, 1, 1)
+    local defs = {
+        { 30, 0, "Test stable master", "Interface\\MINIMAP\\TRACKING\\StableMaster", { 0.9, 0.8, 0.3 } },
+        { -40, 25, "Test ammo vendor", "Interface\\Icons\\INV_Ammo_Arrow_02", { 0.3, 0.55, 1 } },
+        { 0, -60, "Test rare beast", "Interface\\Icons\\Ability_Hunter_BeastCall", RARITY.rare },
+        { 70, 70, "Test far pin", "Interface\\Icons\\INV_Ammo_Arrow_02", { 0.9, 0.25, 0.25 } },
+    }
+    local pts = {}
+    for _, d in ipairs(defs) do
+        local x, y = px + d[1] / w, py + d[2] / h
+        pts[#pts + 1] = { { n = d[3], icon = d[4], color = d[5], lines = { "Test pin" } }, map, x, y, x, y }
+    end
+    mini.test = { stop = GetTime() + 60, map = map, pts = pts }
+    mini.built = 0
+    HHT.Print("Minimap test pins shown for 60 seconds.")
+    return true
 end
 
 function PM:Debug()

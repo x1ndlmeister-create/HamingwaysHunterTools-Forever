@@ -322,6 +322,15 @@ function M:Preview()
     self:ShowList({ petName = L("Your pet"), { a = a, rank = a.maxRank, have = math.max(0, a.maxRank - 1) } }, true)
 end
 
+function M:Test()
+    if not self.frame then return false end
+    self:Preview()
+    self.frame.preview = nil
+    self:SetButtons()
+    self.frame.hideAt = GetTime() + 8
+    return true
+end
+
 function M:OnInit()
     HHT:Listen(self, "UNIT_PET", "OnPetEvent")
     HHT:Listen(self, "UNIT_LEVEL", "OnPetEvent")
