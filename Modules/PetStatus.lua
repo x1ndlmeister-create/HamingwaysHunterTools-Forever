@@ -39,6 +39,8 @@ HHT:AddGerman({
     ["Focus color"] = "Farbe Fokus",
     ["Focus"] = "Fokus",
     ["Show ability border"] = "Rahmen der Faehigkeiten zeigen",
+    ["Show Frenzy"] = "Raserei zeigen",
+    ["Frenzy icon size"] = "Groesse Raserei-Symbol",
 })
 
 local M = HHT:NewModule("pet", {
@@ -51,6 +53,7 @@ local M = HHT:NewModule("pet", {
         showLabel = true, showTime = true, showHappiness = true, hideNoPet = true,
         showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10,
         showAbilities = true, showFocus = true, showFocusLabel = true, showFocusValue = true, abilitySize = 18, abilityNumbers = true, abilityBorder = true, showAutocast = true,
+        showFrenzy = true, frenzySize = 26,
         colors = {
             health = { 0.67, 0.83, 0.45 },
             xp = { 0.58, 0.40, 0.85 },
@@ -110,6 +113,11 @@ function M:Build()
         ic:SetScript("OnLeave", function() GameTooltip:Hide() end)
         f.icons[k] = ic
     end
+    -- Frenzy (pet buff) via the client aura container, so it also works in combat.
+    f.buffs = HHT.AuraBar.New(f, function()
+        local r, g, b = HHT.Col(self.db, "edge")
+        return { size = self.db.frenzySize, spacing = 0, shape = self.db.shape, borderSize = 1, borderAlpha = 1, color = { r, g, b } }
+    end)
     HHT:MakeMovable(f, self, "main", L("Pet status"))
     self:Layout()
 end
@@ -206,6 +214,19 @@ function M:Layout()
         ic:Style(db.abilitySize, db.shape, db.abilityBorder and 1 or 0, 1, db.abilityNumbers)
         ic:ClearAllPoints()
         ic:SetPoint("TOPLEFT", f.abil, "TOPLEFT", (k - 1) * (db.abilitySize + 2), 0)
+    end
+    if f.buffs then
+        if db.showFrenzy and f.buffs.engine then
+            f.buffs:Setup("hht_frenzy", "pet", "HELPFUL", { includeSpellIDs = { [19615] = true } }, 1, "left", 0, 0)
+            local c = f.buffs.conts["hht_frenzy"]
+            if c then
+                c:ClearAllPoints()
+                c:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
+            end
+            f.buffs:StyleAll()
+        else
+            f.buffs:Hide("hht_frenzy")
+        end
     end
     f:SetSize(w, fullH)
     HHT:ApplyGlobalLook(f)
@@ -493,6 +514,8 @@ function M:BuildOptions(form)
     form:Check(L("Show name"), db, "showLabel")
     form:Check(L("Show health percent"), db, "showTime")
     form:Check(L("Show happiness"), db, "showHappiness")
+    form:Check(L("Show Frenzy"), db, "showFrenzy")
+    form:Stepper(L("Frenzy icon size"), db, "frenzySize", 14, 48, 2)
     form:Check(L("Show focus bar"), db, "showFocus")
     form:Check(L("Show focus name"), db, "showFocusLabel")
     form:Check(L("Show focus number"), db, "showFocusValue")

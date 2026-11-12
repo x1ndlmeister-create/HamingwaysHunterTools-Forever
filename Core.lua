@@ -447,6 +447,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.Summons then HHT.Summons:Debug() end
     elseif msg == "auras" then
         if HHT.Procs then HHT.Procs:ListAuras() end
+    elseif msg == "auras pet" then
+        if HHT.Procs then HHT.Procs:ListAuras(false, "pet") end
     elseif msg == "auras watch" then
         if HHT.Procs then
             HHT.Procs.watch = not HHT.Procs.watch

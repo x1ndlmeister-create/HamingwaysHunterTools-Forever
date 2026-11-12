@@ -90,6 +90,21 @@ local function IdSet(ids)
     return set
 end
 
+-- Pet buffs get their own container keys because the unit of a container is fixed.
+local function ProcKey(e, i)
+    return ((e and e.unit == "pet") and "hht_pproc" or "hht_proc") .. i
+end
+
+-- Hunter pet buff Frenzy (Frenzy Effect), added once so deleting it sticks.
+function M:AddFrenzy()
+    local db = self.db
+    if db.frenzyAdded then return end
+    db.frenzyAdded = true
+    if #db.entries < MAXP then
+        db.entries[#db.entries + 1] = { ids = { 19615 }, art = ArtIndex(MEDIA .. "Procs\\Berserk"), unit = "pet" }
+    end
+end
+
 local function ArtOf(e)
     return ARTS[e and e.art or 1] or ARTS[1]
 end
@@ -104,7 +119,7 @@ function M:OnInit()
         m:QueueScan()
     end)
     HHT:Listen(self, "UNIT_AURA", function(m, _, unit)
-        if unit == "player" then m:QueueScan() end
+        if unit == "player" or unit == "pet" then m:QueueScan() end
     end)
 end
 
@@ -127,19 +142,21 @@ function M:ScanNew()
         for _, id in ipairs(e.ids) do db.seen[id] = true end
     end
     local added
-    for i = 1, 40 do
-        local ok, a = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL|PLAYER")
-        if not ok or not a then break end
-        pcall(function()
-            local id, dur = a.spellId, a.duration
-            if type(id) == "number" and type(dur) == "number" and dur > 0 and dur <= 30
-                and not db.seen[id] and #db.entries < MAXP then
-                db.seen[id] = true
-                db.entries[#db.entries + 1] = { ids = { id }, art = 1, off = true, name = a.name }
-                added = true
-                HHT.Print(string.format(L("New proc detected: %s (id %d), switched off in the list."), tostring(a.name), id))
-            end
-        end)
+    for _, src in ipairs({ { "player", "HELPFUL|PLAYER" }, { "pet", "HELPFUL" } }) do
+        for i = 1, 40 do
+            local ok, a = pcall(C_UnitAuras.GetAuraDataByIndex, src[1], i, src[2])
+            if not ok or not a then break end
+            pcall(function()
+                local id, dur = a.spellId, a.duration
+                if type(id) == "number" and type(dur) == "number" and dur > 0 and dur <= 30
+                    and not db.seen[id] and #db.entries < MAXP then
+                    db.seen[id] = true
+                    db.entries[#db.entries + 1] = { ids = { id }, art = 1, off = true, name = a.name, unit = src[1] == "pet" and "pet" or nil }
+                    added = true
+                    HHT.Print(string.format(L("New proc detected: %s (id %d), switched off in the list."), tostring(a.name), id))
+                end
+            end)
+        end
     end
     if added then
         self:Layout()
@@ -269,10 +286,13 @@ function M:Layout()
     f:SetSize(db.size, db.size)
     for i = 1, MAXP do
         local e = db.entries[i]
+        local pet = e and e.unit == "pet"
         if e and not e.off and bar.engine then
-            bar:Setup("hht_proc" .. i, "player", "HELPFUL|PLAYER", { includeSpellIDs = IdSet(e.ids) }, 1, "right", 0, 0)
+            bar:Setup(ProcKey(e, i), pet and "pet" or "player", pet and "HELPFUL" or "HELPFUL|PLAYER", { includeSpellIDs = IdSet(e.ids) }, 1, "right", 0, 0)
+            bar:Hide((pet and "hht_proc" or "hht_pproc") .. i)
         else
             bar:Hide("hht_proc" .. i)
+            bar:Hide("hht_pproc" .. i)
         end
     end
     self:ApplyArts()
@@ -291,6 +311,7 @@ function M:Layout()
 end
 
 function M:OnEnable()
+    self:AddFrenzy()
     self:Build()
     self.frame:Show()
     self:Layout()
@@ -316,8 +337,8 @@ function M:Debug()
     for i = 1, MAXP do
         local e = self.db.entries[i]
         if e then
-            HHT.Print(string.format("proc %d: ids=%s container=%s group=%s buttons=%d", i, table.concat(e.ids, ","), tostring(bar.conts["hht_proc" .. i] ~= nil), tostring(bar.groups["hht_proc" .. i]), self.arts[i] and #self.arts[i] or 0))
-            local c = bar.conts["hht_proc" .. i]
+            HHT.Print(string.format("proc %d: ids=%s container=%s group=%s buttons=%d", i, table.concat(e.ids, ","), tostring(bar.conts[ProcKey(e, i)] ~= nil), tostring(bar.groups[ProcKey(e, i)]), self.arts[i] and #self.arts[i] or 0))
+            local c = bar.conts[ProcKey(e, i)]
             if c then
                 local ok, info = pcall(function()
                     local x, y = c:GetCenter()
@@ -344,7 +365,8 @@ function M:Debug()
 end
 
 -- shortOnly: only buffs with a duration of 30s or less (procs), used by the auto capture after combat.
-function M:ListAuras(shortOnly)
+function M:ListAuras(shortOnly, unit)
+    unit = unit or "player"
     if HHT.InCombat() or S.AurasSecret() then
         HHT.Print("Auras are unreadable now. Use this out of combat while the buff is active.")
         return
@@ -353,11 +375,11 @@ function M:ListAuras(shortOnly)
     for i = 1, 40 do
         local name, id, dur, exp
         if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-            local ok, a = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
+            local ok, a = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
             if not ok or not a then break end
             name, id, dur, exp = a.name, a.spellId, a.duration, a.expirationTime
         else
-            local nm, _, _, _, d, e, _, _, _, sid = UnitBuff("player", i)
+            local nm, _, _, _, d, e, _, _, _, sid = UnitBuff(unit, i)
             if not nm then break end
             name, id, dur, exp = nm, sid, d, e
         end
@@ -462,7 +484,7 @@ local ROW_H = 24
 local function EntryName(e)
     for _, id in ipairs(e.ids) do
         local name = S.Name(id)
-        if name then return name end
+        if name then return e.unit == "pet" and (name .. " (" .. L("Pet") .. ")") or name end
     end
     return e.name or (L("Spell ID") .. " " .. tostring(e.ids[1]))
 end
