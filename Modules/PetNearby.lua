@@ -99,13 +99,13 @@ function M:Build()
     f.sub:SetJustifyV("TOP")
     f.sub:SetHeight(30)
 
-    local close = UI.Button(f, 18, 18, "x", function() f:Hide() end)
+    local close = UI.Button(f, 18, 18, "x", function() HHT.HideSecure(f) end)
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
     f.target:SetSize(78, 20)
     f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 10, 8)
-    f.target:RegisterForClicks("AnyUp")
+    f.target:RegisterForClicks("AnyDown", "AnyUp")
     StyleButton(f.target, L("Target"))
 
     f.map = UI.Button(f, 56, 20, L("Map"), function()
@@ -116,7 +116,7 @@ function M:Build()
     f.snooze = UI.Button(f, 96, 20, L("Snooze 15 min"), function()
         snoozeUntil = GetTime() + 900
         HHT.Print(L("Pet ability alerts paused for 15 minutes."))
-        f:Hide()
+        HHT.HideSecure(f)
     end)
     f.snooze:SetPoint("LEFT", f.map, "RIGHT", 6, 0)
 
@@ -126,7 +126,7 @@ function M:Build()
             M.db.alertFor[key] = false
             HHT.Print(string.format(L("%s no longer triggers alerts. Re-enable it in the options."), f.abilityName or key))
         end
-        f:Hide()
+        HHT.HideSecure(f)
     end)
     f.ignore:SetPoint("LEFT", f.snooze, "RIGHT", 6, 0)
 
@@ -139,6 +139,7 @@ function M:OnInit()
         HHT:Listen(self, ev, "OnUnit")
     end
     HHT:Listen(self, "PLAYER_REGEN_DISABLED", "OnCombat")
+    HHT:Listen(self, "PLAYER_REGEN_ENABLED", function(m) HHT.FlushHidden(m.frame) end)
     HHT:Listen(self, "UNIT_SPELLCAST_START", "OnCast")
     HHT:Every(self, 0.5, M.Tick)
 end
@@ -165,7 +166,7 @@ function M:OnLockChanged() self:Refresh() end
 
 function M:OnCombat()
     local f = self.frame
-    if f and f:IsShown() and not f.preview then f:Hide() end
+    if f and f:IsShown() and not f.preview then HHT.HideSecure(f) end
 end
 
 function M:OnCast(_, unit, _, spellId)
@@ -175,7 +176,7 @@ end
 
 function M:Tick()
     local f = self.frame
-    if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then f:Hide() end
+    if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then HHT.HideSecure(f); f.hideAt = nil end
 end
 
 -- data: icon, title, sub, beast, abilityKey, abilityName
@@ -194,7 +195,7 @@ function M:Show(data, preview)
         f.target:SetAttribute("type", "macro")
         f.target:SetAttribute("macrotext", "/targetexact " .. (data.beastName or ""))
     end
-    f:Show()
+    HHT.ShowSecure(f)
 end
 
 function M:Preview()
@@ -254,6 +255,28 @@ function M:OnUnit(event, unit)
         sub = sub, beast = beast, abilityKey = best.a.key, abilityName = abName, beastName = name,
     })
     if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+end
+
+function M:Why()
+    local P = HHT.Print
+    local PD = HHT.PetDex
+    local unit = UnitExists("target") and "target" or "mouseover"
+    local id = NpcId(unit)
+    P(string.format("nearby: unit=%s npc=%s petdex=%s snooze=%s alerted=%s", unit, tostring(id), tostring(PD and PD.module.enabled), tostring(GetTime() < snoozeUntil), tostring(id and alerted[id] ~= nil)))
+    local beast = id and PD and PD.byId[id]
+    P("beast in data: " .. tostring(beast and beast.n))
+    P(string.format("combat=%s instance=%s unlocked=%s tamedNpc=%s", tostring(HHT.InCombat()), tostring(IsInInstance and IsInInstance()), tostring(HHT:IsUnlocked()), tostring(tamedNpc)))
+    P(string.format("levels: player=%s unit=%s", tostring(UnitLevel("player")), tostring(HHT.SafeNumber(UnitLevel(unit)))))
+    if not (PD and beast) then return end
+    local fams = PD.MyFamilies(self.db.showFor == "all")
+    local list = {}
+    for fam, who in pairs(fams) do list[#list + 1] = fam .. "=" .. who end
+    P("families: " .. (#list > 0 and table.concat(list, "; ") or "none"))
+    for _, e in ipairs(PD.BeastAbilities(beast)) do
+        P(string.format("teaches %s rank %d, known rank %d, ignored=%s", e.a.key, e.rank, PD.KnownRank(e.a.key), tostring(self.db.alertFor[e.a.key] == false)))
+    end
+    local best = PD.NewRank(beast, fams, Ignored(self.db))
+    P("result: " .. (best and (best.a.key .. " " .. best.rank) or "no alert"))
 end
 
 function M:BuildOptions(form)

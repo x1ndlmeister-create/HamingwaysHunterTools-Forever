@@ -264,6 +264,25 @@ function HHT.InCombat()
     return UnitAffectingCombat("player") and true or false
 end
 
+-- Frames with secure buttons cannot be hidden in combat: fade them and finish with FlushHidden afterwards.
+function HHT.HideSecure(f)
+    if InCombatLockdown() then f:SetAlpha(0); f.hhtFaded = true else f:Hide() end
+end
+
+function HHT.ShowSecure(f)
+    f:SetAlpha(1)
+    f.hhtFaded = nil
+    f:Show()
+end
+
+function HHT.FlushHidden(f)
+    if f and f.hhtFaded and not InCombatLockdown() then
+        f:Hide()
+        f:SetAlpha(1)
+        f.hhtFaded = nil
+    end
+end
+
 function HHT:ShouldShow(mode)
     if self:IsUnlocked() then return true end
     if mode == "always" then return true end
@@ -390,6 +409,21 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.PetWatch then HHT.PetWatch.Debug() end
     elseif msg == "debuffs" then
         if HHT.Debuffs then HHT.Debuffs:Debug() end
+    elseif msg == "nearby" then
+        if HHT.modules.petnearby then HHT.modules.petnearby:Why() end
+    elseif msg == "train" then
+        if HHT.modules.pettrain and HHT.modules.pettrain.enabled then HHT.modules.pettrain:Recheck() end
+    elseif msg == "procs" then
+        if HHT.Procs then HHT.Procs:Debug() end
+    elseif msg == "auras" then
+        if HHT.Procs then HHT.Procs:ListAuras() end
+    elseif msg == "auras watch" then
+        if HHT.Procs then
+            HHT.Procs.watch = not HHT.Procs.watch
+            HHT.Print("auras watch: " .. (HHT.Procs.watch and "on, short buffs are listed when combat ends" or "off"))
+        end
+    elseif msg == "proctex" then
+        if HHT.Procs then HHT.Procs:TexPreview() end
     elseif msg == "petinfo" then
         if HHT.PetDex and HHT.PetDex.Inspect then HHT.PetDex.Inspect() end
     elseif msg == "lock" then

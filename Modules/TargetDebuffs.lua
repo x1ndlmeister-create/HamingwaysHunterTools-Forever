@@ -180,7 +180,7 @@ function AuraBar:Setup(key, unit, filter, candidate, count, grow, x, y)
             sortMethod = sortM and sortM.Default,
             sortDirection = sortD and sortD.Normal,
             candidateFilters = candidate,
-            initializeFrame = function(button) self:Guard("init:" .. key, self.InitButton, self, button) end,
+            initializeFrame = function(button) self:Guard("init:" .. key, self.initFn or self.InitButton, self, button, key) end,
         })
         if not ok then return end
         self.groups[key] = true

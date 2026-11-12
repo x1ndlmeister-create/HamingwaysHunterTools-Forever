@@ -457,20 +457,29 @@ function PD.ScanBook()
         end
         if key and rank then
             if (ranks[key] or 0) < rank then ranks[key] = rank end
-            Note(key, rank)
         end
     end
     PD.petRanks = ranks
     return ranks
 end
 
-function PD.ScanCraft()
+PD.SpellName, PD.NameKeys, PD.RankFrom = SpellName, NameKeys, RankFrom
+
+function PD.PetBookCount() return #PetBook() end
+
+-- True while the open craft window is the Beast Training window.
+function PD.CraftIsBeast()
     if not (GetNumCrafts and GetCraftInfo) then return false end
     local line = GetCraftDisplaySkillLine and GetCraftDisplaySkillLine()
     if type(line) == "string" and not HHT.IsSecret(line) then
         local own = SpellName(5149)
         if line ~= "Beast Training" and line ~= own and line ~= BEAST_TRAINING then return false end
     end
+    return true
+end
+
+function PD.ScanCraft()
+    if not PD.CraftIsBeast() then return false end
     local keys = NameKeys()
     local changed = false
     for i = 1, (GetNumCrafts() or 0) do
@@ -625,6 +634,12 @@ function PD.ScanStable()
     end
     if #out == 0 then return false end
     M.db.stable = out
+    -- The stable master's list is authoritative: forget remembered pets that are gone (released).
+    local names = {}
+    for _, e in ipairs(out) do names[e.name] = true end
+    for fam, name in pairs(M.db.pets) do
+        if not names[name] then M.db.pets[fam] = nil end
+    end
     PD.Dirty()
     return true
 end
@@ -1501,6 +1516,11 @@ end
 -- Module
 -- ---------------------------------------------------------------------------
 function M:OnInit()
+    -- Older versions counted the pet's own spellbook as learned ranks; rebuild once from the spellbook and Beast Training.
+    if (self.db.knownVer or 0) < 2 then
+        self.db.known = {}
+        self.db.knownVer = 2
+    end
     for _, ev in ipairs({ "UNIT_PET", "PET_BAR_UPDATE", "SPELLS_CHANGED", "LEARNED_SPELL_IN_TAB", "PLAYER_ENTERING_WORLD" }) do
         HHT:Listen(self, ev, "OnChange")
     end

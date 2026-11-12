@@ -205,7 +205,7 @@ end
 
 -- An arrow that started by itself goes away together with its alert.
 local function CloseAlert()
-    if M.frame then M.frame:Hide() end
+    if M.frame then HHT.HideSecure(M.frame); M.frame.hideAt = nil end
     if M.trackAuto then PW.Track(nil) end
 end
 
@@ -354,10 +354,11 @@ function M:OnLockChanged() self:Refresh() end
 
 function M:OnCombat()
     local f = self.frame
-    if f and f:IsShown() and not f.preview then f:Hide() end
+    if f and f:IsShown() and not f.preview then HHT.HideSecure(f) end
 end
 
 function M:OnCombatEnd()
+    HHT.FlushHidden(self.frame)
     local p = self.pending
     self.pending = nil
     if p and GetTime() - p.at < 30 then self:Show(p) end
@@ -414,7 +415,7 @@ function M:Show(data, preview)
         f.target:SetAttribute("macrotext", "/targetexact " .. b.n)
     end
     UpdateButtons()
-    f:Show()
+    HHT.ShowSecure(f)
 end
 
 function M:Preview()

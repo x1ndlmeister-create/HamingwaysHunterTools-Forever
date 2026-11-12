@@ -2,7 +2,7 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 17 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 20 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
@@ -16,9 +16,9 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Group | Modules |
 | --- | --- |
-| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns |
+| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq announcer |
-| Pets | Pet status, Pet database, Beast watch, Pet ability alerts |
+| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint |
 | Map | Stable masters, Ammo vendors, Map button |
 
 ### Combat
@@ -66,6 +66,20 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - All, only on cooldown or only ready; numbers, grey-out, spell names
 - Action bar key shown on the icon
 - Grow direction, icons per row, border and icon size
+
+**Target debuffs**
+- Serpent Sting and your other debuffs on the target with icon, timer and stacks, also in combat
+- Tracked debuffs get a fixed slot and a red placeholder while they are missing
+- Placeholder on all targets, elites and bosses, or bosses only; optionally blinking
+- Only your debuffs or all, count, size and border adjustable
+
+**Proc overlay**
+- Big art around your character while a proc or buff is active, also in combat
+- Over 150 graphics to choose from in a paged gallery
+- Remaining time as a fade: from the top, bottom, left or right
+- Per proc: graphic, scale, offset X and Y, preview
+- Quick Shots is pre-set; add any buff by spell ID, up to 6
+- Sound when it appears; read the ID with `/hht auras`
 
 ![Ammo and pet feeder](images/ammo_feeder.png)
 
@@ -121,6 +135,11 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup when a nearby beast teaches a higher rank your pet can learn
 - For the active pet only, or every pet you have used
 
+**Pet training hint**
+- Popup when your pet can learn ability ranks you already know
+- A Learn button per ability trains the rank right away
+- Abilities can be ignored; display time, sound, test hint and border colour adjustable
+
 ### Map
 
 ![World map](images/map.png)
@@ -157,6 +176,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Language: automatic, English or German
 - Export and import all settings as one line of text
 - Minimap button
+- The module list on the left scrolls with the mouse wheel
 
 ## Deutsch
 
@@ -164,9 +184,9 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Gruppe | Module |
 | --- | --- |
-| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten |
+| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Einlullen-Ansage |
-| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise |
+| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis |
 | Karte | Stallmeister, Munitionshändler, Kartenknopf |
 
 ### Kampf
@@ -208,6 +228,20 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Alle, nur auf Abklingzeit oder nur bereit; Zahlen, Ausgrauen, Namen
 - Tastenbelegung deiner Leisten auf dem Symbol
 - Richtung, Symbole pro Zeile, Rand- und Symbolgröße
+
+**Ziel-Debuffs**
+- Schlangenbiss und deine anderen Debuffs auf dem Ziel mit Symbol, Zeit und Stapeln, auch im Kampf
+- Überwachte Debuffs bekommen einen festen Platz und einen roten Platzhalter, solange sie fehlen
+- Platzhalter bei allen Zielen, bei Elite und Bossen oder nur bei Bossen; wahlweise blinkend
+- Nur deine Debuffs oder alle, Anzahl, Größe und Rand einstellbar
+
+**Proc-Anzeige**
+- Große Grafik um deinen Charakter, solange ein Proc oder Buff aktiv ist, auch im Kampf
+- Über 150 Grafiken zur Auswahl in einer geblätterten Galerie
+- Restzeit als Verblassen: von oben, unten, links oder rechts
+- Je Proc: Grafik, Skalierung, Versatz X und Y, Vorschau
+- Quick Shots ist voreingestellt; jeder Buff lässt sich per Zauber-ID ergänzen, bis zu 6
+- Ton beim Erscheinen; die ID liest du mit `/hht auras` aus
 
 **Munition**
 - Zählt Taschen, Köcher und Munitionsplatz, Pfeile und Kugeln getrennt
@@ -255,6 +289,11 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann
 - Nur für das aktive Tier oder für jedes Tier, das du benutzt hast
 
+**Begleiter-Training-Hinweis**
+- Popup, wenn dein Tier Fähigkeitsränge lernen kann, die du schon kennst
+- Ein Lernen-Knopf je Fähigkeit trainiert den Rang direkt
+- Fähigkeiten lassen sich ignorieren; Anzeigedauer, Ton, Testhinweis und Rahmenfarbe einstellbar
+
 ### Karte
 
 **Kartenknopf, Munitionshändler, Stallmeister**
@@ -285,6 +324,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Sprache: automatisch, Englisch oder Deutsch
 - Einstellungen als eine Textzeile exportieren und importieren
 - Minimap-Knopf
+- Die Modulliste links lässt sich mit dem Mausrad scrollen
 
 ## Install
 

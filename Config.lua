@@ -177,9 +177,37 @@ function C:Create()
     self.side = {}
     local keys = { "general" }
     for _, k in ipairs(HHT.moduleList) do keys[#keys + 1] = k end
+
+    local sf = CreateFrame("ScrollFrame", nil, side)
+    sf:SetPoint("TOPLEFT", side, "TOPLEFT", 0, 0)
+    sf:SetPoint("BOTTOMRIGHT", side, "BOTTOMRIGHT", 0, 0)
+    local list = CreateFrame("Frame", nil, sf)
+    list:SetSize(140, 10 + #keys * 30)
+    sf:SetScrollChild(list)
+    sf:EnableMouseWheel(true)
+    local thumb = sf:CreateTexture(nil, "OVERLAY")
+    thumb:SetWidth(3)
+    thumb:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.45)
+    local function UpdateThumb()
+        local viewH, contentH = sf:GetHeight(), list:GetHeight()
+        if contentH <= viewH + 1 then thumb:Hide(); return end
+        local h = math.max(20, viewH * viewH / contentH)
+        thumb:SetHeight(h)
+        thumb:ClearAllPoints()
+        thumb:SetPoint("TOPRIGHT", sf, "TOPRIGHT", -1, -((viewH - h) * (sf:GetVerticalScroll() / (contentH - viewH))))
+        thumb:Show()
+    end
+    sf:SetScript("OnMouseWheel", function(self, delta)
+        local range = math.max(0, list:GetHeight() - self:GetHeight())
+        self:SetVerticalScroll(math.min(range, math.max(0, self:GetVerticalScroll() - delta * 60)))
+        UpdateThumb()
+    end)
+    sf:SetScript("OnSizeChanged", UpdateThumb)
+    UpdateThumb()
+
     for i, key in ipairs(keys) do
-        local b = UI.Button(side, 130, 26, "", function() C:Select(key) end)
-        b:SetPoint("TOPLEFT", side, "TOPLEFT", 5, -5 - (i - 1) * 30)
+        local b = UI.Button(list, 130, 26, "", function() C:Select(key) end)
+        b:SetPoint("TOPLEFT", list, "TOPLEFT", 5, -5 - (i - 1) * 30)
         b.sel = b:CreateTexture(nil, "ARTWORK")
         b.sel:SetPoint("TOPLEFT", b, "TOPLEFT", 0, 0)
         b.sel:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 0, 0)
