@@ -2,7 +2,7 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 20 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 21 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
@@ -16,7 +16,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Group | Modules |
 | --- | --- |
-| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay |
+| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay, Summons |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq announcer |
 | Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint |
 | Map | Stable masters, Ammo vendors, Map button |
@@ -80,6 +80,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Per proc: graphic, scale, offset X and Y, preview
 - Quick Shots is pre-set; add any buff by spell ID, up to 6
 - Sound when it appears; read the ID with `/hht auras`
+- Scan for new procs: short buffs you gain out of combat are added to the list switched off; switch on the ones you want
+- Each proc has its own On/Off switch
+
+**Summons**
+- Active summons such as Summon Hawk with icon and remaining time, also in combat
+- The default UI shows them under the player frame; they are not buffs, so this module lists them
+- Icons close up without gaps and keep their order of arrival
+- Shape, size, border, spacing, names, grow direction, visibility; `/hht totems` shows the slots
 
 ![Ammo and pet feeder](images/ammo_feeder.png)
 
@@ -184,7 +192,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Gruppe | Module |
 | --- | --- |
-| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige |
+| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Einlullen-Ansage |
 | Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis |
 | Karte | Stallmeister, Munitionshändler, Kartenknopf |
@@ -242,6 +250,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Je Proc: Grafik, Skalierung, Versatz X und Y, Vorschau
 - Quick Shots ist voreingestellt; jeder Buff lässt sich per Zauber-ID ergänzen, bis zu 6
 - Ton beim Erscheinen; die ID liest du mit `/hht auras` aus
+- Nach neuen Procs suchen: kurze Buffs, die du außerhalb des Kampfes bekommst, kommen ausgeschaltet in die Liste; schalte die gewünschten ein
+- Jeder Proc hat einen eigenen An/Aus-Schalter
+
+**Beschwörungen**
+- Aktive Beschwörungen wie Habicht beschwören mit Symbol und Restzeit, auch im Kampf
+- Das Standard-UI zeigt sie unter dem Spielerrahmen; sie sind keine Buffs, deshalb listet sie dieses Modul
+- Die Symbole rücken lückenlos zusammen und behalten ihre Reihenfolge
+- Form, Größe, Rand, Abstand, Namen, Wachstumsrichtung, Sichtbarkeit; `/hht totems` zeigt die Slots
 
 **Munition**
 - Zählt Taschen, Köcher und Munitionsplatz, Pfeile und Kugeln getrennt

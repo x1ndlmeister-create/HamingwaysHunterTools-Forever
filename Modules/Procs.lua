@@ -25,6 +25,12 @@ HHT:AddGerman({
     ["Right"] = "Rechts",
     ["Offset X"] = "Versatz X",
     ["Offset Y"] = "Versatz Y",
+    ["Scan for new procs"] = "Nach neuen Procs suchen",
+    ["While on, short buffs you gain out of combat are added to the list switched off. Switch the ones you want on."] =
+        "Solange aktiv, werden kurze Buffs, die du ausserhalb des Kampfes bekommst, ausgeschaltet zur Liste hinzugefuegt. Schalte die gewuenschten ein.",
+    ["On"] = "An",
+    ["Off"] = "Aus",
+    ["New proc detected: %s (id %d), switched off in the list."] = "Neuer Proc erkannt: %s (ID %d), in der Liste ausgeschaltet.",
     ["Use /hht auras while the proc is active to read its ID. The game draws the art itself, so nothing can be hidden or checked by the addon in combat."] =
         "Mit /hht auras waehrend der Proc aktiv ist liest du seine ID aus. Das Spiel zeichnet die Grafik selbst, das Addon kann im Kampf nichts pruefen oder verstecken.",
 })
@@ -58,7 +64,7 @@ local function LayoutArt(t1, parent, a, size, x, y)
     t1:SetTexCoord(0, 1, 0, 1)
 end
 
-local MAXP = 6
+local MAXP = 12
 
 local function ArtIndex(path)
     for i, a in ipairs(ARTS) do
@@ -72,7 +78,7 @@ local M = HHT:NewModule("procs", {
     desc = "Big art around your character while a proc or buff is active, also in combat.",
     positions = { main = { "CENTER", "CENTER", 0, 0 } },
     defaults = {
-        size = 200, sound = true, drain = true, rising = false,
+        size = 200, sound = true, drain = true, rising = false, scan = false,
         entries = { { ids = { 6150 }, art = ArtIndex(MEDIA .. "Procs\\ArrowStage1") } }, -- Quick Shots
     },
 })
@@ -95,7 +101,50 @@ function M:OnInit()
     self.watch = false
     HHT:Listen(self, "PLAYER_REGEN_ENABLED", function(m)
         if m.watch then C_Timer.After(0.3, function() m:ListAuras(true) end) end
+        m:QueueScan()
     end)
+    HHT:Listen(self, "UNIT_AURA", function(m, _, unit)
+        if unit == "player" then m:QueueScan() end
+    end)
+end
+
+function M:QueueScan()
+    if not (self.db and self.db.scan) or self.scanPending then return end
+    self.scanPending = true
+    C_Timer.After(0.5, function()
+        self.scanPending = false
+        if self.enabled then self:ScanNew() end
+    end)
+end
+
+-- Unknown short buffs of the player are added switched off; only readable out of combat.
+function M:ScanNew()
+    local db = self.db
+    if not db.scan or HHT.InCombat() or S.AurasSecret() then return end
+    if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then return end
+    db.seen = db.seen or {}
+    for _, e in ipairs(db.entries) do
+        for _, id in ipairs(e.ids) do db.seen[id] = true end
+    end
+    local added
+    for i = 1, 40 do
+        local ok, a = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL|PLAYER")
+        if not ok or not a then break end
+        pcall(function()
+            local id, dur = a.spellId, a.duration
+            if type(id) == "number" and type(dur) == "number" and dur > 0 and dur <= 30
+                and not db.seen[id] and #db.entries < MAXP then
+                db.seen[id] = true
+                db.entries[#db.entries + 1] = { ids = { id }, art = 1, off = true, name = a.name }
+                added = true
+                HHT.Print(string.format(L("New proc detected: %s (id %d), switched off in the list."), tostring(a.name), id))
+            end
+        end)
+    end
+    if added then
+        self:Layout()
+        if self.procList then pcall(self.procList.Refresh) end
+    end
 end
 
 -- Runs once per engine-made button; the art only exists while the aura does.
@@ -220,7 +269,7 @@ function M:Layout()
     f:SetSize(db.size, db.size)
     for i = 1, MAXP do
         local e = db.entries[i]
-        if e and bar.engine then
+        if e and not e.off and bar.engine then
             bar:Setup("hht_proc" .. i, "player", "HELPFUL|PLAYER", { includeSpellIDs = IdSet(e.ids) }, 1, "right", 0, 0)
         else
             bar:Hide("hht_proc" .. i)
@@ -230,7 +279,7 @@ function M:Layout()
     local unlocked = HHT:IsUnlocked()
     for i = 1, MAXP do
         local e, t = db.entries[i], self.pvs[i]
-        if (e and (e.preview or unlocked)) or (i == 1 and unlocked) then
+        if (e and not e.off and (e.preview or unlocked)) or (i == 1 and unlocked) then
             LayoutArt(t, f, ArtOf(e), db.size * ((e and e.scale) or 1), e and e.x, e and e.y)
             t:SetAlpha(e and e.preview and 0.9 or 0.5)
             t:Show()
@@ -251,7 +300,10 @@ function M:OnDisable()
     if self.frame then self.frame:Hide() end
 end
 
-function M:Refresh() self:Layout() end
+function M:Refresh()
+    self:Layout()
+    self:QueueScan()
+end
 function M:OnLockChanged() self:Layout() end
 
 -- ---------------------------------------------------------------------------
@@ -412,7 +464,7 @@ local function EntryName(e)
         local name = S.Name(id)
         if name then return name end
     end
-    return L("Spell ID") .. " " .. tostring(e.ids[1])
+    return e.name or (L("Spell ID") .. " " .. tostring(e.ids[1]))
 end
 
 local function BuildProcList(m, form)
@@ -427,12 +479,12 @@ local function BuildProcList(m, form)
     local function NewRow(i)
         local row = CreateFrame("Frame", nil, list)
         row:SetSize(380, ROW_H)
-        row.text = UI.Button(row, 150, 20, "", function()
+        row.text = UI.Button(row, 140, 20, "", function()
             list.sel = i
             list:Refresh()
         end)
         row.text:SetPoint("LEFT", row, "LEFT", 0, 0)
-        row.art = UI.Button(row, 130, 20, "", function()
+        row.art = UI.Button(row, 110, 20, "", function()
             local e = db.entries[i]
             if not e then return end
             M:OpenPicker(e.art or 1, function(idx)
@@ -442,12 +494,20 @@ local function BuildProcList(m, form)
             end)
         end)
         row.art:SetPoint("LEFT", row.text, "RIGHT", 6, 0)
+        row.on = UI.Button(row, 40, 20, "", function()
+            local e = db.entries[i]
+            if not e then return end
+            if e.off then e.off = nil else e.off = true end
+            Changed()
+            list:Refresh()
+        end)
+        row.on:SetPoint("LEFT", row.art, "RIGHT", 6, 0)
         row.del = UI.Button(row, 20, 20, "x", function()
             table.remove(db.entries, i)
             Changed()
             list:Refresh()
         end)
-        row.del:SetPoint("LEFT", row.art, "RIGHT", 6, 0)
+        row.del:SetPoint("LEFT", row.on, "RIGHT", 6, 0)
         list.rows[i] = row
         return row
     end
@@ -487,7 +547,11 @@ local function BuildProcList(m, form)
             local row = list.rows[i] or NewRow(i)
             local e = db.entries[i]
             row.text:SetLabel(EntryName(e))
-            if i == list.sel then row.text.label:SetTextColor(A[1], A[2], A[3]) else row.text.label:SetTextColor(0.92, 0.94, 0.97) end
+            if i == list.sel then row.text.label:SetTextColor(A[1], A[2], A[3])
+            elseif e.off then row.text.label:SetTextColor(0.5, 0.52, 0.57)
+            else row.text.label:SetTextColor(0.92, 0.94, 0.97) end
+            row.on:SetLabel(e.off and L("Off") or L("On"))
+            if e.off then row.on.label:SetTextColor(0.5, 0.52, 0.57) else row.on.label:SetTextColor(A[1], A[2], A[3]) end
             row.art:SetLabel(ArtOf(e)[1])
             row:ClearAllPoints()
             row:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -(i - 1) * ROW_H)
@@ -535,6 +599,7 @@ local function BuildProcList(m, form)
     end)
 
     list.Refresh = Rebuild
+    m.procList = list
     form:PlaceTail(list)
     Rebuild()
     return list
@@ -549,6 +614,8 @@ function M:BuildOptions(form)
     form:Check(L("Reverse the fading (art fills up instead of draining)"), db, "rising")
     form:Button(L("Browse graphics"), function() M:TexPreview() end)
     form:Header(L("Tracked procs"))
+    form:Check(L("Scan for new procs"), db, "scan")
+    form:Note(L("While on, short buffs you gain out of combat are added to the list switched off. Switch the ones you want on."))
     form:Note(L("Use /hht auras while the proc is active to read its ID. The game draws the art itself, so nothing can be hidden or checked by the addon in combat."))
     BuildProcList(self, form)
 end

@@ -415,6 +415,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.modules.pettrain and HHT.modules.pettrain.enabled then HHT.modules.pettrain:Recheck() end
     elseif msg == "procs" then
         if HHT.Procs then HHT.Procs:Debug() end
+    elseif msg == "totems" then
+        if HHT.Summons then HHT.Summons:Debug() end
     elseif msg == "auras" then
         if HHT.Procs then HHT.Procs:ListAuras() end
     elseif msg == "auras watch" then
