@@ -2,7 +2,7 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 22 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 23 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
@@ -207,7 +207,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Einlullen-Ansage |
 | Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis |
-| Karte | Stallmeister, Munitionshändler, Kartenknopf |
+| Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
 
 ### Kampf
 
@@ -296,7 +296,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Rund oder eckig, Größe und jede Leiste einstellbar
 
 **Tierdatenbank**
-- Vier Reiter: Tiere, Fähigkeiten, Mein Begleiter, Stall
+- Fünf Reiter: Tiere, Familien, Fähigkeiten, Mein Begleiter, Stall
+- Familien-Reiter: Nahrung, Schaden-, Lebens- und Rüstungsmodifikator, Familienfähigkeiten und Tempo je Tierfamilie
 - Familie, Stufe, Angriffstempo, Zone und gelehrte Fähigkeiten je Tier
 - Suche nach Name, Familie, Zone oder Fähigkeit, dazu Filter
 - Markierungen: gezähmt (`+`), Wunschliste (`*`), gesehen
@@ -324,11 +325,13 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 ### Karte
 
-**Kartenknopf, Munitionshändler, Stallmeister**
+**Kartenknopf, Munitionshändler, Stallmeister, Futterhändler, Lehrer**
 - Kartenknopf oben links mit Schaltern für die Ebenen
 - Ebene Munitionshändler, wahlweise nach Munitionsart und nur eigene Fraktion
 - Ebene Stallmeister aus einer eingebauten Liste; fehlende werden beim Besuch gelernt
-- Wegpunkt zum nächsten Händler oder Stallmeister
+- Ebene Futterhändler: nur Händler, die Futter für die Nahrung deines aktuellen Tiers verkaufen; fehlende werden beim Öffnen des Händlerfensters gelernt
+- Ebene Lehrer: Jägerlehrer und Tierausbilder zusammen in einer Kategorie
+- Wegpunkt zum nächsten Händler, Stallmeister, Futterhändler oder Lehrer (`/hht food`, `/hht food go`, `/hht trainer`, `/hht trainer go`)
 - Aktive Ebenen, Tiere aus der Tierdatenbank und das Seltene, auf das der Pfeil zeigt, erscheinen auch auf der Minimap (standardmäßig an, ein Schalter pro Ebene)
 - Tiere aus der Tierdatenbank auf der Karte zeigen
 - Jede Ebene einzeln abschaltbar
@@ -367,6 +370,11 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | `/hht unlock` / `/hht lock` | Unlock or lock the frames |
 | `/hht reset` | Reset the positions |
 | `/hht petinfo` | Print the active pet's abilities |
+| `/hht pets` / `/hht pets name` | Open the pet database or search it |
+| `/hht ammo` / `/hht ammo go` | Show ammo vendors on the map or set a waypoint to the nearest |
+| `/hht stable` / `/hht stable go` | Show stable masters on the map or set a waypoint to the nearest |
+| `/hht food` / `/hht food go` | Show food vendors for your pet on the map or set a waypoint to the nearest |
+| `/hht trainer` / `/hht trainer go` | Show hunter and pet trainers on the map or set a waypoint to the nearest |
 
 ## Credits
 
