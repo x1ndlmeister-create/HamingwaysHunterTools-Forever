@@ -6,7 +6,136 @@ HHT.UI = UI
 
 local FONT = "Fonts\\ARIALN.TTF"
 UI.FONT = FONT
-UI.ACCENT = { 0.67, 0.83, 0.45 }
+local WHITE = "Interface\\Buttons\\WHITE8X8"
+
+-- Colour themes of the settings window and popups. UI.PAL is filled in place, so references stay valid.
+local THEMES = {
+    classic = {
+        accent = { 0.67, 0.83, 0.45 }, bg = { 0.075, 0.068, 0.055, 0.97 }, panel = { 0.075, 0.068, 0.055, 0.96 },
+        inset = { 0.03, 0.028, 0.024, 1 }, side = { 0.05, 0.045, 0.035, 0.9 }, titleBar = { 0.13, 0.105, 0.07, 1 },
+        border = { 0.55, 0.42, 0.2, 0.9 }, button = { 0.17, 0.145, 0.105, 1 }, box = { 0.09, 0.08, 0.065, 1 },
+        field = { 0.045, 0.04, 0.032, 0.95 }, menu = { 0.07, 0.06, 0.05, 0.99 }, hdrLine = { 0.55, 0.42, 0.2, 0.6 },
+    },
+    dark = {
+        accent = { 0.45, 0.78, 0.95 }, bg = { 0.05, 0.057, 0.075, 0.97 }, panel = { 0.05, 0.057, 0.075, 0.96 },
+        inset = { 0.025, 0.03, 0.042, 1 }, side = { 0.035, 0.04, 0.055, 0.9 }, titleBar = { 0.085, 0.1, 0.135, 1 },
+        border = { 0.25, 0.31, 0.44, 0.9 }, button = { 0.115, 0.135, 0.18, 1 }, box = { 0.06, 0.07, 0.095, 1 },
+        field = { 0.03, 0.035, 0.05, 0.95 }, menu = { 0.045, 0.052, 0.07, 0.99 }, hdrLine = { 0.25, 0.31, 0.44, 0.6 },
+    },
+    minimal = {
+        accent = { 0.67, 0.83, 0.45 }, bg = { 0.04, 0.04, 0.04, 0.97 }, panel = { 0.04, 0.04, 0.04, 0.96 },
+        inset = { 0.015, 0.015, 0.015, 1 }, side = { 0.028, 0.028, 0.028, 0.9 }, titleBar = { 0.085, 0.085, 0.085, 1 },
+        border = { 0.3, 0.3, 0.3, 0.9 }, button = { 0.135, 0.135, 0.135, 1 }, box = { 0.07, 0.07, 0.07, 1 },
+        field = { 0.02, 0.02, 0.02, 0.95 }, menu = { 0.035, 0.035, 0.035, 0.99 }, hdrLine = { 0.3, 0.3, 0.3, 0.6 },
+    },
+}
+UI.ThemeList = { "classic", "dark", "minimal" }
+
+UI.PAL = {}
+function UI.ApplyTheme(name)
+    local t = THEMES[name] or THEMES.classic
+    for k, v in pairs(t) do
+        local dst = UI.PAL[k]
+        if not dst then dst = {}; UI.PAL[k] = dst end
+        for i = 1, #v do dst[i] = v[i] end
+    end
+end
+UI.ApplyTheme("classic")
+UI.ACCENT = UI.PAL.accent
+
+local function Tint(tex, c, a)
+    tex:SetColorTexture(c[1], c[2], c[3], a or c[4] or 1)
+end
+UI.Tint = Tint
+
+function UI.Anim()
+    local g = HHT.db and HHT.db.general
+    return not (g and g.animations == false)
+end
+
+-- One-colour alpha gradient. a1 = bottom (or left), a2 = top (or right).
+function UI.Gradient(tex, vertical, r, g, b, a1, a2)
+    tex:SetTexture(WHITE)
+    local o = vertical and "VERTICAL" or "HORIZONTAL"
+    if tex.SetGradient and CreateColor then
+        if pcall(tex.SetGradient, tex, o, CreateColor(r, g, b, a1), CreateColor(r, g, b, a2)) then return end
+    end
+    if tex.SetGradientAlpha and pcall(tex.SetGradientAlpha, tex, o, r, g, b, a1, r, g, b, a2) then return end
+    tex:SetVertexColor(r, g, b, (a1 + a2) / 2)
+end
+
+-- Soft dark fade around a frame, drawn outside its edges.
+function UI.Glow(f, size, a)
+    -- Nested 1px rings keep the corners filled; four gradient strips would leave them cut off.
+    for i = 1, size do
+        local k = 1 - (i - 0.5) / size
+        local al = a * k * k
+        local d = i - 1
+        local function Ring(p1, r1, x1, y1, p2, r2, x2, y2, horizontal)
+            local t = f:CreateTexture(nil, "BACKGROUND")
+            t:SetPoint(p1, f, r1, x1, y1)
+            t:SetPoint(p2, f, r2, x2, y2)
+            if horizontal then t:SetHeight(1) else t:SetWidth(1) end
+            t:SetColorTexture(0, 0, 0, al)
+        end
+        Ring("BOTTOMLEFT", "TOPLEFT", -i, d, "BOTTOMRIGHT", "TOPRIGHT", i, d, true)
+        Ring("TOPLEFT", "BOTTOMLEFT", -i, -d, "TOPRIGHT", "BOTTOMRIGHT", i, -d, true)
+        Ring("TOPRIGHT", "TOPLEFT", -d, d, "BOTTOMRIGHT", "BOTTOMLEFT", -d, -d, false)
+        Ring("TOPLEFT", "TOPRIGHT", d, d, "BOTTOMLEFT", "BOTTOMRIGHT", d, -d, false)
+    end
+end
+
+-- Content fades in when the frame is shown. A cover texture fades out, so the frame's own alpha stays untouched.
+function UI.Reveal(f, dur, color)
+    dur = dur or 0.16
+    local cover = CreateFrame("Frame", nil, f)
+    cover:SetAllPoints(f)
+    cover:SetFrameLevel(f:GetFrameLevel() + 60)
+    local tex = cover:CreateTexture(nil, "OVERLAY")
+    tex:SetAllPoints()
+    Tint(tex, color or UI.PAL.bg, 1)
+    cover:Hide()
+    local t = 0
+    cover:SetScript("OnUpdate", function(self, dt)
+        t = t + dt
+        if t >= dur then self:Hide(); return end
+        local k = 1 - t / dur
+        tex:SetAlpha(k * k)
+    end)
+    f:HookScript("OnShow", function()
+        if not UI.Anim() then return end
+        t = 0
+        tex:SetAlpha(1)
+        cover:Show()
+    end)
+end
+
+-- Popup look: dark panel, accent top stripe, soft shadow. Returns the border (SetColor recolours border and stripe).
+function UI.Panel(f, r, g, b)
+    local P = UI.PAL
+    local bg = f:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    Tint(bg, P.panel)
+    local sheen = f:CreateTexture(nil, "BORDER")
+    sheen:SetPoint("TOPLEFT", 1, -1)
+    sheen:SetPoint("TOPRIGHT", -1, -1)
+    sheen:SetHeight(46)
+    UI.Gradient(sheen, true, 1, 1, 1, 0, 0.05)
+    UI.Glow(f, 7, 0.4)
+    local edge = UI.Border(f, 1, 1, 1, 0.9)
+    local top = f:CreateTexture(nil, "ARTWORK")
+    top:SetPoint("TOPLEFT", 1, -1)
+    top:SetPoint("TOPRIGHT", -1, -1)
+    top:SetHeight(2)
+    local setc = edge.SetColor
+    function edge:SetColor(cr, cg, cb, ca)
+        setc(self, cr, cg, cb, ca)
+        top:SetColorTexture(cr, cg, cb, 1)
+    end
+    edge:SetColor(r or UI.ACCENT[1], g or UI.ACCENT[2], b or UI.ACCENT[3], 0.9)
+    UI.Reveal(f, 0.2, P.panel)
+    return edge
+end
 
 -- 1px outline made of four edge textures
 function UI.Border(f, r, g, b, a)
@@ -41,13 +170,26 @@ function UI.Button(parent, w, h, text, onClick)
     b:SetSize(w, h)
     local bg = b:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.17, 0.145, 0.105, 1)
-    UI.Border(b, 1, 1, 1, 0.08)
+    Tint(bg, UI.PAL.button)
+    local gloss = b:CreateTexture(nil, "BORDER")
+    gloss:SetPoint("TOPLEFT", 1, -1)
+    gloss:SetPoint("TOPRIGHT", -1, -1)
+    gloss:SetHeight(math.max(2, math.floor(h / 2)))
+    UI.Gradient(gloss, true, 1, 1, 1, 0, 0.08)
+    b.edge = UI.Border(b, 1, 1, 1, 0.08)
     local hl = b:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
     hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.25)
     b.label = UI.Text(b, text, 12)
     b.label:SetPoint("CENTER")
+    b:SetScript("OnEnter", function(self) self.edge:SetColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.7) end)
+    b:SetScript("OnLeave", function(self) self.edge:SetColor(1, 1, 1, 0.08) end)
+    b:SetScript("OnMouseDown", function(self)
+        if not self.noPress then self.label:SetPoint("CENTER", self, "CENTER", 0, -1) end
+    end)
+    b:SetScript("OnMouseUp", function(self)
+        if not self.noPress then self.label:SetPoint("CENTER", self, "CENTER", 0, 0) end
+    end)
     b:SetScript("OnClick", function(self) if onClick then onClick(self) end end)
     function b:SetLabel(t) self.label:SetText(t) end
     return b
@@ -59,10 +201,12 @@ function UI.Check(parent, label, get, set)
     local box = c:CreateTexture(nil, "BACKGROUND")
     box:SetSize(14, 14)
     box:SetPoint("LEFT", c, "LEFT", 0, 0)
-    box:SetColorTexture(0.09, 0.08, 0.065, 1)
+    Tint(box, UI.PAL.box)
     local frame = CreateFrame("Frame", nil, c)
     frame:SetAllPoints(box)
-    UI.Border(frame, 1, 1, 1, 0.18)
+    local boxEdge = UI.Border(frame, 1, 1, 1, 0.18)
+    c:SetScript("OnEnter", function() boxEdge:SetColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.8) end)
+    c:SetScript("OnLeave", function() boxEdge:SetColor(1, 1, 1, 0.18) end)
     local mark = c:CreateTexture(nil, "ARTWORK")
     mark:SetSize(8, 8)
     mark:SetPoint("CENTER", box, "CENTER", 0, 0)
@@ -198,7 +342,7 @@ function UI.EditBox(parent, w, onText)
     e:SetTextInsets(6, 6, 0, 0)
     local bg = e:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.045, 0.04, 0.032, 0.95)
+    Tint(bg, UI.PAL.field)
     local border = UI.Border(e, 1, 1, 1, 0.1)
     e:SetScript("OnEditFocusGained", function() border:SetColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.9) end)
     e:SetScript("OnEditFocusLost", function() border:SetColor(1, 1, 1, 0.1) end)
@@ -224,15 +368,27 @@ function UI.Window(name, w, h, title)
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", function(self) self:StartMoving() end)
     f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    local P = UI.PAL
     local bg = f:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.075, 0.068, 0.055, 0.97)
-    UI.Border(f, 0.55, 0.42, 0.2, 0.9)
+    Tint(bg, P.bg)
+    local sheen = f:CreateTexture(nil, "BACKGROUND")
+    sheen:SetPoint("TOPLEFT", 1, -30)
+    sheen:SetPoint("TOPRIGHT", -1, -30)
+    sheen:SetHeight(160)
+    UI.Gradient(sheen, true, 1, 1, 1, 0, 0.035)
+    UI.Glow(f, 9, 0.5)
+    UI.Border(f, P.border[1], P.border[2], P.border[3], P.border[4])
     local bar = f:CreateTexture(nil, "BORDER")
     bar:SetPoint("TOPLEFT", 1, -1)
     bar:SetPoint("TOPRIGHT", -1, -1)
     bar:SetHeight(28)
-    bar:SetColorTexture(0.13, 0.105, 0.07, 1)
+    Tint(bar, P.titleBar)
+    local barSheen = f:CreateTexture(nil, "ARTWORK")
+    barSheen:SetPoint("TOPLEFT", 1, -1)
+    barSheen:SetPoint("TOPRIGHT", -1, -1)
+    barSheen:SetHeight(28)
+    UI.Gradient(barSheen, true, 1, 1, 1, 0, 0.09)
     local line = f:CreateTexture(nil, "ARTWORK")
     line:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -29)
     line:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -29)
@@ -242,6 +398,7 @@ function UI.Window(name, w, h, title)
     f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -8)
     local close = UI.Button(f, 22, 20, "x", function() f:Hide() end)
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -5, -4)
+    UI.Reveal(f, 0.16, P.bg)
     return f
 end
 
@@ -294,7 +451,8 @@ local function MenuBuild()
     menu:SetScript("OnHide", function() catcher:Hide() end)
     local bg = menu:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.07, 0.06, 0.05, 0.99)
+    Tint(bg, UI.PAL.menu)
+    UI.Glow(menu, 6, 0.4)
     UI.Border(menu, 1, 1, 1, 0.14)
     menu.rows = {}
     for i = 1, PAGE do
@@ -308,6 +466,7 @@ local function MenuBuild()
         b.icon:SetSize(16, 16)
         b.icon:SetPoint("LEFT", b, "LEFT", 2, 0)
         b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        HHT.Icon.Attach(b.icon)
         b.text = UI.Text(b, "", 12)
         b.text:SetPoint("LEFT", b, "LEFT", 24, 0)
         b:SetScript("OnClick", function(self)

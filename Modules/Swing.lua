@@ -33,6 +33,7 @@ HHT:AddGerman({
     ["TOO FAR"] = "ZU WEIT",
     ["Auto Shot"] = "Auto-Shot",
     ["Main hand"] = "Haupthand",
+    ["Mark 0.5 s before the shot"] = "Markierung 0,5 s vor dem Schuss",
 })
 
 local M = HHT:NewModule("swing", {
@@ -42,7 +43,8 @@ local M = HHT:NewModule("swing", {
     defaults = {
         showRanged = true, showMelee = true, showRange = true,
         showTime = true, showLabel = true, showSpark = true, colorByRange = true,
-        border = true, barTexture = "blizzard", bevel = 0.6,
+        border = true, barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
+        showMark = true,
         width = 220, height = 16, spacing = 3, bgAlpha = 0.85,
         visibility = "combattarget", fillMode = "fill",
         colors = {
@@ -84,6 +86,10 @@ function M:Build()
     f.range = UI.Text(f, "", 11)
     f.range:SetPoint("TOP", f, "TOP", 0, 0)
     f.ranged = HHT.Bar.New(f)
+    -- Auto Shot needs 0.5 s to fire, so moving is safe until the bar reaches this line.
+    f.ranged.mark = f.ranged.fx:CreateTexture(nil, "OVERLAY", nil, 1)
+    f.ranged.mark:SetColorTexture(0.6, 0.6, 0.6, 0.5)
+    f.ranged.mark:SetWidth(1)
     f.melee = HHT.Bar.New(f)
     HHT:MakeMovable(f, self, "main", L("Swing timer"))
     self:Layout()
@@ -145,6 +151,13 @@ function M:OnSwing(_, duration, swingType)
     if swingType == 0 then t = self.timers.melee
     elseif swingType == 2 then t = self.timers.ranged
     else return end
+    -- the next swing starts right as the bar fills, so the flash has to fire here before the timer resets
+    local f = self.frame
+    if f and self.db.flash and t.start and t.duration and not t.flashed
+        and GetTime() - t.start >= t.duration - 0.08 then
+        HHT.Bar.Flash(swingType == 0 and f.melee or f.ranged)
+    end
+    t.flashed = false
     t.duration = duration
     t.start = GetTime()
 end
@@ -152,8 +165,10 @@ end
 local function UpdateRow(self, row, t, now, demoPhase)
     local db = self.db
     local duration, elapsed = t.duration, nil
+    local demo = false
     if duration and t.start then elapsed = now - t.start end
     if (not elapsed or elapsed >= duration) and demoPhase then
+        demo = true
         duration = 2.2
         elapsed = (now + demoPhase) % duration
     end
@@ -164,6 +179,18 @@ local function UpdateRow(self, row, t, now, demoPhase)
     else
         progress = 1
         remain = nil
+    end
+    if db.flash then
+        if demo then
+            if row.demoProg and progress < row.demoProg then HHT.Bar.Flash(row) end
+            row.demoProg = progress
+        else
+            row.demoProg = nil
+            if not remain and t.start and not t.flashed and elapsed - duration < 0.5 then
+                t.flashed = true
+                HHT.Bar.Flash(row)
+            end
+        end
     end
     row.bar:SetMinMaxValues(0, 1)
     if db.fillMode == "drain" then
@@ -183,6 +210,18 @@ local function UpdateRow(self, row, t, now, demoPhase)
     end
 end
 
+local function UpdateMark(self, row, t, unlocked)
+    local mark = row.mark
+    local duration = t.duration or (unlocked and 2.2) or nil
+    if not (self.db.showMark and duration and duration > 0.5) then mark:Hide(); return end
+    local frac = 0.5 / duration
+    local pos = (self.db.fillMode == "drain") and frac or (1 - frac)
+    mark:ClearAllPoints()
+    mark:SetPoint("CENTER", row.bar, "LEFT", (row:GetWidth() - 2) * pos, 0)
+    mark:SetHeight(row:GetHeight() - 2)
+    mark:Show()
+end
+
 local RANGE_TEXT = {
     melee = { "MELEE", "rMelee" },
     ranged = { "RANGED", "rRanged" },
@@ -194,7 +233,7 @@ function M:Tick(dt)
     local f = self.frame
     if not f then return end
     local db = self.db
-    local show = HHT:ShouldShow(db.visibility)
+    local show = HHT:ShouldShow(db.visibility, self)
     if f:IsShown() ~= show then f:SetShown(show) end
     if not show then return end
 
@@ -204,7 +243,7 @@ function M:Tick(dt)
         self.rangeState = Range.State()
     end
 
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
     local state = self.rangeState
     if unlocked and not state then state = "ranged" end
     if db.showRange then
@@ -225,7 +264,10 @@ function M:Tick(dt)
     end
 
     local now = GetTime()
-    if db.showRanged then UpdateRow(self, f.ranged, self.timers.ranged, now, unlocked and 0 or nil) end
+    if db.showRanged then
+        UpdateRow(self, f.ranged, self.timers.ranged, now, unlocked and 0 or nil)
+        UpdateMark(self, f.ranged, self.timers.ranged, unlocked)
+    end
     if db.showMelee then UpdateRow(self, f.melee, self.timers.melee, now, unlocked and 1.1 or nil) end
 end
 
@@ -238,6 +280,7 @@ function M:BuildOptions(form)
     form:Check(L("Show remaining time"), db, "showTime")
     form:Check(L("Show bar labels"), db, "showLabel")
     form:Check(L("Show spark"), db, "showSpark")
+    form:Check(L("Mark 0.5 s before the shot"), db, "showMark")
     form:Check(L("Show border"), db, "border")
     form:Check(L("Ranged bar turns red in the dead zone"), db, "colorByRange")
     form:Stepper(L("Bar width"), db, "width", 80, 600, 10)
@@ -245,6 +288,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Spacing"), db, "spacing", 0, 12, 1)
     form:Stepper(L("Background opacity"), db, "bgAlpha", 0, 1, 0.05)
     HHT.Bar.AddOptions(form, db)
+    HHT.Bar.AddFlash(form, db)
     form:Cycle(L("Bar mode"), db, "fillMode", { { "fill", L("Fill") }, { "drain", L("Drain") } })
     form:Header(L("Behavior"))
     form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())

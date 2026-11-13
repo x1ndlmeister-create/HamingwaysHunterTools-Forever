@@ -179,7 +179,7 @@ function M:Tick()
     if not f then return end
     local db = self.db
 
-    if HHT:IsUnlocked() then
+    if HHT:IsUnlocked(self) then
         if not f:IsShown() then f:Show() end
         f.body:SetAlpha(1)
         if self.band ~= "Y25" then self.band = "Y25"; self:Paint("Y25") end
@@ -187,7 +187,7 @@ function M:Tick()
     end
 
     local band
-    if HHT:ShouldShow(db.visibility) then band = Range.Band() end
+    if HHT:ShouldShow(db.visibility, self) then band = Range.Band() end
     if not band then
         if f:IsShown() then f:Hide() end
         self.band = nil

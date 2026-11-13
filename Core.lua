@@ -78,7 +78,51 @@ local GENERAL_DEFAULTS = {
     versionNotice = true,
     scale = 1.0,
     alpha = 1.0,
+    theme = "classic",
+    style = "flat",
+    animations = true,
+    snap = true,
+    preview = true,
 }
+
+-- Module defaults plus the keys every module shares.
+local function ModuleDefaults(m)
+    local d = DeepCopy(m.defaults or {})
+    if d.enabled == nil then d.enabled = (m.enabledByDefault ~= false) end
+    if d.scale == nil then d.scale = 1.0 end
+    if d.alpha == nil then d.alpha = 1.0 end
+    if d.onlyCombat == nil then d.onlyCombat = false end
+    if d.textStyle == nil then d.textStyle = "outline" end
+    return d
+end
+
+-- Text flags for fonts inside a module frame: the module's text style (outline, thick outline, plain).
+function HHT.TextFlags(owner)
+    local f, n = owner, 0
+    while f and n < 10 do
+        local info = f.hht
+        if info then
+            local s = info.module.db and info.module.db.textStyle
+            if s == "thick" then return "THICKOUTLINE" elseif s == "plain" then return "" end
+            return "OUTLINE"
+        end
+        f = f.GetParent and f:GetParent() or nil
+        n = n + 1
+    end
+    return "OUTLINE"
+end
+
+function HHT.StyleFont(fs, size, owner)
+    local flags = HHT.TextFlags(owner)
+    local font = HHT.UI.FONT
+    if fs:SetFont(font, size, flags) == false then fs:SetFont(STANDARD_TEXT_FONT, size, flags) end
+    if flags == "" then
+        fs:SetShadowOffset(1, -1)
+        fs:SetShadowColor(0, 0, 0, 0.9)
+    else
+        fs:SetShadowOffset(0, 0)
+    end
+end
 
 -- ---------------------------------------------------------------------------
 -- Modules
@@ -121,8 +165,7 @@ end
 function HHT:ResetModule(m)
     local wasOn = m.enabled
     if wasOn then self:SetEnabled(m, false) end
-    local fresh = DeepCopy(m.defaults or {})
-    fresh.enabled = (m.enabledByDefault ~= false)
+    local fresh = ModuleDefaults(m)
     self.db.mods[m.key] = fresh
     m.db = fresh
     if m.OnReset then m:OnReset() end
@@ -162,8 +205,30 @@ end)
 -- ---------------------------------------------------------------------------
 -- Movable frames
 -- ---------------------------------------------------------------------------
-function HHT:IsUnlocked()
-    return self.db and self.db.general and self.db.general.locked == false
+-- With a module argument it also answers true while that module is previewed or unlocked from its settings page.
+function HHT:IsUnlocked(m)
+    local g = self.db and self.db.general
+    if not g then return g end
+    if g.locked == false then return true end
+    return m ~= nil and (m == self.previewModule or m.moveUnlock == true)
+end
+
+-- Frames may be dragged when everything is unlocked or when this module was unlocked on its own.
+function HHT:CanMove(m)
+    local g = self.db and self.db.general
+    if not g then return false end
+    return g.locked == false or (m ~= nil and m.moveUnlock == true)
+end
+
+-- Shows one module in demo mode (nil ends it). Used while its settings page is open.
+function HHT:SetPreview(m)
+    local old = self.previewModule
+    if old == m then return end
+    self.previewModule = m
+    for _, x in ipairs({ old or false, m or false }) do
+        if x and x.enabled and x.OnLockChanged then x:OnLockChanged(self:IsUnlocked(x)) end
+    end
+    self:ApplyAllLooks()
 end
 
 function HHT:ApplyPosition(frame)
@@ -184,21 +249,24 @@ function HHT:ApplyAllPositions()
 end
 
 function HHT:ApplyLock()
-    local unlocked = self:IsUnlocked()
     local outline = self.db.general.outline
     for _, f in ipairs(self.movables) do
-        f:EnableMouse(unlocked and true or false)
-        if f.hhtOutline then f.hhtOutline:SetShown(unlocked and outline and true or false) end
-        if f.hhtLabel then f.hhtLabel:SetShown(unlocked and outline and true or false) end
+        local can = self:CanMove(f.hht and f.hht.module) and true or false
+        f:EnableMouse(can)
+        if f.hhtOutline then f.hhtOutline:SetShown(can and outline and true or false) end
+        if f.hhtLabel then f.hhtLabel:SetShown(can and outline and true or false) end
     end
     self:EachModule(function(m)
-        if m.enabled and m.OnLockChanged then m:OnLockChanged(unlocked) end
+        if m.enabled and m.OnLockChanged then m:OnLockChanged(self:IsUnlocked(m)) end
     end)
     self:ApplyAllLooks()
 end
 
 function HHT:SetLocked(locked)
     self.db.general.locked = locked and true or false
+    if locked then
+        self:EachModule(function(m) m.moveUnlock = nil end)
+    end
     self:ApplyLock()
     self.Print(locked and self.L("Frames locked.") or self.L("Frames are unlocked. Drag them with the left mouse button."))
 end
@@ -208,13 +276,143 @@ function HHT:ApplyGlobalLook(frame)
     local info = frame.hht
     local ms = info and info.module.db.scale or 1
     local ma = info and info.module.db.alpha or 1
-    local hidden = info and info.module.db.onlyCombat and not self:IsUnlocked() and not self.InCombat()
+    local hidden = info and info.module.db.onlyCombat and not self:IsUnlocked(info.module) and not self.InCombat()
     frame:SetScale((g.scale or 1) * ms)
     frame:SetAlpha(hidden and 0 or (g.alpha or 1) * ma)
 end
 
 function HHT:ApplyAllLooks()
     for _, f in ipairs(self.movables) do self:ApplyGlobalLook(f) end
+end
+
+-- Snapping while dragging: edges, centres and icon centres of the other frames, in UIParent units.
+local SNAP_RANGE = 8
+
+local function AddSnapPoints(f, xs, ys)
+    local ui = UIParent:GetEffectiveScale()
+    local Num = HHT.SafeNumber
+    -- Frame geometry can be a secret value (secure children); such frames are skipped.
+    local function One(r, pad)
+        local gx, gy = r:GetCenter()
+        local cx, cy = Num(gx), Num(gy)
+        local k = Num(r:GetEffectiveScale())
+        local w, h = Num(r:GetWidth()), Num(r:GetHeight())
+        if not (cx and cy and k and w and h) then return false end
+        k = k / ui
+        cx, cy = cx * k, cy * k
+        if pad then
+            local hw, hh = w * k / 2, h * k / 2
+            xs[#xs + 1] = cx - hw; xs[#xs + 1] = cx + hw
+            ys[#ys + 1] = cy - hh; ys[#ys + 1] = cy + hh
+        end
+        xs[#xs + 1] = cx
+        ys[#ys + 1] = cy
+        return true
+    end
+    One(f, true)
+    for _, c in ipairs({ f:GetChildren() }) do
+        local w = Num(c:GetWidth())
+        if w and w >= 10 and w <= 80 and c:IsShown() then One(c, false) end
+    end
+end
+
+local function SnapGuide()
+    local g = HHT.snapGuide
+    if g then return g end
+    g = CreateFrame("Frame", nil, UIParent)
+    g:SetAllPoints(UIParent)
+    g:SetFrameStrata("TOOLTIP")
+    g:Hide()
+    g.v = g:CreateTexture(nil, "OVERLAY")
+    g.v:SetColorTexture(0.67, 0.83, 0.45, 0.85)
+    g.v:SetWidth(1)
+    g.h = g:CreateTexture(nil, "OVERLAY")
+    g.h:SetColorTexture(0.67, 0.83, 0.45, 0.85)
+    g.h:SetHeight(1)
+    HHT.snapGuide = g
+    return g
+end
+
+local function DragUpdate(driver)
+    local frame, d = driver.frame, driver.data
+    local s = UIParent:GetEffectiveScale()
+    local mx, my = GetCursorPosition()
+    local cx, cy = mx / s - d.gx, my / s - d.gy
+    local lineX, lineY
+    if HHT.db.general.snap ~= false and not IsShiftKeyDown() then
+        local bx, by = SNAP_RANGE, SNAP_RANGE
+        local dx, dy
+        for _, o in ipairs(d.ox) do
+            for _, t in ipairs(d.tx) do
+                local diff = t - (cx + o)
+                if math.abs(diff) < bx then bx, dx, lineX = math.abs(diff), diff, t end
+            end
+        end
+        for _, o in ipairs(d.oy) do
+            for _, t in ipairs(d.ty) do
+                local diff = t - (cy + o)
+                if math.abs(diff) < by then by, dy, lineY = math.abs(diff), diff, t end
+            end
+        end
+        if dx then cx = cx + dx end
+        if dy then cy = cy + dy end
+    end
+    local ux, uy = UIParent:GetCenter()
+    local k = frame:GetEffectiveScale() / s
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", (cx - ux) / k, (cy - uy) / k)
+    local g = SnapGuide()
+    g.v:ClearAllPoints()
+    g.h:ClearAllPoints()
+    g.v:SetShown(lineX ~= nil)
+    g.h:SetShown(lineY ~= nil)
+    if lineX then
+        g.v:SetPoint("TOPLEFT", UIParent, "TOPLEFT", lineX, 0)
+        g.v:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", lineX, 0)
+    end
+    if lineY then
+        g.h:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 0, lineY)
+        g.h:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", 0, lineY)
+    end
+    g:Show()
+end
+
+function HHT:BeginDrag(frame)
+    local s = UIParent:GetEffectiveScale()
+    local cx, cy = frame:GetCenter()
+    local k = HHT.SafeNumber(frame:GetEffectiveScale())
+    if not (HHT.SafeNumber(cx) and HHT.SafeNumber(cy) and k) then
+        frame:StartMoving()
+        return
+    end
+    k = k / s
+    cx, cy = cx * k, cy * k
+    local mx, my = GetCursorPosition()
+    local d = { gx = mx / s - cx, gy = my / s - cy, ox = {}, oy = {}, tx = {}, ty = {} }
+    AddSnapPoints(frame, d.ox, d.oy)
+    for i, v in ipairs(d.ox) do d.ox[i] = v - cx end
+    for i, v in ipairs(d.oy) do d.oy[i] = v - cy end
+    local ux, uy = UIParent:GetCenter()
+    d.tx[1], d.ty[1] = ux, uy
+    for _, f in ipairs(self.movables) do
+        if f ~= frame and f:IsVisible() and (HHT.SafeNumber(f:GetAlpha()) or 0) > 0 then AddSnapPoints(f, d.tx, d.ty) end
+    end
+    local driver = self.dragDriver
+    if not driver then
+        driver = CreateFrame("Frame")
+        self.dragDriver = driver
+    end
+    driver.frame, driver.data = frame, d
+    driver:SetScript("OnUpdate", DragUpdate)
+end
+
+function HHT:EndDrag()
+    local driver = self.dragDriver
+    if driver then
+        driver:SetScript("OnUpdate", nil)
+        driver.frame, driver.data = nil, nil
+    end
+    if self.snapGuide then self.snapGuide:Hide() end
 end
 
 -- Registers frame as draggable. label = shown while unlocked.
@@ -224,11 +422,14 @@ function HHT:MakeMovable(frame, m, key, label)
     frame:SetClampedToScreen(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", function(self)
-        if HHT:IsUnlocked() then self:StartMoving() end
+        if HHT:CanMove(m) then HHT:BeginDrag(self) end
     end)
     frame:SetScript("OnDragStop", function(self)
+        HHT:EndDrag()
         self:StopMovingOrSizing()
+        if not self.hht then return end
         local p, _, rp, x, y = self:GetPoint(1)
+        if not p then return end
         m.db.pos = m.db.pos or {}
         m.db.pos[self.hht.key] = { p, rp, math.floor(x + 0.5), math.floor(y + 0.5) }
     end)
@@ -247,9 +448,9 @@ function HHT:MakeMovable(frame, m, key, label)
     self.movables[#self.movables + 1] = frame
     self:ApplyPosition(frame)
     self:ApplyGlobalLook(frame)
-    frame:EnableMouse(self:IsUnlocked() and true or false)
-    o:SetShown(self:IsUnlocked() and self.db.general.outline and true or false)
-    fs:SetShown(self:IsUnlocked() and self.db.general.outline and true or false)
+    frame:EnableMouse(self:CanMove(m) and true or false)
+    o:SetShown(self:CanMove(m) and self.db.general.outline and true or false)
+    fs:SetShown(self:CanMove(m) and self.db.general.outline and true or false)
 end
 
 -- ---------------------------------------------------------------------------
@@ -285,8 +486,8 @@ function HHT.FlushHidden(f)
     end
 end
 
-function HHT:ShouldShow(mode)
-    if self:IsUnlocked() then return true end
+function HHT:ShouldShow(mode, m)
+    if self:IsUnlocked(m) then return true end
     if mode == "always" then return true end
     if mode == "combat" then return self.InCombat() end
     if mode == "target" then return self.HasAttackableTarget() end
@@ -333,17 +534,13 @@ function HHT:InitDB()
     local db = HamingwaysHunterToolsDB
     db.general = db.general or {}
     Fill(db.general, GENERAL_DEFAULTS)
+    if self.UI and self.UI.ApplyTheme then self.UI.ApplyTheme(db.general.theme) end
     db.mods = db.mods or {}
     self.db = db
     self:EachModule(function(m)
         local d = db.mods[m.key]
         if not d then d = {}; db.mods[m.key] = d end
-        local defaults = DeepCopy(m.defaults or {})
-        if defaults.enabled == nil then defaults.enabled = (m.enabledByDefault ~= false) end
-        if defaults.scale == nil then defaults.scale = 1.0 end
-        if defaults.alpha == nil then defaults.alpha = 1.0 end
-        if defaults.onlyCombat == nil then defaults.onlyCombat = false end
-        Fill(d, defaults)
+        Fill(d, ModuleDefaults(m))
         if m.wip then d.enabled = false end
         m.db = d
     end)
@@ -399,6 +596,7 @@ local TESTS = {
     { "arrow", "direction arrow to a rare", function() return HHT.PetWatch and HHT.PetWatch.TestArrow() end },
     { "nearby", "pet ability alert", function() local m = HHT.modules.petnearby; return m and m.enabled and m:Test() end },
     { "train", "pet training hint", function() local m = HHT.modules.pettrain; return m and m.enabled and m:Test() end },
+    { "guide", "level 10 pet guide hint", function() local m = HHT.modules.petguide; return m and m.enabled and m:Test() end },
     { "minimap", "minimap pins around you", function() return HHT.PetMap and HHT.PetMap:TestMinimap() end },
 }
 
@@ -423,6 +621,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.PetDex then HHT.PetDex:Toggle(petSearch ~= "" and petSearch or nil) end
     elseif testWhat then
         HHT.RunTest(testWhat)
+    elseif msg == "guide" then
+        if HHT.PetDex then HHT.PetDex:Open("guide") end
     elseif msg == "petmap" then
         if HHT.PetMap then HHT.PetMap:Debug() end
     elseif msg == "ammo" then
@@ -466,6 +666,9 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.Procs then HHT.Procs:TexPreview() end
     elseif msg == "petinfo" then
         if HHT.PetDex and HHT.PetDex.Inspect then HHT.PetDex.Inspect() end
+    elseif msg == "tranq" then
+        local tm = HHT.modules.tranq
+        if tm and tm.enabled then tm:SetWindow(tm.db.show == false) end
     elseif msg == "lock" then
         HHT:SetLocked(true)
     elseif msg == "unlock" then
@@ -490,6 +693,7 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
             HHT.Print("happiness: C_PetInfo=" .. tostring(c1) .. " global=" .. tostring(g1) .. "/" .. tostring(g2) .. " used=" .. tostring(pm.ReadHappiness()))
         end
         local fm = HHT.modules.feeder
+        if pm and pm.DebugExtras then pm:DebugExtras() end
         if fm and fm.Debug then fm:Debug() end
         local w = HHT.modules.warnings
         if w and w.Collect then

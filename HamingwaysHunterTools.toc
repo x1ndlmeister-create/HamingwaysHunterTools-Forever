@@ -5,7 +5,7 @@
 ## Author: Hamingway
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.0.14
+## Version: 1.1.0
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 
 Widgets.lua
@@ -51,6 +51,7 @@ Modules\AmmoVendors.lua
 Modules\StableMasters.lua
 Modules\FoodVendors.lua
 Modules\Trainers.lua
+Modules\PetGuide.lua
 Modules\MapButton.lua
 Profile.lua
 VersionCheck.lua

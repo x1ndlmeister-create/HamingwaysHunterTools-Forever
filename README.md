@@ -2,7 +2,7 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 23 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 24 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
 
 A richer overview with all pictures is in [Overview.html](Overview.html).
 
@@ -15,8 +15,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | Group | Modules |
 | --- | --- |
 | Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay, Summons |
-| Gear and tools | Ammo, Pet feeder, Macros, Tranq announcer |
-| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint |
+| Gear and tools | Ammo, Pet feeder, Macros, Tranq rotation |
+| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide |
 | Map | Stable masters, Ammo vendors, Food vendors, Trainers, Map button |
 
 ### Combat
@@ -120,11 +120,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Pet abilities with cooldown and auto-cast ring
 - Click the portrait to open the pet database
 - Round or square, size and every bar adjustable
+- Level on the portrait; experience, training points and loyalty switch on and off independently, loyalty can hide at max, bar spacing adjustable
+- Frenzy indicator with adjustable icon size
 
 ![Pet database](images/petdex.png)
 
 **Pet database**
-- Five tabs: Beasts, Families, Abilities, My pet, Stable
+- Six tabs: Beasts, Families, Abilities, My pet, Stable, Guide
+- Guide tab: pick a goal (maximum damage, solo survival, balanced) and get the best families with the beast to tame, a first-pet section with the hunter trainer on the map and a waypoint, and the basics of training and feeding
 - Families tab: diet, damage/health/armor modifier, family abilities and speed per pet family
 - Family, level, attack speed, zone and taught abilities per beast
 - Search by name, family, zone or ability, plus filters
@@ -142,11 +145,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup for rare and wishlist beasts; also close to known spawns
 - Buttons: target, map, arrow, wishlist, pause
 - Direction arrow to the rare beast, adjustable size
+- The popup shows family, level and zone, the family role with health, armor and damage modifiers, attack speed, diet, the abilities the beast teaches (ranks you can still learn in green) and the family abilities
+- Optional 3D model of the beast in the popup
 - Only beasts up to your level, sound, inside dungeons, repeat delay
 
 **Pet ability alerts**
 - Popup when a nearby beast teaches a higher rank your pet can learn
 - For the active pet only, or every pet you have used
+- On entering a zone: a list of all beasts there that give a pet of yours an upgrade; click shows the beast on the map, right-click sets the arrow, Shift-click a waypoint, one button shows all on the map
 
 ![Pet training hint](images/pettrain.png)
 
@@ -154,6 +160,10 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup when your pet can learn ability ranks you already know
 - A Learn button per ability trains the rank right away
 - Abilities can be ignored; display time, sound, test hint and border colour adjustable
+
+**Pet guide**
+- One-time popup when a character reaches level 10, with buttons for the trainer on the map, a waypoint and the Guide tab
+- Test with `/hht test guide`, open the tab with `/hht guide`
 
 ### Map
 
@@ -181,7 +191,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - 13 hunter macros: attack, mark, aspect, trap, melee, feign, kite, growl, tame, track, burst, ammo, stable
 - Shift and Ctrl pick variants, for example other aspects or traps
 
-**Tranq announcer** - announces Tranquilizing Shot to a chat channel of your choice, with your own text and a test button.
+**Tranq rotation** - lists the hunters of your group with their Tranquilizing Shot cooldown. The raid leader or an assistant sets the order and a backup list and sends it to everyone who runs the addon; the raid chat shows who changed it. After a shot the hunter moves to the end, a missed shot marks him red until his cooldown is over, and the next free hunter is always on top. When it is your turn a "you are next to tranq" notice appears. Hunters without the addon are tracked by their visible casts. Optionally only hunters who know the spell are listed. Includes a test mode with fake hunters, plus an announcer that tells a chat channel of your choice about your own shot (own text, test button). `/hht tranq` shows or hides the window.
 
 ### Settings
 
@@ -191,6 +201,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Own scale and opacity per module, plus global values for all
 - Show always, in combat, with a target, or both
 - All bar colours adjustable
+- Icons per row for cooldowns, target debuffs, warnings and summons, so icons can wrap into several rows
+- Colour themes (Bronze, Blue, Graphite), look of icons and bars (Flat, 3D frame, Glass), soft fade-in of windows and popups, optional animations
+- Collapsible sections, icons in the module list, text style per module (outline, thick, plain)
+- Live preview: opening a module's page shows that module with demo data, so changes are visible at once (can be switched off)
+- The settings window remembers its position and reopens after a reload
+- Glass bar texture and smooth bar movement, flash when a cooldown is ready or a warning appears
+- Flash glow strength and size, position of label and time per bar, ammo count and key binding position adjustable
+- Unlock a single module right on its page; frames snap to each other while you move them (Shift = off)
 - Unlock frames, move them with the mouse, lock again
 - Reset positions or single modules
 - Language: automatic, English or German
@@ -205,8 +223,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | Gruppe | Module |
 | --- | --- |
 | Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
-| Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Einlullen-Ansage |
-| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis |
+| Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Tranq-Rotation |
+| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber |
 | Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
 
 ### Kampf
@@ -294,9 +312,12 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Tierfähigkeiten mit Abklingzeit und Automatik-Ring
 - Ein Klick auf das Porträt öffnet die Tierdatenbank
 - Rund oder eckig, Größe und jede Leiste einstellbar
+- Stufe am Porträt; Erfahrung, Trainingspunkte und Loyalität einzeln schaltbar, Loyalität bei Maximum ausblendbar, Balkenabstand einstellbar
+- Raserei-Anzeige mit einstellbarer Symbolgröße
 
 **Tierdatenbank**
-- Fünf Reiter: Tiere, Familien, Fähigkeiten, Mein Begleiter, Stall
+- Sechs Reiter: Tiere, Familien, Fähigkeiten, Mein Begleiter, Stall, Ratgeber
+- Ratgeber-Reiter: Ziel wählen (maximaler Schaden, Solo-Überleben, ausgewogen) und die besten Familien mit dem passenden Tier bekommen, dazu ein Bereich für das erste Tier mit Jäger-Lehrer auf der Karte und Wegpunkt sowie die Grundlagen zu Training und Füttern
 - Familien-Reiter: Nahrung, Schaden-, Lebens- und Rüstungsmodifikator, Familienfähigkeiten und Tempo je Tierfamilie
 - Familie, Stufe, Angriffstempo, Zone und gelehrte Fähigkeiten je Tier
 - Suche nach Name, Familie, Zone oder Fähigkeit, dazu Filter
@@ -312,16 +333,23 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Popup bei seltenen Tieren und Wunschlisten-Tieren; auch in der Nähe bekannter Spawns
 - Knöpfe: anvisieren, Karte, Pfeil, Wunschliste, Pause
 - Richtungspfeil zum seltenen Tier, Größe einstellbar
+- Das Popup zeigt Familie, Stufe und Zone, die Familienrolle mit Leben-, Rüstungs- und Schadensmodifikator, Angriffstempo, Nahrung, die gelehrten Fähigkeiten (lernbare neue Ränge grün) und die Familienfähigkeiten
+- Optional: 3D-Modell des Tiers im Popup
 - Nur Tiere bis zu deiner Stufe, Ton, auch in Dungeons, Wiederholungs-Pause
 
 **Fähigkeits-Hinweise**
 - Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann
 - Nur für das aktive Tier oder für jedes Tier, das du benutzt hast
+- Beim Betreten einer Zone: Liste aller Tiere dort, die einem deiner Tiere ein Upgrade geben; Klick zeigt das Tier auf der Karte, Rechtsklick setzt den Pfeil, Shift-Klick einen Wegpunkt, ein Knopf zeigt alle auf der Karte
 
 **Begleiter-Training-Hinweis**
 - Popup, wenn dein Tier Fähigkeitsränge lernen kann, die du schon kennst
 - Ein Lernen-Knopf je Fähigkeit trainiert den Rang direkt
 - Fähigkeiten lassen sich ignorieren; Anzeigedauer, Ton, Testhinweis und Rahmenfarbe einstellbar
+
+**Tierratgeber**
+- Einmaliges Popup, wenn ein Charakter Stufe 10 erreicht, mit Knöpfen für den Lehrer auf der Karte, einen Wegpunkt und den Ratgeber-Reiter
+- Testen mit `/hht test guide`, Reiter öffnen mit `/hht guide`
 
 ### Karte
 
@@ -343,7 +371,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - 13 Jäger-Makros: Angriff, Mal, Aspekt, Falle, Nahkampf, Totstellen, Kiten, Knurren, Zähmen, Spurensuche, Burst, Munition, Stall
 - Umschalt und Strg wählen Varianten, zum Beispiel andere Aspekte oder Fallen
 
-**Einlullen-Ansage** - meldet den Einlullenden Schuss in einen Chatkanal deiner Wahl, mit eigenem Text und Testknopf.
+**Tranq-Rotation** - listet die Jäger deiner Gruppe mit ihrer Abklingzeit des Einlullenden Schusses. Schlachtzugsleiter oder Assistenten legen Reihenfolge und Backup fest und senden sie an alle mit dem Addon; der Raid-Chat zeigt, wer sie geändert hat. Nach einem Schuss rückt der Jäger ans Ende, ein Fehlschuss markiert ihn rot bis zum Ende der Abklingzeit, und der nächste freie Jäger steht immer oben. Bist du dran, erscheint der Hinweis "Du bist mit Tranq dran". Jäger ohne Addon werden über ihre sichtbaren Zauber erkannt. Auf Wunsch werden nur Jäger gelistet, die den Zauber kennen. Mit Testmodus (falsche Jäger) und einem Ansager, der deinen eigenen Schuss in einen Chatkanal deiner Wahl meldet (eigener Text, Testknopf). `/hht tranq` blendet das Fenster ein oder aus.
 
 ### Einstellungen
 
@@ -351,7 +379,10 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Eigene Größe und Transparenz je Modul, dazu global für alle
 - Anzeige immer, im Kampf, mit Ziel oder beides
 - Alle Farben der Balken wählbar
+- Symbole pro Reihe für Abklingzeiten, Ziel-Debuffs, Warnungen und Beschwörungen, damit Symbole in mehrere Reihen umbrechen
 - Rahmen entsperren, mit der Maus verschieben, wieder sperren
+- Einzelne Module direkt auf ihrer Seite entsperren; Rahmen rasten beim Verschieben aneinander ein (Shift = aus)
+- Stärke und Größe des Aufblitzens sowie Position von Beschriftung, Restzeit, Munitionsanzahl und Tastenbelegung einstellbar
 - Position oder einzelne Module zurücksetzen
 - Sprache: automatisch, Englisch oder Deutsch
 - Einstellungen als eine Textzeile exportieren und importieren
@@ -371,6 +402,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | `/hht reset` | Reset the positions |
 | `/hht petinfo` | Print the active pet's abilities |
 | `/hht pets` / `/hht pets name` | Open the pet database or search it |
+| `/hht guide` | Open the pet guide |
 | `/hht ammo` / `/hht ammo go` | Show ammo vendors on the map or set a waypoint to the nearest |
 | `/hht stable` / `/hht stable go` | Show stable masters on the map or set a waypoint to the nearest |
 | `/hht food` / `/hht food go` | Show food vendors for your pet on the map or set a waypoint to the nearest |

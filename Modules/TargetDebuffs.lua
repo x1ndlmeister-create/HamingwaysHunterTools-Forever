@@ -121,6 +121,7 @@ function AuraBar:StyleButton(e)
     e.border:SetShown(bs > 0)
     e.border:SetColorTexture(st.color[1], st.color[2], st.color[3], st.borderAlpha)
     SetRound(e, st.shape == "round")
+    if e.fin then Icon.ApplyFinish(e.fin, s, st.shape == "round", bs) end
 end
 
 function AuraBar:StyleAll()
@@ -147,6 +148,7 @@ function AuraBar:InitButton(button)
     count:SetPoint("BOTTOMRIGHT", -1, 2)
     button:SetApplicationCount(count, {})
     local e = { button = button, border = border, tex = tex, cd = cd }
+    e.fin = Icon.NewFinish(button, border)
     self.buttons[#self.buttons + 1] = e
     self:StyleButton(e)
 end
@@ -164,7 +166,7 @@ function AuraBar:NewContainer(unit)
 end
 
 -- Adds the group once, afterwards only re-applies its settings. The unit is fixed per key.
-function AuraBar:Setup(key, unit, filter, candidate, count, grow, x, y)
+function AuraBar:Setup(key, unit, filter, candidate, count, grow, x, y, perLine)
     if not self.engine then return end
     local container = self.conts[key] or self:NewContainer(unit)
     if not container then return end
@@ -189,7 +191,7 @@ function AuraBar:Setup(key, unit, filter, candidate, count, grow, x, y)
         self:Guard("filter:" .. key, container.SetAuraGroupFilterString, container, key, filter)
         self:Guard("cand:" .. key, container.SetAuraGroupCandidateFilters, container, key, candidate)
     end
-    local wrap = count * (s + sp)
+    local wrap = (perLine or count) * (s + sp)
     if not self:Guard("flow:" .. key, ApplyFlow, container, grow, wrap) then
         self.errors["flow:" .. key] = self.errors["flow:" .. key] or "flow enums missing"
     end
@@ -247,7 +249,7 @@ local M = HHT:NewModule("debuffs", {
     desc = "Your Serpent Sting and other debuffs on the target, with timer, also in combat.",
     positions = { main = { "CENTER", "CENTER", 0, 60 } },
     defaults = {
-        size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 6, grow = "right",
+        size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 6, grow = "right", perRow = 20,
         showRow = true, max = 5, filter = "mine", visibility = "target", blink = true,
         entries = {}, custom = {},
         colors = { border = { 0.55, 0.42, 0.20 } },
@@ -361,14 +363,27 @@ function M:Layout()
     local s, sp, grow = db.size, db.spacing, db.grow
     local active = self:Active()
     local nRow = db.showRow and math.min(db.max, MAXROW) or 0
-    local n = math.max(1, #active + nRow)
-    local span = n * s + (n - 1) * sp
-    if grow == "up" then f:SetSize(s, span) else f:SetSize(span, s) end
+    local n = #active + nRow
+    local per = math.max(1, db.perRow or 20)
+    local step = s + sp
+    -- Tracked slots fill the first lines; the other debuffs continue the line when everything fits, else start a new line.
+    local oneLine = n <= per
+    local trackedLines = math.ceil(#active / per)
+    local cols, lines
+    if oneLine then
+        cols, lines = math.max(1, n), 1
+    else
+        cols = math.max(math.min(#active, per), math.min(nRow, per))
+        lines = trackedLines + math.ceil(nRow / per)
+    end
+    local across, along = cols * step - sp, lines * step - sp
+    if grow == "up" then f:SetSize(along, across) else f:SetSize(across, along) end
 
     local anchor = (FLOW[grow] or FLOW.right)[4]
-    local function Offset(i)
-        local off = i * (s + sp)
-        return (grow == "right" and off) or (grow == "left" and -off) or 0, grow == "up" and off or 0
+    local function Offset(col, line)
+        local a, b = col * step, line * step
+        if grow == "up" then return b, a end
+        return grow == "left" and -a or a, b
     end
 
     local excl = {}
@@ -377,7 +392,7 @@ function M:Layout()
         self.slotEntry[i] = e
         local ph = self.phs[i]
         if e then
-            local x, y = Offset(i - 1)
+            local x, y = Offset((i - 1) % per, math.floor((i - 1) / per))
             ph:Style(s, db.shape, 0, 0, false)
             ph:ClearAllPoints()
             ph:SetPoint(anchor, f, anchor, x, y)
@@ -390,8 +405,9 @@ function M:Layout()
     end
 
     if nRow > 0 then
-        local rx, ry = Offset(#active)
-        bar:Setup(ROW_KEY, "target", db.filter == "all" and "HARMFUL" or "HARMFUL|PLAYER", { excludeSpellIDs = excl }, nRow, grow, rx, ry)
+        local rx, ry
+        if oneLine then rx, ry = Offset(#active, 0) else rx, ry = Offset(0, trackedLines) end
+        bar:Setup(ROW_KEY, "target", db.filter == "all" and "HARMFUL" or "HARMFUL|PLAYER", { excludeSpellIDs = excl }, nRow, grow, rx, ry, per)
     else
         bar:Hide(ROW_KEY)
     end
@@ -426,8 +442,8 @@ end
 function M:Tick()
     local f, db = self.frame, self.db
     if not f then return end
-    local unlocked = HHT:IsUnlocked()
-    local show = self.bar.engine and (unlocked or (HHT.HasAttackableTarget() and HHT:ShouldShow(db.visibility)))
+    local unlocked = HHT:IsUnlocked(self)
+    local show = self.bar.engine and (unlocked or (HHT.HasAttackableTarget() and HHT:ShouldShow(db.visibility, self)))
     local g = HHT.db.general
     f:SetAlpha(show and (g.alpha or 1) * (db.alpha or 1) or 0)
 
@@ -498,6 +514,7 @@ local function BuildTrackList(m, form)
         row.icon:SetSize(18, 18)
         row.icon:SetPoint("LEFT", row, "LEFT", 24, 0)
         row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        HHT.Icon.Attach(row.icon)
         row.text = UI.Text(row, "", 12)
         row.text:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
         row.text:SetWidth(150)
@@ -591,6 +608,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Spacing"), db, "spacing", 0, 40, 1)
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") } })
+    form:Stepper(L("Icons per row"), db, "perRow", 1, 20, 1)
     form:Header(L("Behavior"))
     form:Check(L("Blink the red placeholder when a tracked debuff is missing"), db, "blink")
     form:Check(L("Show my other debuffs"), db, "showRow")

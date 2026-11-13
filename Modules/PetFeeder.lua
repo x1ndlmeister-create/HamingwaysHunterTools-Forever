@@ -208,7 +208,7 @@ function M:Layout()
     f:SetSize(db.size, db.size)
     f.icon.label:SetWidth(db.size + 40)
     if not (InCombatLockdown and InCombatLockdown()) then
-        self.button:EnableMouse(not HHT:IsUnlocked())
+        self.button:EnableMouse(not HHT:IsUnlocked(self))
     end
     HHT:ApplyGlobalLook(f)
 end
@@ -347,7 +347,7 @@ function M:Tick()
     self.current = self:Pick()
     self:SyncSecure()
 
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
     local okE, ex = pcall(UnitExists, "pet")
     local exists = okE and not HHT.IsSecret(ex) and ex and true or false
     local dead = exists and HHT.SafeBool(UnitIsDead, "pet") == true

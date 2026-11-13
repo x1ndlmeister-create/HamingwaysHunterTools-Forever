@@ -296,7 +296,7 @@ function M:Layout()
         end
     end
     self:ApplyArts()
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
     for i = 1, MAXP do
         local e, t = db.entries[i], self.pvs[i]
         if (e and not e.off and (e.preview or unlocked)) or (i == 1 and unlocked) then

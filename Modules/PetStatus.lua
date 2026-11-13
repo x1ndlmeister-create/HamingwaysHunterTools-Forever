@@ -22,8 +22,10 @@ HHT:AddGerman({
     ["Show level"] = "Level zeigen",
     ["Show experience bar"] = "Erfahrungsbalken zeigen",
     ["Show loyalty bar"] = "Loyalitaetsbalken zeigen",
+    ["Hide loyalty at max"] = "Loyalitaet bei Maximum ausblenden",
     ["Show training points"] = "Trainingspunkte zeigen",
     ["Small bar height"] = "Hoehe der kleinen Balken",
+    ["Bar spacing"] = "Balkenabstand",
     ["Experience color"] = "Farbe Erfahrung",
     ["Training: %d"] = "Training: %d",
     ["Loyalty"] = "Loyalitaet",
@@ -49,9 +51,9 @@ local M = HHT:NewModule("pet", {
     positions = { main = { "CENTER", "CENTER", -260, -170 } },
     defaults = {
         shape = "round", iconSize = 34, width = 150, height = 18, bgAlpha = 0.85,
-        barTexture = "blizzard", bevel = 0.6, border = true,
+        barTexture = "blizzard", bevel = 0.6, border = true, smooth = true,
         showLabel = true, showTime = true, showHappiness = true, hideNoPet = true,
-        showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10,
+        showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10, barSpacing = 2,
         showAbilities = true, showFocus = true, showFocusLabel = true, showFocusValue = true, abilitySize = 18, abilityNumbers = true, abilityBorder = true, showAutocast = true,
         showFrenzy = true, frenzySize = 26,
         colors = {
@@ -118,6 +120,8 @@ function M:Build()
         local r, g, b = HHT.Col(self.db, "edge")
         return { size = self.db.frenzySize, spacing = 0, shape = self.db.shape, borderSize = 1, borderAlpha = 1, color = { r, g, b } }
     end)
+    f.frenzyDemo = Icon.New(f)
+    f.frenzyDemo:Hide()
     HHT:MakeMovable(f, self, "main", L("Pet status"))
     self:Layout()
 end
@@ -151,7 +155,7 @@ function M:Layout()
     f.portrait:ClearAllPoints()
     f.portrait:SetBorderColor(HHT.Col(db, "edge"))
     local pdx = HHT.modules.petdex
-    local click = not HHT:IsUnlocked() and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick and true or false
+    local click = not HHT:IsUnlocked(self) and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick and true or false
     f.portrait:EnableMouse(click)
     if not f.portrait.petdexHooked then
         f.portrait.petdexHooked = true
@@ -160,19 +164,23 @@ function M:Layout()
         end)
     end
     Bar.Apply(f.bar, db, "health")
-    local gap = 2
+    local gap = db.barSpacing or 2
     local totalH = db.height
     if db.showFocus then totalH = totalH + gap + db.subHeight end
-    if db.showXp then totalH = totalH + gap + db.subHeight end
-    if db.showLoyalty then totalH = totalH + gap + db.subHeight end
+    if db.showXp or db.showTraining then totalH = totalH + gap + db.subHeight end
+    local showLoy = db.showLoyalty and not self.loyHidden
+    if showLoy then totalH = totalH + gap + db.subHeight end
     local fh = math.max(s, totalH)
     f.portrait:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(fh - s) / 2)
     f.bar:ClearAllPoints()
     f.bar:SetPoint("TOPLEFT", f, "TOPLEFT", s + 6, -(fh - totalH) / 2)
     local prev = f.bar
-    local subXp = setmetatable({ height = db.subHeight, showLabel = db.showTraining, showTime = true }, { __index = db })
+    local xpOnly = not db.showXp
+    local subXp = setmetatable({ height = db.subHeight, showLabel = db.showTraining, showTime = true,
+        bgAlpha = xpOnly and 0 or db.bgAlpha, border = (not xpOnly) and db.border }, { __index = db })
     local subLoy = setmetatable({ height = db.subHeight, showLabel = true, showTime = true }, { __index = db })
     Bar.Apply(f.xp, subXp, "xp")
+    if xpOnly then f.xp.shine:Hide(); f.xp.shade:Hide(); f.xp.lit:Hide() end
     Bar.Apply(f.loy, subLoy, nil)
     f.focus:ClearAllPoints()
     Bar.Apply(f.focus, setmetatable({ height = db.subHeight, showLabel = db.showFocusLabel, showTime = db.showFocusValue }, { __index = db }), "focus")
@@ -185,14 +193,14 @@ function M:Layout()
     end
     f.xp:ClearAllPoints()
     f.loy:ClearAllPoints()
-    if db.showXp then
+    if db.showXp or db.showTraining then
         f.xp:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -gap)
         f.xp:Show()
         prev = f.xp
     else
         f.xp:Hide()
     end
-    if db.showLoyalty then
+    if showLoy then
         f.loy:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -gap)
         f.loy:Show()
         prev = f.loy
@@ -229,6 +237,11 @@ function M:Layout()
         end
     end
     f:SetSize(w, fullH)
+    local d = f.frenzyDemo
+    d:Style(db.frenzySize, db.shape, 1, 1, false)
+    d:SetBorderColor(HHT.Col(db, "edge"))
+    d:ClearAllPoints()
+    d:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
     HHT:ApplyGlobalLook(f)
 end
 
@@ -286,18 +299,33 @@ function M:Tick()
     local f = self.frame
     if not f then return end
     local db = self.db
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
     local bar = f.bar
 
     local ok, ex = pcall(UnitExists, "pet")
     local exists = ok and not HHT.IsSecret(ex) and ex and true or false
 
+    -- Frenzy comes from the real pet buff, so the preview shows a stand-in icon.
+    local demo = f.frenzyDemo
+    local showDemo = unlocked and not exists and db.showFrenzy and true or false
+    if demo:IsShown() ~= showDemo then
+        if showDemo then
+            local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(19615))
+                or (GetSpellTexture and GetSpellTexture(19615)) or "Interface\\Icons\\INV_Misc_QuestionMark"
+            demo:SetIcon(tex)
+        end
+        demo:SetShown(showDemo)
+    end
     if unlocked and not exists then
         if not f:IsShown() then f:Show() end
         bar.bar:SetMinMaxValues(0, 1)
         bar.bar:SetValue(0.7)
         bar.bar:SetStatusBarColor(HHT.Col(db, "health"))
+        local okP, pl = pcall(UnitLevel, "pet")
+        pl = okP and HHT.SafeNumber(pl) or nil
+        if not (pl and pl > 0) then pl = 60 end
         bar.label:SetText(L("Pet"))
+        f.portrait.count:SetText(db.showLevel and tostring(pl) or "")
         bar.time:SetText("70%")
         f.portrait:SetIcon(HHT.Spells.Resolve("@callPet").icon)
         f.happy.tex:SetTexCoord(unpack(HAPPY_COORDS[3]))
@@ -316,6 +344,7 @@ function M:Tick()
         bar.bar:SetValue(0)
         bar.label:SetText(L("No pet"))
         bar.time:SetText("")
+        f.portrait.count:SetText("")
         f.happy:Hide()
         f.xp:Hide()
         f.loy:Hide()
@@ -338,8 +367,17 @@ function M:Tick()
     bar.label:SetText(ReadName())
     if db.showLevel then
         local okL, lv = pcall(UnitLevel, "pet")
-        lv = okL and HHT.SafeNumber(lv) or nil
-        if lv and lv > 0 then bar.label:SetText(ReadName() .. "  " .. string.format(L("Lv %d"), lv)) end
+        local num = okL and HHT.SafeNumber(lv) or nil
+        if num and num > 0 then
+            f.portrait.count:SetText(tostring(num))
+        elseif okL and lv ~= nil then
+            -- a secret level cannot be compared, but it may still be formatted
+            if not pcall(f.portrait.count.SetFormattedText, f.portrait.count, "%d", lv) then f.portrait.count:SetText("") end
+        else
+            f.portrait.count:SetText("")
+        end
+    else
+        f.portrait.count:SetText("")
     end
 
     if dead then
@@ -436,6 +474,10 @@ function M:Abilities(preview)
     end
 end
 
+local LOYALTY_NAMES = {
+    rebellious = 1, unruly = 2, submissive = 3, dependable = 4, faithful = 5, ["best friend"] = 6,
+}
+
 local LOYALTY_COLORS = {
     { 0.85, 0.08, 0.08 }, { 1.00, 0.30, 0.22 }, { 1.00, 0.50, 0.08 },
     { 1.00, 0.82, 0.08 }, { 0.55, 0.85, 0.18 }, { 0.12, 0.72, 0.20 },
@@ -459,13 +501,17 @@ function M:Extras(preview)
                 pcall(f.focus.bar.SetMinMaxValues, f.focus.bar, 0, mx)
                 pcall(f.focus.bar.SetValue, f.focus.bar, cur)
                 local rc = HHT.SafeNumber(cur)
-                f.focus.time:SetText(rc and tostring(rc) or "")
+                if rc then
+                    f.focus.time:SetText(tostring(rc))
+                elseif not pcall(f.focus.time.SetFormattedText, f.focus.time, "%d", cur) then
+                    f.focus.time:SetText("")
+                end
             else
                 f.focus:Hide()
             end
         end
     end
-    if db.showXp then
+    if db.showXp or db.showTraining then
         local cur, mx, tp
         if preview then cur, mx, tp = 60, 100, 4 else
             local a, b = PetCall("GetPetExperience")
@@ -474,6 +520,8 @@ function M:Extras(preview)
             total, spent = HHT.SafeNumber(total), HHT.SafeNumber(spent)
             if total then tp = total - (spent or 0) end
         end
+        if not db.showXp then cur, mx = nil, nil end
+        if not db.showTraining then tp = nil end
         if cur or tp then
             f.xp:Show()
             f.xp.bar:SetMinMaxValues(0, math.max(mx or 1, 1))
@@ -485,21 +533,62 @@ function M:Extras(preview)
         end
     end
     if db.showLoyalty then
-        local level
+        local level, rawText
         if preview then level = 4 else
             local s = PetCall("GetPetLoyalty")
-            if type(s) == "string" and not HHT.IsSecret(s) then level = tonumber(s:match("(%d+)")) end
+            if type(s) == "string" and s ~= "" and not HHT.IsSecret(s) then
+                rawText = s
+                level = tonumber(s:match("(%d+)"))
+                if not level then
+                    local low = s:lower()
+                    for name, n in pairs(LOYALTY_NAMES) do
+                        if low:find(name, 1, true) then level = n break end
+                    end
+                end
+            end
         end
-        if level and level > 0 and LOYALTY_COLORS[level] then
+        local hideMax = db.hideLoyaltyMax and (preview or (level and level >= 6)) and true or false
+        if (self.loyHidden or false) ~= hideMax then
+            self.loyHidden = hideMax
+            self:Layout()
+        end
+        if hideMax then
+            f.loy:Hide()
+        elseif level and level > 0 and LOYALTY_COLORS[level] then
             f.loy:Show()
             f.loy.bar:SetMinMaxValues(0, 6)
             f.loy.bar:SetValue(level)
             f.loy.bar:SetStatusBarColor(unpack(LOYALTY_COLORS[level]))
             f.loy.label:SetText(L("Loyalty"))
             f.loy.time:SetText(level .. "/6")
+        elseif rawText then
+            -- text without a readable level: show it instead of hiding the row
+            f.loy:Show()
+            f.loy.bar:SetMinMaxValues(0, 6)
+            f.loy.bar:SetValue(0)
+            f.loy.label:SetText(L("Loyalty"))
+            f.loy.time:SetText(rawText)
         else
             f.loy:Hide()
         end
+    end
+end
+
+-- /hht debug: raw pet values, to see what this client returns.
+function M:DebugExtras()
+    local function S(...)
+        local t = {}
+        for i = 1, select("#", ...) do
+            local v = select(i, ...)
+            t[#t + 1] = HHT.IsSecret(v) and "secret" or tostring(v)
+        end
+        return table.concat(t, "/")
+    end
+    HHT.Print("pet level=" .. S(pcall(UnitLevel, "pet")))
+    for _, name in ipairs({ "GetPetExperience", "GetPetTrainingPoints", "GetPetLoyalty" }) do
+        local c, g = C_PetInfo and C_PetInfo[name], _G[name]
+        HHT.Print(name .. ": C_PetInfo=" .. (type(c) == "function" and S(pcall(c)) or "-")
+            .. " global=" .. (type(g) == "function" and S(pcall(g)) or "-"))
     end
 end
 
@@ -523,7 +612,9 @@ function M:BuildOptions(form)
     form:Check(L("Show experience bar"), db, "showXp")
     form:Check(L("Show training points"), db, "showTraining")
     form:Check(L("Show loyalty bar"), db, "showLoyalty")
+    form:Check(L("Hide loyalty at max"), db, "hideLoyaltyMax")
     form:Stepper(L("Small bar height"), db, "subHeight", 6, 20, 1)
+    form:Stepper(L("Bar spacing"), db, "barSpacing", 0, 12, 1)
     form:Check(L("Show pet abilities"), db, "showAbilities")
     form:Stepper(L("Ability icon size"), db, "abilitySize", 10, 48, 2)
     form:Check(L("Show cooldown numbers"), db, "abilityNumbers")
@@ -531,6 +622,7 @@ function M:BuildOptions(form)
     form:Check(L("Show autocast state"), db, "showAutocast")
     form:Check(L("Show border"), db, "border")
     Bar.AddOptions(form, db)
+    Bar.AddSmooth(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Hide when no pet"), db, "hideNoPet")
     form:Header(L("Colors"))

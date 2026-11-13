@@ -4,6 +4,7 @@ local L, UI, Icon = HHT.L, HHT.UI, HHT.Icon
 
 HHT:AddGerman({
     ["Summons"] = "Beschwoerungen",
+    ["Summon Hawk"] = "Habicht beschwoeren",
     ["Active summons such as Summon Hawk with their remaining time. The default UI shows them under the player frame; they are not buffs."] =
         "Aktive Beschwoerungen wie Habicht beschwoeren mit ihrer Restzeit. Das Standard-UI zeigt sie unter dem Spielerrahmen, sie sind keine Buffs.",
     ["Show names"] = "Namen zeigen",
@@ -16,7 +17,7 @@ local M = HHT:NewModule("summons", {
     desc = "Active summons such as Summon Hawk with their remaining time. The default UI shows them under the player frame; they are not buffs.",
     positions = { main = { "CENTER", "CENTER", -200, -140 } },
     defaults = {
-        size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 4,
+        size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 4, perRow = 4,
         grow = "right", visibility = "always", numbers = true, names = false,
         colors = { border = { 0.67, 0.83, 0.45 } },
     },
@@ -24,7 +25,7 @@ local M = HHT:NewModule("summons", {
 HHT.Summons = M
 
 local MAXS = MAX_TOTEMS or 4
-local SAMPLE = "Interface\\Icons\\INV_Misc_QuestionMark"
+local HAWK = "Interface\\Icons\\Spell_Nature_RavenForm"
 
 local function IsSecret(v)
     return issecretvalue and issecretvalue(v) or false
@@ -105,16 +106,18 @@ function M:OnLockChanged() self.styled = false end
 function M:Place(ic, idx)
     local db = self.db
     local step = db.size + db.spacing
+    local per = math.max(1, db.perRow or 4)
+    local along, across = idx % per, math.floor(idx / per)
     local f = self.frame
     ic:ClearAllPoints()
     if db.grow == "right" then
-        ic:SetPoint("TOPLEFT", f, "TOPLEFT", idx * step, 0)
+        ic:SetPoint("TOPLEFT", f, "TOPLEFT", along * step, -across * step)
     elseif db.grow == "left" then
-        ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -idx * step, 0)
+        ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -along * step, -across * step)
     elseif db.grow == "down" then
-        ic:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -idx * step)
+        ic:SetPoint("TOPLEFT", f, "TOPLEFT", across * step, -along * step)
     else
-        ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, idx * step)
+        ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", across * step, along * step)
     end
 end
 
@@ -122,7 +125,7 @@ function M:Tick()
     local f = self.frame
     if not f then return end
     local db = self.db
-    local show = HHT:ShouldShow(db.visibility)
+    local show = HHT:ShouldShow(db.visibility, self)
     if f:IsShown() ~= show then f:SetShown(show) end
     if not show then return end
 
@@ -158,8 +161,11 @@ function M:Tick()
         self.order = {}
         for _, r in ipairs(plain) do self.order[#self.order + 1] = r.idx end
     end
-    if #list == 0 and HHT:IsUnlocked() then
-        list[1] = { name = L("Summons"), icon = SAMPLE }
+    if #list == 0 and HHT:IsUnlocked(self) then
+        -- preview: two hawks with a frozen remaining time of 12 s and 5 s
+        local now = GetTime()
+        list[1] = { name = L("Summon Hawk"), icon = HAWK, start = now - 48, dur = 60 }
+        list[2] = { name = L("Summon Hawk"), icon = HAWK, start = now - 55, dur = 60 }
     end
 
     local restyle = not self.styled
@@ -231,4 +237,5 @@ function M:BuildOptions(form)
     form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") }, { "down", L("Down") } })
+    form:Stepper(L("Icons per row"), db, "perRow", 1, 4, 1)
 end

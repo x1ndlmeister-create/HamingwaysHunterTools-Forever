@@ -40,7 +40,7 @@ local M = HHT:NewModule("warnings", {
     desc = "Icon warnings for missing aspect, Trueshot Aura, Hunter's Mark and pet.",
     positions = { main = { "CENTER", "CENTER", 0, 120 } },
     defaults = {
-        size = 48, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 10, grow = "right",
+        size = 48, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 10, grow = "right", perRow = 8,
         blink = true, sound = false, showText = true, hideInCombat = false, clickCast = true,
         aspectWarn = true, aspectWrong = true, aspectShow = false, aspectMain = "aspectHawk",
         trueshotWarn = true,
@@ -152,13 +152,13 @@ function M:ApplyClick(ic, spell)
         b:SetAttribute("spell1", spell)
         b.spell = spell
     end
-    h:SetShown(self.db.clickCast and not HHT:IsUnlocked() and spell ~= nil and b.spell == spell)
+    h:SetShown(self.db.clickCast and not HHT:IsUnlocked(self) and spell ~= nil and b.spell == spell)
 end
 
 function M:Collect()
     local db = self.db
     local list = {}
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
 
     if unlocked then
         Add(list, "aspect", S.Resolve("@" .. db.aspectMain).icon, L("No aspect"), true, S.Resolve("@" .. db.aspectMain).name)
@@ -265,6 +265,7 @@ function M:Tick()
     local s, sp = db.size, db.spacing
     f:SetSize(s, s)
     local used = 0
+    local prevKeys, nowKeys = self.prevKeys, {}
     for i, e in ipairs(list) do
         local ic = self.icons[i]
         if not ic then ic = Icon.New(f); self.icons[i] = ic end
@@ -279,16 +280,20 @@ function M:Tick()
         ic:SetBlink(e.warn and db.blink)
         HHT.Keys.Apply(ic, db, e.spell)
         self:ApplyClick(ic, e.spell)
-        local step = (s + sp) * (i - 1)
+        local per = math.max(1, db.perRow or 8)
+        local along, across = ((i - 1) % per) * (s + sp), math.floor((i - 1) / per) * (s + sp)
         ic:ClearAllPoints()
-        if db.grow == "right" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", step, 0)
-        elseif db.grow == "left" then ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -step, 0)
-        elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -step)
-        else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, step) end
+        if db.grow == "right" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", along, -across)
+        elseif db.grow == "left" then ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -along, -across)
+        elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", across, -along)
+        else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", across, along) end
         ic:SetAlpha(1)
         ic:Show()
+        nowKeys[e.key] = true
+        if prevKeys and not prevKeys[e.key] then ic:Flash() end
         used = i
     end
+    self.prevKeys = nowKeys
     for i = used + 1, #self.icons do
         local ic = self.icons[i]
         ic:SetBlink(false)
@@ -298,7 +303,7 @@ function M:Tick()
 
     local warns = 0
     for _, e in ipairs(list) do if e.warn then warns = warns + 1 end end
-    if db.sound and warns > self.lastWarnCount and not HHT:IsUnlocked() then
+    if db.sound and warns > self.lastWarnCount and not HHT:IsUnlocked(self) then
         pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
     end
     self.lastWarnCount = warns
@@ -314,6 +319,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Spacing"), db, "spacing", 0, 40, 1)
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") }, { "down", L("Down") } })
+    form:Stepper(L("Icons per row"), db, "perRow", 1, 8, 1)
     form:Check(L("Show text under icons"), db, "showText")
     form:Check(L("Blink warnings"), db, "blink")
     form:Check(L("Play a sound for new warnings"), db, "sound")

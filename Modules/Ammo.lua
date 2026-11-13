@@ -22,6 +22,9 @@ HHT:AddGerman({
     ["Low color"] = "Farbe wenig",
     ["Normal color"] = "Farbe normal",
     ["Show count text"] = "Anzahl zeigen",
+    ["Count position"] = "Position der Anzahl",
+    ["Below the icon"] = "Unter dem Icon",
+    ["In the icon"] = "Im Icon",
     ["Click an ammo icon to choose and equip other ammo."] = "Klick auf ein Munitionssymbol: andere Munition waehlen und anlegen.",
     ["Equipped"] = "Angelegt",
     ["No ammo of this type"] = "Keine Munition dieser Art",
@@ -35,7 +38,7 @@ local M = HHT:NewModule("ammo", {
     positions = { main = { "CENTER", "CENTER", 150, -170 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 8, grow = "right",
-        visibility = "always", mode = "needed", countMode = "equipped", showText = true, blink = true, sound = false,
+        visibility = "always", mode = "needed", countMode = "equipped", countPos = "below", showText = true, blink = true, sound = false,
         low = 200, reminder = true, reminderBelow = 400, onlyLow = false,
         colors = {
             normal = { 0.67, 0.83, 0.45 },
@@ -285,8 +288,8 @@ function M:Tick()
         self:Remind()
     end
 
-    local unlocked = HHT:IsUnlocked()
-    local show = HHT:ShouldShow(db.visibility)
+    local unlocked = HHT:IsUnlocked(self)
+    local show = HHT:ShouldShow(db.visibility, self)
     local list = {}
     if show then
         for _, kind in ipairs(KINDS) do
@@ -301,7 +304,7 @@ function M:Tick()
     if f:IsShown() ~= (#list > 0) then f:SetShown(#list > 0) end
 
     local isLow = false
-    local sig = { tostring(db.low), tostring(db.onlyLow) }
+    local sig = { tostring(db.low), tostring(db.onlyLow), tostring(db.countPos) }
     for _, e in ipairs(list) do
         sig[#sig + 1] = e.kind .. e.n .. tostring(e.icon)
         if e.n < db.low and (e.kind == self.needs or not self.needs) then isLow = true end
@@ -338,8 +341,13 @@ function M:Tick()
         ic:SetBorderColor(HHT.Col(db, low and "low" or "normal"))
         ic:SetDesaturated(e.n == 0)
         ic.label:SetWidth(s + sp)
-        ic.label:SetText(db.showText and tostring(e.n) or "")
-        ic.label:SetTextColor(HHT.Col(db, low and "low" or "normal"))
+        local inside = db.countPos == "icon"
+        local txt = db.showText and tostring(e.n) or ""
+        local cr, cg, cb = HHT.Col(db, low and "low" or "normal")
+        ic.label:SetText(inside and "" or txt)
+        ic.count:SetText(inside and txt or "")
+        ic.label:SetTextColor(cr, cg, cb)
+        ic.count:SetTextColor(cr, cg, cb)
         ic:SetBlink(low and db.blink and not unlocked)
         local step = (s + sp) * (i - 1)
         ic:ClearAllPoints()
@@ -361,6 +369,7 @@ function M:BuildOptions(form)
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") }, { "down", L("Down") } })
     form:Check(L("Show count text"), db, "showText")
+    form:Cycle(L("Count position"), db, "countPos", { { "below", L("Below the icon") }, { "icon", L("In the icon") } })
     form:Note(L("Click an ammo icon to choose and equip other ammo."))
     form:Button(L("Show all ammunition"), function() HHT.AmmoList:Open() end, 220)
     form:Button(L("Ammo vendors on map"), function() if HHT.AmmoVendors then HHT.AmmoVendors.Show() end end, 220)

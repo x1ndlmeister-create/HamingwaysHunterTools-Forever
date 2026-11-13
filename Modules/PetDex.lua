@@ -801,17 +801,14 @@ local function AbilityTip(row, a)
 end
 
 local TABS = {}
-local TAB_ORDER = { "beasts", "families", "abilities", "pet", "stable" }
+local TAB_ORDER = { "beasts", "families", "abilities", "pet", "stable", "guide" }
 
 -- 3D preview panel on the right side of the window
 local function BuildView()
     local p = CreateFrame("Frame", nil, win)
     p:SetSize(250, H)
     p:SetPoint("TOPLEFT", win, "TOPRIGHT", 4, 0)
-    local bg = p:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.075, 0.068, 0.055, 0.96)
-    UI.Border(p, 0.67, 0.83, 0.45, 0.9)
+    UI.Panel(p)
     p.name = UI.Header(p, "")
     p.name:SetPoint("TOPLEFT", p, "TOPLEFT", 12, -12)
     p.name:SetWidth(226)
@@ -820,7 +817,10 @@ local function BuildView()
     local inset = p:CreateTexture(nil, "BORDER")
     inset:SetPoint("TOPLEFT", p, "TOPLEFT", 10, -34)
     inset:SetSize(230, 300)
-    inset:SetColorTexture(0.03, 0.028, 0.024, 1)
+    UI.Tint(inset, UI.PAL.inset)
+    local spot = p:CreateTexture(nil, "BORDER")
+    spot:SetAllPoints(inset)
+    UI.Gradient(spot, true, 1, 1, 1, 0, 0.07)
     local m = CreateFrame("PlayerModel", nil, p)
     m:SetPoint("TOPLEFT", p, "TOPLEFT", 10, -34)
     m:SetSize(230, 300)
@@ -884,7 +884,7 @@ end
 local function UpdateModel()
     local p = win and win.view
     if not p then return end
-    local show = M.db.showModel and win.tab ~= "abilities" and win.tab ~= "stable" and win.tab ~= "families"
+    local show = M.db.showModel and win.tab ~= "abilities" and win.tab ~= "stable" and win.tab ~= "families" and win.tab ~= "guide"
     p:SetShown(show and true or false)
     if not show then return end
     local m = p.model
@@ -1204,6 +1204,91 @@ TABS.families = {
     end,
 }
 
+local ROLE_COLOR = { Offense = { 0.88, 0.58, 0.24 }, Defense = { 0.4, 0.7, 0.9 }, General = { 0.67, 0.83, 0.45 } }
+
+local function GuideItems()
+    local G = HHT.PetGuide
+    if not G then return {} end
+    local goal = G.Goal()
+    local out = { { kind = "head", text = string.format(L("Best families for: %s"), G.GoalLabel(goal)) } }
+    for i, e in ipairs(G.Rank(goal)) do
+        if i > 8 then break end
+        out[#out + 1] = { kind = "fam", e = e, rank = i }
+    end
+    out[#out + 1] = { kind = "head", text = L("First pet") }
+    for _, t in ipairs(G.firstPet) do out[#out + 1] = { kind = "text", text = L(t[1]) } end
+    out[#out + 1] = { kind = "act", text = L("Show hunter trainers on the map"), run = G.ShowTrainers }
+    out[#out + 1] = { kind = "act", text = L("Waypoint to the nearest hunter trainer"), run = G.TrainerWaypoint }
+    out[#out + 1] = { kind = "head", text = L("How pets work") }
+    for _, t in ipairs(G.basics) do out[#out + 1] = { kind = "text", text = L(t[1]) } end
+    return out
+end
+
+local GUIDE_ICON = {
+    head = "Interface\\Icons\\INV_Misc_Book_09", text = "Interface\\Icons\\INV_Misc_Note_01", act = "Interface\\Icons\\INV_Misc_Map_01",
+}
+
+TABS.guide = {
+    label = "Guide",
+    cols = {
+        { "Name", 32, 150 }, { "Role", 186, 76 }, { "Health", 266, 48 }, { "Armor", 318, 48 }, { "Damage", 370, 56 },
+        { "Tip", 430, 344 },
+    },
+    hint = "Click a family to see its beasts. Pick the goal above.",
+    items = function() return GuideItems() end,
+    paint = function(row, it)
+        for i = 2, 7 do row.cells[i]:SetText("") end
+        local c1 = row.cells[1]
+        if it.kind == "fam" then
+            local e = it.e
+            c1:SetWidth(150)
+            row.icon:SetTexture(PD.FamilyIcon(e.n))
+            c1:SetText(it.rank .. ". " .. L(e.n))
+            local rc = ROLE_COLOR[e.role] or { 0.92, 0.94, 0.97 }
+            row.cells[2]:SetText(L(e.role))
+            row.cells[2]:SetTextColor(rc[1], rc[2], rc[3])
+            row.cells[3]:SetText(StatText(e.h))
+            row.cells[3]:SetTextColor(StatColor(e.h))
+            row.cells[4]:SetText(StatText(e.a))
+            row.cells[4]:SetTextColor(StatColor(e.a))
+            row.cells[5]:SetText(StatText(e.d))
+            row.cells[5]:SetTextColor(StatColor(e.d))
+            row.cells[6]:SetText(HHT.PetGuide.Tip(e.n))
+            row.cells[6]:SetTextColor(0.75, 0.75, 0.75)
+            return
+        end
+        c1:SetWidth(730)
+        c1:SetText(it.text)
+        row.icon:SetTexture(GUIDE_ICON[it.kind])
+        if it.kind == "head" then
+            c1:SetTextColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3])
+        elseif it.kind == "act" then
+            c1:SetTextColor(0.5, 0.8, 1)
+        end
+    end,
+    tip = function(row, it)
+        if it.kind == "fam" then
+            TABS.families.tip(row, it.e)
+            local t = HHT.PetGuide.Tip(it.e.n)
+            if t ~= "" then
+                GameTooltip:AddLine(t, 0.5, 0.9, 0.5, true)
+                GameTooltip:Show()
+            end
+        elseif it.kind == "text" or it.kind == "act" then
+            GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(it.text, 0.9, 0.9, 0.9, true)
+            GameTooltip:Show()
+        end
+    end,
+    click = function(row, it)
+        if it.kind == "fam" then
+            PD:Open("beasts", { family = it.e.n, reset = true })
+        elseif it.kind == "act" and it.run then
+            it.run()
+        end
+    end,
+}
+
 local function FilterActive()
     return filter.text ~= nil and filter.text ~= "" or filter.family or filter.ability or filter.myLevel or filter.newRanks or filter.rare
         or filter.wish or filter.unseen
@@ -1285,6 +1370,14 @@ function PD.Paint()
     win.btnWish:SetShown(win.tab == "beasts")
     win.btnWish:SetLabel(sel and PD.IsWish(sel.id) and L("Remove from wishlist") or L("Add to wishlist"))
     win.filterBar:SetShown(win.tab == "beasts")
+    win.guideBar:SetShown(win.tab == "guide")
+    if win.tab == "guide" and HHT.PetGuide then
+        local cur = HHT.PetGuide.Goal()
+        for key, b in pairs(win.goalBtns) do
+            local text = HHT.PetGuide.GoalLabel(key)
+            b:SetLabel(key == cur and ("|cffabd473" .. text .. "|r") or text)
+        end
+    end
     win.hint:SetText(L(tab.hint))
     win.famBtn:SetLabel(filter.family and string.format(L("Family: %s"), L(filter.family)) or L("All families"))
     win.abBtn:SetLabel(filter.ability and string.format(L("Ability: %s"), PD.AbilityName(byKey[filter.ability])) or L("All abilities"))
@@ -1383,7 +1476,7 @@ local function Build()
 
     local prev
     for _, k in ipairs(TAB_ORDER) do
-        local t = UI.Button(win, 130, 22, L(TABS[k].label), function() SetTab(k) end)
+        local t = UI.Button(win, 104, 22, L(TABS[k].label), function() SetTab(k) end)
         if prev then t:SetPoint("LEFT", prev, "RIGHT", 6, 0) else t:SetPoint("TOPLEFT", win, "TOPLEFT", 12, -38) end
         win.tabs[k] = t
         prev = t
@@ -1424,6 +1517,25 @@ local function Build()
     Toggle("Wishlist", "wish", 500)
     Toggle("Not seen yet", "unseen", 600)
 
+    -- goal buttons (guide tab)
+    local gb = CreateFrame("Frame", nil, win)
+    gb:SetPoint("TOPLEFT", win, "TOPLEFT", 0, -64)
+    gb:SetSize(W, 48)
+    win.guideBar = gb
+    win.goalBtns = {}
+    local G = HHT.PetGuide
+    local prevGoal
+    for _, g in ipairs(G and G.goals or {}) do
+        local b = UI.Button(gb, 180, 22, "", function()
+            G.SetGoal(g.key)
+            win.offset = 0
+            Rebuild()
+        end)
+        if prevGoal then b:SetPoint("LEFT", prevGoal, "RIGHT", 6, 0) else b:SetPoint("TOPLEFT", gb, "TOPLEFT", 12, -4) end
+        win.goalBtns[g.key] = b
+        prevGoal = b
+    end
+
     for i = 1, 7 do
         local h = CreateFrame("Button", nil, win)
         h.text = UI.Header(h, "")
@@ -1453,6 +1565,7 @@ local function Build()
         row.icon:SetSize(20, 20)
         row.icon:SetPoint("LEFT", row, "LEFT", 4, 0)
         row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        HHT.Icon.Attach(row.icon)
         row.cells = {}
         for k = 1, 7 do
             local fs = UI.Text(row, "", 12)

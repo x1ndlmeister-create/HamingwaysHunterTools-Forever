@@ -30,6 +30,8 @@ HHT:AddGerman({
     ["Wishlist"] = "Wunschliste",
     ["* Wishlist"] = "* Wunschliste",
     ["Teaches: %s"] = "Lehrt: %s",
+    ["Family learns: %s"] = "Familie lernt: %s",
+    ["Show a 3D model of the beast"] = "3D-Modell des Tiers zeigen",
     ["Tameable"] = "Zaehmbar",
     ["Teaches %s (new for %s)"] = "Lehrt %s (neu fuer %s)",
     ["Teaches %s"] = "Lehrt %s",
@@ -61,7 +63,7 @@ local M = HHT:NewModule("petwatch", {
     defaults = {
         tooltip = true, markSeen = true,
         rareAlert = true, wishAlert = true, nearAlert = true, nearYards = 150, onlyMyLevel = true,
-        sound = true, duration = 20, repeatMinutes = 10, inInstances = false,
+        sound = true, duration = 20, repeatMinutes = 10, inInstances = false, showModel = false,
         arrow = true, arrowAuto = false, arrowSize = 64,
         colors = { border = { 0.75, 0.55, 1 } },
     },
@@ -70,7 +72,8 @@ local M = HHT:NewModule("petwatch", {
 local PW = {}
 HHT.PetWatch = PW
 
-local W, H = 370, 112
+local W, H = 400, 112
+local MODEL_W, MODEL_H = 110, 150
 local ARROW_TEX = "Interface\\Minimap\\ROTATING-MINIMAPARROW"
 local snoozeUntil, alerted = 0, {}
 local tameId, tameAt
@@ -185,7 +188,7 @@ end
 local function StyleButton(b, text)
     local bg = b:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.17, 0.145, 0.105, 1)
+    UI.Tint(bg, UI.PAL.button)
     UI.Border(b, 1, 1, 1, 0.08)
     local hl = b:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
@@ -215,15 +218,13 @@ function M:Build()
     f:SetSize(W, H)
     f:SetFrameStrata("DIALOG")
     self.frame = f
-    local bg = f:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.075, 0.068, 0.055, 0.96)
-    f.border = UI.Border(f, 0.75, 0.55, 1, 0.9)
+    f.border = UI.Panel(f, 0.75, 0.55, 1)
 
     f.icon = f:CreateTexture(nil, "ARTWORK")
     f.icon:SetSize(44, 44)
     f.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -12)
     f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    HHT.Icon.Attach(f.icon)
     f.eyebrow = UI.Text(f, "", 10, 0.75, 0.55, 1)
     f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -8)
     f.title = UI.Text(f, "", 13, 1, 1, 1)
@@ -235,8 +236,34 @@ function M:Build()
     f.sub:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -40)
     f.sub:SetWidth(W - 76)
     f.sub:SetJustifyH("LEFT")
-    f.sub:SetJustifyV("TOP")
-    f.sub:SetHeight(30)
+    f.sub:SetWordWrap(false)
+    f.div = f:CreateTexture(nil, "ARTWORK")
+    f.div:SetColorTexture(1, 1, 1, 0.08)
+    f.div:SetHeight(1)
+    f.div:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -57)
+    f.div:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -57)
+    local function Detail(r, g, b)
+        local fs = UI.Text(f, "", 11, r, g, b)
+        fs:SetWidth(W - 24)
+        fs:SetJustifyH("LEFT")
+        fs:SetJustifyV("TOP")
+        return fs
+    end
+    f.stats = Detail(0.85, 0.85, 0.85)
+    f.stats2 = Detail(0.85, 0.85, 0.85)
+    f.teach = Detail(0.8, 0.8, 0.8)
+    f.fam = Detail(0.6, 0.6, 0.6)
+
+    f.modelBg = f:CreateTexture(nil, "ARTWORK")
+    f.modelBg:SetColorTexture(0, 0, 0, 0.3)
+    f.modelBg:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -63)
+    f.modelBg:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 34)
+    f.modelBg:SetWidth(MODEL_W)
+    f.model = CreateFrame("PlayerModel", nil, f)
+    f.model:SetAllPoints(f.modelBg)
+    f.model:EnableMouse(false)
+    f.modelBg:Hide()
+    f.model:Hide()
 
     local close = UI.Button(f, 18, 18, "x", CloseAlert)
     close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
@@ -347,7 +374,7 @@ function M:Refresh()
     HHT:ApplyGlobalLook(f)
     if self.arrowFrame then HHT:ApplyGlobalLook(self.arrowFrame) end
     LayoutArrow()
-    if HHT:IsUnlocked() then self:Preview() elseif f.preview then f:Hide(); f.preview = nil end
+    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then f:Hide(); f.preview = nil end
 end
 
 function M:OnLockChanged() self:Refresh() end
@@ -385,6 +412,89 @@ function M:Tick()
     if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then CloseAlert() end
 end
 
+local function StatColored(v)
+    if not v then return "-" end
+    local c = v > 1 and "66e066" or (v < 1 and "f07368" or "ffffff")
+    return string.format("|cff%s%d%%|r", c, math.floor(v * 100 + 0.5))
+end
+
+local function FamilyEntry(fam)
+    for _, e in ipairs(HHT.PetFamilyData or {}) do
+        if e.n == fam then return e end
+    end
+end
+
+local function Chip(a, rank, color)
+    local s = "|T" .. tostring(PD().AbilityIcon(a)) .. ":14:14:0:0:64:64:5:59:5:59|t " .. PD().AbilityName(a)
+    if rank and rank > 0 then s = s .. " " .. rank end
+    return color and ("|cff" .. color .. s .. "|r") or s
+end
+
+-- Role and modifiers on the first line, attack speed and diet on the second.
+local function Stats(b)
+    local pd, fe = PD(), FamilyEntry(b.f)
+    local l1, l2 = {}, {}
+    if fe then
+        l1[#l1 + 1] = "|cffffd24d" .. L(fe.role) .. "|r"
+        if fe.h then
+            l1[#l1 + 1] = string.format(L("Health %s, armor %s, damage %s"), StatColored(fe.h), StatColored(fe.a), StatColored(fe.d))
+        end
+    end
+    if pd.module.db.showSpeed and pd.Speed(b.id) then
+        l2[#l2 + 1] = string.format(L("Attack speed: %s"), pd.SpeedText(b.id))
+    end
+    local diet = b.d
+    if fe and fe.diet then
+        local t = {}
+        for _, d in ipairs(fe.diet) do t[#t + 1] = L(d) end
+        diet = table.concat(t, ", ")
+    end
+    if diet and diet ~= "" then l2[#l2 + 1] = string.format(L("Diet: %s"), diet) end
+    local a, c = table.concat(l1, " - "), table.concat(l2, " - ")
+    return a, c
+end
+
+-- Abilities the beast teaches; green = a higher rank than you know that one of your pets can learn.
+local function Teaches(b)
+    local pd = PD()
+    local fams = pd.MyFamilies(true)
+    local parts = {}
+    for _, e in ipairs(pd.BeastAbilities(b)) do
+        local new = e.rank > 0 and e.rank > pd.KnownRank(e.a.key) and pd.Applies(e.a, fams)
+        parts[#parts + 1] = Chip(e.a, e.rank, new and "66ee66" or nil)
+    end
+    if #parts == 0 then return "" end
+    return string.format(L("Teaches: %s"), table.concat(parts, "  "))
+end
+
+-- Abilities only this family can learn.
+local function FamilyLearns(b)
+    local parts = {}
+    for _, a in ipairs(PD().FamilyAbilities(b.f)) do
+        if not a.all then parts[#parts + 1] = Chip(a) end
+    end
+    if #parts == 0 then return "" end
+    return string.format(L("Family learns: %s"), table.concat(parts, "  "))
+end
+
+-- The client loads an unseen creature late, so the model is set again until it reports a file.
+local function LoadModel(f, b)
+    local m = f.model
+    f.modelKey = b.id
+    local tries = 0
+    local function Load()
+        pcall(m.ClearModel, m)
+        local ok = pcall(m.SetCreature, m, b.id)
+        pcall(m.SetFacing, m, 0)
+        local okF, file = pcall(m.GetModelFileID, m)
+        if ok and okF and not file and tries < 12 and C_Timer and C_Timer.After then
+            tries = tries + 1
+            C_Timer.After(0.4, function() if f.modelKey == b.id and f:IsShown() then Load() end end)
+        end
+    end
+    Load()
+end
+
 -- data: kind (rare, wish, near), beast, name
 function M:Show(data, preview)
     local f = self.frame
@@ -401,13 +511,33 @@ function M:Show(data, preview)
     f.eyebrow:SetTextColor(c[1], c[2], c[3])
     f.icon:SetTexture(pd.FamilyIcon(b.f))
     f.title:SetText(data.name or b.n)
-    local abil = {}
-    for _, e in ipairs(pd.BeastAbilities(b)) do
-        abil[#abil + 1] = pd.AbilityName(e.a) .. (e.rank > 0 and (" " .. e.rank) or "")
+    f.sub:SetText(L(b.f) .. ", " .. L("Level") .. " " .. b.l .. " - " .. pd.ZoneName(b))
+    local withModel = db.showModel and true or false
+    local textW = withModel and (W - 24 - MODEL_W - 8) or (W - 24)
+    local y = 63
+    local s1, s2 = Stats(b)
+    for _, row in ipairs({ { f.stats, s1 }, { f.stats2, s2 }, { f.teach, Teaches(b) }, { f.fam, FamilyLearns(b) } }) do
+        local fs, text = row[1], row[2]
+        fs:SetWidth(textW)
+        fs:SetText(text)
+        fs:ClearAllPoints()
+        if text == "" then
+            fs:Hide()
+        else
+            fs:Show()
+            fs:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -y)
+            y = y + math.ceil(fs:GetStringHeight()) + 5
+        end
     end
-    local line2 = #abil > 0 and string.format(L("Teaches: %s"), table.concat(abil, ", ")) or ""
-    local line1 = L(b.f) .. ", " .. L("Level") .. " " .. b.l .. " - " .. pd.ZoneName(b)
-    f.sub:SetText(line1 .. "\n" .. line2)
+    f.div:SetShown(y > 63)
+    f.modelBg:SetShown(withModel)
+    f.model:SetShown(withModel)
+    if withModel then
+        LoadModel(f, b)
+    else
+        f.modelKey = nil
+    end
+    if not InCombatLockdown() then f:SetHeight(math.max(H, y + 20 + 8, withModel and (63 + MODEL_H + 34) or 0)) end
     f.beast, f.preview = b, preview
     f.hideAt = (not preview and db.duration > 0) and (GetTime() + db.duration) or nil
     if not InCombatLockdown() then
@@ -444,7 +574,7 @@ function M:Test()
     return true
 end
 local function Allowed(db)
-    if HHT:IsUnlocked() then return false end
+    if HHT:IsUnlocked(M) then return false end
     if GetTime() < snoozeUntil then return false end
     if not db.inInstances and IsInInstance and IsInInstance() then return false end
     return true
@@ -571,7 +701,7 @@ function M:ArrowTick()
     if not a then return end
     local b = self.track
     if not b then
-        if not HHT:IsUnlocked() then a:Hide() end
+        if not HHT:IsUnlocked(self) then a:Hide() end
         return
     end
     a:Show()
@@ -619,6 +749,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Spawn distance (yards)"), db, "nearYards", 50, 500, 25)
     form:Check(L("Only beasts up to my level"), db, "onlyMyLevel")
     form:Check(L("Play a sound"), db, "sound")
+    form:Check(L("Show a 3D model of the beast"), db, "showModel")
     form:Check(L("Also inside dungeons"), db, "inInstances")
     form:Stepper(L("Show for (seconds, 0 = until closed)"), db, "duration", 0, 60, 1)
     form:Stepper(L("Repeat for the same beast after (minutes)"), db, "repeatMinutes", 1, 60, 1)

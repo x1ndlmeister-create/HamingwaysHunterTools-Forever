@@ -7,7 +7,27 @@ local C = {}
 HHT.Config = C
 
 C.pages = {}
-local W, H = 610, 620
+local W, H = 626, 620
+
+-- Sidebar icons (classic icon files).
+local ICONS = {
+    general = "INV_Misc_Gear_01", swing = "Ability_Whirlwind", castbar = "INV_Misc_PocketWatch_01",
+    cooldowns = "Spell_Nature_TimeStop", warnings = "Ability_Hunter_SniperShot", debuffs = "Ability_Hunter_Quickshot",
+    procs = "Spell_Nature_Lightning", summons = "Ability_Hunter_BeastCall", raidbuffs = "INV_Misc_Note_01",
+    consumables = "INV_Potion_54", threat = "Ability_Hunter_Misdirection", distance = "Ability_Marksmanship",
+    pet = "Ability_Hunter_BeastCall", feeder = "INV_Misc_Food_15", ammo = "INV_Ammo_Arrow_01",
+    tranq = "Spell_Nature_Drowsy", macros = "INV_Scroll_03", petdex = "INV_Misc_Book_09",
+    petwatch = "INV_Misc_Spyglass_02", petnearby = "Ability_Hunter_BeastSoothe", pettrain = "INV_Misc_Book_11",
+    ammovendors = "INV_Ammo_Arrow_02", stablemasters = "INV_Misc_Map_01", foodvendors = "INV_Misc_Food_15",
+    trainers = "INV_Misc_Book_11", mapbutton = "INV_Misc_Map02", petguide = "INV_Misc_Book_08",
+}
+
+-- Modules shown in demo mode while their settings page is open.
+local PREVIEW = {
+    swing = true, castbar = true, distance = true, threat = true, warnings = true, debuffs = true, procs = true,
+    summons = true, ammo = true, pet = true, feeder = true, petnearby = true, petwatch = true, pettrain = true,
+    cooldowns = true, tranq = true, petguide = true,
+}
 
 function HHT.CommonOptions(m, form)
     if m.noFrame then
@@ -19,9 +39,12 @@ function HHT.CommonOptions(m, form)
         return
     end
     form:Header(L("Position"))
+    form:Check(L("Unlock this module (move with mouse)"), m, "moveUnlock", function() HHT:ApplyLock() end)
     form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05)
     form:Stepper(L("Opacity"), m.db, "alpha", 0.1, 1, 0.05)
     form:Check(L("Show only in combat"), m.db, "onlyCombat", function() HHT:ApplyAllLooks() end)
+    form:Cycle(L("Text style"), m.db, "textStyle", {
+        { "outline", L("Outline") }, { "thick", L("Thick outline") }, { "plain", L("Plain") } })
     form:Button(L("Reset position"), function()
         m.db.pos = nil
         HHT:ApplyAllPositions()
@@ -42,11 +65,32 @@ function C:BuildGeneral(form)
     form:Cycle(L("Language"), g, "lang", {
         { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
         function() C:Relang() end)
+    local themeRow = form:Cycle(L("Colour theme"), g, "theme", {
+        { "classic", L("Bronze") }, { "dark", L("Blue") }, { "minimal", L("Graphite") } },
+        function() HHT.Print(L("The colour theme applies after /reload.")) end)
+    local reload = UI.Button(themeRow, 24, 20, "", function() ReloadUI() end)
+    reload:SetPoint("LEFT", themeRow, "LEFT", 366, 0)
+    local ricon = reload:CreateTexture(nil, "ARTWORK")
+    ricon:SetSize(14, 14)
+    ricon:SetPoint("CENTER")
+    ricon:SetTexture("Interface\\Buttons\\UI-RefreshButton")
+    reload:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L("Reload UI"))
+        GameTooltip:Show()
+    end)
+    reload:HookScript("OnLeave", function() GameTooltip:Hide() end)
+    form:Cycle(L("Style of icons and bars"), g, "style", {
+        { "flat", L("Flat") }, { "bevel", L("3D frame") }, { "glass", L("Glass") } },
+        function() HHT:RefreshAll(); HHT.Icon.RefreshFinish() end)
+    form:Check(L("Animations"), g, "animations")
+    form:Check(L("Live preview"), g, "preview", function() C:Select(C.current or "general") end)
 
     local unlock = UI.Check(form.content, L("Unlock frames (move with mouse)"),
         function() return g.locked == false end,
         function(v) HHT:SetLocked(not v) end)
     form:Place(unlock, 20, 4, 4)
+    form:Check(L("Snap frames to each other while moving (Shift = off)"), g, "snap")
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
     form:Check(L("Tell me about new versions"), g, "versionNotice")
@@ -91,11 +135,11 @@ function C:BuildPage(key)
     parent:SetAllPoints(self.content)
     local form
     if key == "general" then
-        form = UI.NewForm(parent)
+        form = UI.NewForm(parent, nil, key)
         self:BuildGeneral(form)
     else
         local m = HHT.modules[key]
-        form = UI.NewForm(parent, function() HHT:RefreshModule(m) end)
+        form = UI.NewForm(parent, function() HHT:RefreshModule(m) end, key)
         form:Header(L(m.name))
         form:Note(L(m.desc))
         if m.wip then
@@ -129,6 +173,8 @@ function C:Select(key)
     page.frame:Show()
     page.form:Refresh()
     self:UpdateSidebar()
+    local open = self.window and self.window:IsShown()
+    HHT:SetPreview(open and PREVIEW[key] and HHT.db.general.preview ~= false and HHT.modules[key] or nil)
 end
 
 function C:UpdateSidebar()
@@ -153,7 +199,10 @@ function C:UpdateSidebar()
         else
             b.label:SetTextColor(0.45, 0.43, 0.40)
         end
+        b.icon:SetDesaturated(not on)
+        b.icon:SetAlpha(on and 1 or 0.45)
         b.sel:SetShown(key == self.current)
+        b.selBg:SetShown(key == self.current)
     end
 end
 
@@ -170,8 +219,22 @@ function C:Create()
     if self.window then return end
     local w = UI.Window("HamingwaysHunterToolsConfig", W, H, "Hamingway's HunterTools  v" .. HHT.version)
     w:SetPoint("CENTER")
+    local pos = HHT.db.general.menuPos
+    if pos then
+        w:ClearAllPoints()
+        w:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+    end
+    w:HookScript("OnDragStop", function(self)
+        local p, _, rp, x, y = self:GetPoint()
+        HHT.db.general.menuPos = { p, rp, x, y }
+    end)
     w:Hide()
     self.window = w
+    w:HookScript("OnShow", function() HHT.db.general.menuOpen = true end)
+    w:HookScript("OnHide", function()
+        HHT.db.general.menuOpen = false
+        HHT:SetPreview(nil)
+    end)
     local logoHolder = CreateFrame("Frame", nil, w)
     logoHolder:SetSize(50, 50)
     logoHolder:SetPoint("TOPLEFT", w, "TOPLEFT", -14, 14)
@@ -185,13 +248,13 @@ function C:Create()
 
     local side = CreateFrame("Frame", nil, w)
     side:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -40)
-    side:SetSize(140, H - 52)
+    side:SetSize(154, H - 52)
     local sbg = side:CreateTexture(nil, "BACKGROUND")
     sbg:SetAllPoints()
-    sbg:SetColorTexture(0.05, 0.045, 0.035, 0.9)
+    UI.Tint(sbg, UI.PAL.side)
 
     self.content = CreateFrame("Frame", nil, w)
-    self.content:SetPoint("TOPLEFT", w, "TOPLEFT", 162, -40)
+    self.content:SetPoint("TOPLEFT", w, "TOPLEFT", 176, -40)
     self.content:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -12, 12)
 
     self.side = {}
@@ -202,7 +265,7 @@ function C:Create()
     sf:SetPoint("TOPLEFT", side, "TOPLEFT", 0, 0)
     sf:SetPoint("BOTTOMRIGHT", side, "BOTTOMRIGHT", 0, 0)
     local list = CreateFrame("Frame", nil, sf)
-    list:SetSize(140, 10 + #keys * 30)
+    list:SetSize(154, 10 + #keys * 30)
     sf:SetScrollChild(list)
     sf:EnableMouseWheel(true)
     local thumb = sf:CreateTexture(nil, "OVERLAY")
@@ -226,8 +289,24 @@ function C:Create()
     UpdateThumb()
 
     for i, key in ipairs(keys) do
-        local b = UI.Button(list, 130, 26, "", function() C:Select(key) end)
+        local b = UI.Button(list, 144, 26, "", function() C:Select(key) end)
         b:SetPoint("TOPLEFT", list, "TOPLEFT", 5, -5 - (i - 1) * 30)
+        b.noPress = true
+        b.icon = b:CreateTexture(nil, "ARTWORK")
+        b.icon:SetSize(18, 18)
+        b.icon:SetPoint("LEFT", b, "LEFT", 8, 0)
+        b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        HHT.Icon.Attach(b.icon)
+        b.icon:SetTexture("Interface\\Icons\\" .. (ICONS[key] or "INV_Misc_QuestionMark"))
+        b.label:ClearAllPoints()
+        b.label:SetPoint("LEFT", b, "LEFT", 32, 0)
+        b.label:SetWidth(108)
+        b.label:SetJustifyH("LEFT")
+        b.label:SetWordWrap(false)
+        b.selBg = b:CreateTexture(nil, "BORDER")
+        b.selBg:SetAllPoints()
+        b.selBg:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.14)
+        b.selBg:Hide()
         b.sel = b:CreateTexture(nil, "ARTWORK")
         b.sel:SetPoint("TOPLEFT", b, "TOPLEFT", 0, 0)
         b.sel:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 0, 0)
@@ -319,4 +398,11 @@ end
 
 function C:Init()
     self:BuildMinimap()
+    -- Reopen the settings window after a UI reload if it was open before.
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("PLAYER_ENTERING_WORLD")
+    f:SetScript("OnEvent", function(self, _, _, isReload)
+        self:UnregisterAllEvents()
+        if isReload and HHT.db.general.menuOpen then C:Toggle() end
+    end)
 end

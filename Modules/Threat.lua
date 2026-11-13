@@ -25,7 +25,8 @@ local M = HHT:NewModule("threat", {
     desc = "Threat meter and aggro warning.",
     positions = { main = { "CENTER", "CENTER", 0, -98 } },
     defaults = {
-        width = 180, height = 16, bgAlpha = 0.85, barTexture = "blizzard", bevel = 0.6, border = true,
+        width = 180, height = 16, bgAlpha = 0.85, barTexture = "blizzard", bevel = 0.6, border = true, smooth = true,
+        flash = false, flashGlow = 1, flashGlowSize = 8,
         showLabel = true, showTime = true,
         onlyGroup = true, hideNoThreat = true, warnAt = 80, alertAggro = true, sound = true, blink = true,
         colors = {
@@ -121,7 +122,7 @@ function M:Tick()
     local db = self.db
     local bar = f.bar
 
-    if HHT:IsUnlocked() then
+    if HHT:IsUnlocked(self) then
         if not f:IsShown() then f:Show() end
         bar:SetAlpha(1)
         bar.bar:SetMinMaxValues(0, 100)
@@ -138,10 +139,15 @@ function M:Tick()
     end
     if not pct or (db.hideNoThreat and pct <= 0 and not tanking) then
         if f:IsShown() then f:Hide() end
+        self.wasFull = false
         self:ResetAlerts()
         return
     end
     if not f:IsShown() then f:Show() end
+
+    local full = pct >= 100
+    if db.flash and full and not self.wasFull then Bar.Flash(bar) end
+    self.wasFull = full
 
     local warnAt = db.warnAt
     local key = (tanking and "aggro") or (pct >= warnAt and "high") or (pct >= warnAt - 25 and "mid") or "low"
@@ -181,6 +187,8 @@ function M:BuildOptions(form)
     form:Check(L("Show percent"), db, "showTime")
     form:Check(L("Show border"), db, "border")
     Bar.AddOptions(form, db)
+    Bar.AddSmooth(form, db)
+    Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Only in a group or with pet"), db, "onlyGroup")
     form:Check(L("Hide when no threat"), db, "hideNoThreat")

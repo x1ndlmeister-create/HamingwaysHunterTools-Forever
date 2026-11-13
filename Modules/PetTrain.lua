@@ -43,7 +43,7 @@ local craftOpen, pending = false, nil
 local function StyleButton(b, text)
     local bg = b:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.17, 0.145, 0.105, 1)
+    UI.Tint(bg, UI.PAL.button)
     UI.Border(b, 1, 1, 1, 0.08)
     local hl = b:CreateTexture(nil, "HIGHLIGHT")
     hl:SetAllPoints()
@@ -58,10 +58,7 @@ function M:Build()
     f:SetSize(W, 80)
     f:SetFrameStrata("DIALOG")
     self.frame = f
-    local bg = f:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.075, 0.068, 0.055, 0.96)
-    f.border = UI.Border(f, 0.67, 0.83, 0.45, 0.9)
+    f.border = UI.Panel(f, 0.67, 0.83, 0.45)
 
     f.eyebrow = UI.Text(f, "", 10, 0.67, 0.83, 0.45)
     f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -8)
@@ -83,6 +80,7 @@ function M:Build()
         r.icon:SetSize(20, 20)
         r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        HHT.Icon.Attach(r.icon)
         r.text = UI.Text(r, "", 11, 1, 1, 1)
         r.text:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
         r.text:SetWidth(W - 190)
@@ -195,7 +193,7 @@ end
 function M:Check()
     dueAt = nil
     local f = self.frame
-    if not f or HHT:IsUnlocked() or InCombatLockdown() or HHT.InCombat() then return end
+    if not f or HHT:IsUnlocked(self) or InCombatLockdown() or HHT.InCombat() then return end
     local list, wait = self:Missing()
     if wait then
         if (tries or 0) < 6 then tries = (tries or 0) + 1; dueAt = GetTime() + 1.5 end
@@ -360,7 +358,7 @@ function M:Refresh()
     local c = self.db.colors.border
     f.border:SetColor(c[1], c[2], c[3], 0.9)
     HHT:ApplyGlobalLook(f)
-    if HHT:IsUnlocked() then self:Preview() elseif f.preview then f.preview = nil; if not InCombatLockdown() then f:Hide() end end
+    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then f.preview = nil; if not InCombatLockdown() then f:Hide() end end
 end
 
 function M:OnLockChanged() self:Refresh() end

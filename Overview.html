@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <title>Hamingway's HunterTools - The hunter's Swiss army knife</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="23 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters.">
+<meta name="description" content="24 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Hamingway's HunterTools - The hunter's Swiss army knife">
-<meta property="og:description" content="23 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters.">
+<meta property="og:description" content="24 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters.">
 <meta property="og:image" content="https://x1ndlmeister-create.github.io/HamingwaysHunterTools-Forever/images/hero.png">
 <meta property="og:url" content="https://x1ndlmeister-create.github.io/HamingwaysHunterTools-Forever/">
 <meta name="twitter:card" content="summary_large_image">
@@ -121,7 +121,7 @@
 <main>
 
 <h2 class="sec" id="glance" data-de="Alles auf einen Blick">Everything at a glance</h2>
-<p class="lead" data-de="23 Module, die du einzeln aktivierst. Was du nicht brauchst, bleibt aus und kostet nichts." >23 modules you switch on one by one. Whatever you do not need stays off.</p>
+<p class="lead" data-de="24 Module, die du einzeln aktivierst. Was du nicht brauchst, bleibt aus und kostet nichts." >24 modules you switch on one by one. Whatever you do not need stays off.</p>
 <div class="legend">
   <span><i style="background:#e0943d"></i><span data-de="Kampf">Combat</span></span>
   <span><i style="background:#66b3e6"></i><span data-de="Ausrüstung und Werkzeuge">Gear and tools</span></span>
@@ -141,12 +141,13 @@
   <div class="tile gear"><h4 data-de="Munition">Ammo</h4><p data-de="Pfeil- und Kugelzähler mit Warnung und Dungeon-Erinnerung.">Arrow and bullet counter with low ammo warning and dungeon reminder.</p></div>
   <div class="tile gear"><h4 data-de="Tier füttern">Pet feeder</h4><p data-de="Ein Klick füttert das Tier. Futterwahl und Sperrliste pro Tier.">Click to feed your pet. Per-pet food choice and blacklist.</p></div>
   <div class="tile gear"><h4 data-de="Makros">Macros</h4><p data-de="Legt Charaktermakros für Tier, Schüsse, Fallen, Aspekte und mehr an.">Creates character macros for pet handling, shots, traps, aspects and more.</p></div>
-  <div class="tile gear"><h4 data-de="Einlullen-Ansage">Tranq announcer</h4><p data-de="Meldet den Einlullenden Schuss im Chat.">Announces Tranquilizing Shot in chat.</p></div>
+  <div class="tile gear"><h4 data-de="Tranq-Rotation">Tranq rotation</h4><p data-de="Rotation und Abklingzeiten aller Jäger im Raid, Hinweis wenn du dran bist.">Rotation and cooldowns of every hunter in the raid, with a notice when it is your turn.</p></div>
   <div class="tile pet"><h4 data-de="Tierstatus">Pet status</h4><p data-de="Tierporträt, Lebensbalken und Zufriedenheit.">Pet portrait, health bar and happiness.</p></div>
   <div class="tile pet"><h4 data-de="Tierdatenbank">Pet database</h4><p data-de="Tierfähigkeiten, Ränge, lehrende Tiere und Kartenpunkte.">Pet abilities, ranks, teaching beasts and map pins.</p></div>
   <div class="tile pet"><h4 data-de="Tierbeobachtung">Beast watch</h4><p data-de="Tooltip-Infos, Hinweise zu seltenen Tieren und Wunschliste, Richtungspfeil.">Tooltip info, rare and wishlist alerts, discovery tracking and a direction arrow.</p></div>
   <div class="tile pet"><h4 data-de="Fähigkeits-Hinweise">Pet ability alerts</h4><p data-de="Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann.">Popup when a beast nearby teaches a higher ability rank your pet can learn.</p></div>
   <div class="tile pet"><h4 data-de="Begleiter-Training-Hinweis">Pet training hint</h4><p data-de="Popup mit Lernen-Knopf für Fähigkeitsränge, die dein Tier jetzt lernen kann.">Popup with a Learn button for ability ranks your pet can train now.</p></div>
+  <div class="tile pet"><h4 data-de="Tierratgeber">Pet guide</h4><p data-de="Einmaliges Popup bei Stufe 10 und ein Ratgeber-Reiter in der Tierdatenbank: das beste Tier für dein Ziel, Lehrer auf der Karte.">One-time popup at level 10 and a Guide tab in the pet database: the best pet for your goal, trainer on the map.</p></div>
   <div class="tile map"><h4 data-de="Stallmeister">Stable masters</h4><p data-de="Stallmeister auf Weltkarte und Minimap, eingebaute Liste, lernt fehlende dazu.">Stable masters on the world map and minimap from a built-in list; learns missing ones.</p></div>
   <div class="tile map"><h4 data-de="Futterhändler">Food vendors</h4><p data-de="Händler, die Futter für dein aktuelles Tier verkaufen, auf Weltkarte und Minimap.">Vendors that sell food for your current pet on the world map and minimap.</p></div>
   <div class="tile map"><h4 data-de="Lehrer">Trainers</h4><p data-de="Jägerlehrer und Tierausbilder zusammen in einer Ebene, mit Wegpunkt zum nächsten.">Hunter trainers and pet trainers together in one layer, waypoint to the nearest one.</p></div>
@@ -296,6 +297,8 @@
       <li data-de="Tierfähigkeiten mit Abklingzeit und Automatik-Ring">Pet abilities with cooldown and auto-cast ring</li>
       <li data-de="Ein Klick auf das Porträt öffnet die Tierdatenbank">Click the portrait to open the pet database</li>
       <li data-de="Rund oder eckig, Größe und jede Leiste einstellbar">Round or square, size and every bar adjustable</li>
+      <li data-de="Stufe am Porträt; Erfahrung, Trainingspunkte und Loyalität einzeln schaltbar, Loyalität bei Maximum ausblendbar, Balkenabstand einstellbar">Level on the portrait; experience, training points and loyalty switch on and off independently, loyalty can hide at max, bar spacing adjustable</li>
+      <li data-de="Raserei-Anzeige mit einstellbarer Symbolgröße">Frenzy indicator with adjustable icon size</li>
     </ul>
   </div>
 </section>
@@ -306,7 +309,8 @@
     <div class="kick" data-de="Tierdatenbank">Pet database</div>
     <h3 data-de="Das Wissen über jedes Tier">What there is to know about every beast</h3>
     <ul class="f">
-      <li data-de="Fünf Reiter: Tiere, Familien, Fähigkeiten, Mein Begleiter, Stall">Five tabs: Beasts, Families, Abilities, My pet, Stable</li>
+      <li data-de="Sechs Reiter: Tiere, Familien, Fähigkeiten, Mein Begleiter, Stall, Ratgeber">Six tabs: Beasts, Families, Abilities, My pet, Stable, Guide</li>
+      <li data-de="Ratgeber-Reiter: Ziel wählen (maximaler Schaden, Solo-Überleben, ausgewogen), beste Familien mit passendem Tier, erstes Tier mit Jäger-Lehrer auf der Karte und Wegpunkt">Guide tab: pick a goal (maximum damage, solo survival, balanced), get the best families with the beast to tame, a first-pet section with the hunter trainer on the map and a waypoint</li>
       <li data-de="Familien-Reiter: Nahrung, Schaden-, Lebens- und Rüstungsmodifikator, Familienfähigkeiten und Tempo je Tierfamilie">Families tab: diet, damage, health and armor modifier, family abilities and speed per pet family</li>
       <li data-de="Über 600 Tiere mit Spawns aus Huntmaster, OneForAll und Questie">Over 600 beasts with spawns from Huntmaster, OneForAll and Questie</li>
       <li data-de="Familie, Stufe, Angriffstempo, Zone und gelehrte Fähigkeiten je Tier">Family, level, attack speed, zone and taught abilities per beast</li>
@@ -332,10 +336,13 @@
       <li data-de="Popup bei seltenen Tieren und Wunschlisten-Tieren; auch in der Nähe bekannter Spawns">Popup for rare and wishlist beasts; also close to known spawns</li>
       <li data-de="Knöpfe: anvisieren, Karte, Pfeil, Wunschliste, Pause">Buttons: target, map, arrow, wishlist, pause</li>
       <li data-de="Richtungspfeil zum seltenen Tier, Größe einstellbar">Direction arrow to the rare beast, adjustable size</li>
+      <li data-de="Das Popup zeigt Familie, Stufe und Zone, die Familienrolle mit Leben-, Rüstungs- und Schadensmodifikator, Angriffstempo, Nahrung, die gelehrten Fähigkeiten (lernbare neue Ränge grün) und die Familienfähigkeiten">The popup shows family, level and zone, the family role with health, armor and damage modifiers, attack speed, diet, the abilities the beast teaches (ranks you can still learn in green) and the family abilities</li>
+      <li data-de="Optional: 3D-Modell des Tiers im Popup">Optional 3D model of the beast in the popup</li>
       <li data-de="Nur Tiere bis zu deiner Stufe, Ton, auch in Dungeons, Wiederholungs-Pause">Only beasts up to your level, sound, inside dungeons, repeat delay</li>
       <li class="sep" data-de="Fähigkeits-Hinweise">Pet ability alerts</li>
       <li data-de="Popup, wenn ein Tier in der Nähe einen höheren Rang lehrt, den dein Tier lernen kann">Popup when a nearby beast teaches a higher rank your pet can learn</li>
       <li data-de="Nur für das aktive Tier oder für jedes Tier, das du benutzt hast">For the active pet only, or every pet you have used</li>
+      <li data-de="Beim Betreten einer Zone: Liste aller Tiere dort, die einem deiner Tiere ein Upgrade geben; Klick zeigt das Tier auf der Karte, Rechtsklick setzt den Pfeil, Shift-Klick einen Wegpunkt, ein Knopf zeigt alle auf der Karte">On entering a zone: a list of all beasts there that give a pet of yours an upgrade; click shows the beast on the map, right-click sets the arrow, Shift-click a waypoint, one button shows all on the map</li>
     </ul>
   </div>
 </section>
@@ -348,6 +355,18 @@
       <li data-de="Popup, wenn dein Tier Fähigkeitsränge lernen kann, die du schon kennst">Popup when your pet can learn ability ranks you already know</li>
       <li data-de="Ein Lernen-Knopf je Fähigkeit trainiert den Rang direkt">A Learn button per ability trains the rank right away</li>
       <li data-de="Fähigkeiten lassen sich ignorieren; Anzeigedauer, Ton, Testhinweis und Rahmenfarbe einstellbar">Abilities can be ignored; display time, sound, test hint and border colour adjustable</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="txt">
+    <div class="kick" data-de="Tierratgeber">Pet guide</div>
+    <h3 data-de="Welches Tier passt zu dir, und wo bekommst du es">Which pet suits you, and where to get it</h3>
+    <ul class="f">
+      <li data-de="Einmaliges Popup bei Stufe 10 mit Knöpfen für Lehrer auf der Karte, Wegpunkt und Ratgeber">One-time popup at level 10 with buttons for the trainer on the map, a waypoint and the guide</li>
+      <li data-de="Ziel wählen: maximaler Schaden, Solo-Überleben oder ausgewogen">Pick a goal: maximum damage, solo survival or balanced</li>
+      <li data-de="Grundlagen zu Training und Füttern, jederzeit mit /hht guide">Basics of training and feeding, any time with /hht guide</li>
     </ul>
   </div>
 </section>
@@ -391,7 +410,7 @@
         <li data-de="Umschalt und Strg wählen Varianten, zum Beispiel andere Aspekte oder Fallen">Shift and Ctrl pick variants, for example other aspects or traps</li>
         <li data-de="Makros lassen sich direkt aus der Liste auf die Leiste ziehen">Drag macros straight from the list onto your bar</li>
         <li data-de="Das Futter-Makro bleibt mit der Futterwahl des Tiers aktuell">The feed macro stays in sync with the pet's food choice</li>
-        <li data-de="Einlullen-Ansage: meldet den Einlullenden Schuss in einen Chatkanal deiner Wahl, mit eigenem Text und Testknopf">Tranq announcer: announces Tranquilizing Shot to a chat channel of your choice, with your own text and a test button</li>
+        <li data-de="Tranq-Rotation: Jäger der Gruppe mit Abklingzeit, Reihenfolge und Backup vom Schlachtzugsleiter, Fehlschuss rot markiert, Hinweis wenn du dran bist, Testmodus; dazu ein Ansager für deinen eigenen Schuss">Tranq rotation: hunters of the group with cooldown, order and backup set by the raid leader, missed shots in red, a notice when you are next, test mode; plus an announcer for your own shot</li>
       </ul>
     </div>
   </div>
@@ -408,9 +427,16 @@
         <li data-de="Eigene Größe und Transparenz je Modul, dazu global für alle">Own scale and opacity per module, plus global values for all</li>
         <li data-de="Anzeige nur im Kampf, mit Ziel oder immer">Show always, in combat, with a target, or both</li>
         <li data-de="Alle Farben der Balken wählbar">All bar colours adjustable</li>
+        <li data-de="Symbole pro Reihe für Abklingzeiten, Ziel-Debuffs, Warnungen und Beschwörungen">Icons per row for cooldowns, target debuffs, warnings and summons</li>
+        <li data-de="Farbthemen (Bronze, Blau, Graphit), Stil der Icons und Balken (Flach, 3D-Rahmen, Glas), weiches Einblenden der Fenster, Animationen abschaltbar">Colour themes (Bronze, Blue, Graphite), look of icons and bars (Flat, 3D frame, Glass), soft fade-in of windows, optional animations</li>
+        <li data-de="Einklappbare Abschnitte, Symbole in der Modulliste, Textstil je Modul">Collapsible sections, icons in the module list, text style per module</li>
+        <li data-de="Live-Vorschau: Die Seite eines Moduls zeigt es mit Demo-Daten, Änderungen sind sofort sichtbar. Das Fenster merkt sich seine Position">Live preview: a module's page shows it with demo data so changes are visible at once. The window remembers its position</li>
+        <li data-de="Glas-Balkentextur, weiche Balkenbewegung, Aufblitzen bei fertigen Fähigkeiten und neuen Warnungen">Glass bar texture, smooth bar movement, flash when a cooldown is ready or a warning appears</li>
       </ul>
       <ul class="f">
         <li data-de="Rahmen entsperren, mit der Maus verschieben, wieder sperren">Unlock frames, move them with the mouse, lock again</li>
+        <li data-de="Einzelne Module direkt auf ihrer Seite entsperren; Rahmen rasten beim Verschieben aneinander ein (Shift = aus)">Unlock a single module right on its page; frames snap to each other while you move them (Shift = off)</li>
+        <li data-de="Stärke und Größe des Aufblitzens sowie Position von Beschriftung, Restzeit, Munitionsanzahl und Tastenbelegung einstellbar">Flash glow strength and size, position of label and time per bar, ammo count and key binding position adjustable</li>
         <li data-de="Position oder einzelne Module zurücksetzen">Reset positions or single modules</li>
         <li data-de="Sprache: automatisch, Englisch oder Deutsch">Language: automatic, English or German</li>
         <li data-de="Einstellungen als eine Textzeile exportieren und importieren">Export and import all settings as one line of text</li>
@@ -440,6 +466,7 @@
       <li><code>/hht reset</code> <span data-de="Positionen zurücksetzen">reset the positions</span></li>
       <li><code>/hht petinfo</code> <span data-de="Tierfähigkeiten des aktiven Tiers ausgeben">print the active pet's abilities</span></li>
       <li><code>/hht pets</code> <span data-de="Tierdatenbank öffnen, /hht pets Name sucht">open the pet database, <code>/hht pets name</code> searches it</span></li>
+      <li><code>/hht guide</code> <span data-de="Tierratgeber öffnen">open the pet guide</span></li>
       <li><code>/hht ammo</code> / <code>/hht ammo go</code> <span data-de="Munitionshändler auf der Karte zeigen oder Wegpunkt zum nächsten">show ammo vendors on the map or set a waypoint to the nearest</span></li>
       <li><code>/hht stable</code> / <code>/hht stable go</code> <span data-de="Stallmeister auf der Karte zeigen oder Wegpunkt zum nächsten">show stable masters on the map or set a waypoint to the nearest</span></li>
       <li><code>/hht food</code> / <code>/hht food go</code> <span data-de="Futterhändler für dein Tier auf der Karte zeigen oder Wegpunkt zum nächsten">show food vendors for your pet on the map or set a waypoint to the nearest</span></li>

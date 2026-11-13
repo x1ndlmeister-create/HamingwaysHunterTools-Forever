@@ -1,4 +1,4 @@
--- Stacked option forms inside a scroll frame. Widgets bind to (table, key).
+-- Stacked option forms inside a scroll frame. Widgets bind to (table, key). Headers fold their section.
 local ADDON, HHT = ...
 local UI = HHT.UI
 
@@ -11,7 +11,14 @@ local function Round(v, step)
     return floor(v * m + 0.5) / m
 end
 
-function UI.NewForm(parent, onChange)
+local function Folds()
+    local g = HHT.db and HHT.db.general
+    if not g then return nil end
+    g.fold = g.fold or {}
+    return g.fold
+end
+
+function UI.NewForm(parent, onChange, id)
     local sf = CreateFrame("ScrollFrame", nil, parent)
     sf:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     sf:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -8, 0)
@@ -44,28 +51,57 @@ function UI.NewForm(parent, onChange)
     end)
     sf:SetScript("OnSizeChanged", UpdateThumb)
 
-    local form = { sf = sf, content = content, y = 4, items = {}, onChange = onChange }
+    local form = { sf = sf, content = content, entries = {}, items = {}, onChange = onChange, id = id }
+
+    -- Places every entry again; entries below a folded header are hidden.
+    function form:Layout()
+        local y, folded, tailShown = 4, false, false
+        for _, e in ipairs(self.entries) do
+            local w = e.w
+            if e.header then
+                y = y + 8
+                w:ClearAllPoints()
+                w:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -y)
+                e.hit:ClearAllPoints()
+                e.hit:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(y - 3))
+                e.hit:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -(y - 3))
+                y = y + 18
+                e.line:ClearAllPoints()
+                e.line:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -y)
+                e.line:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -y)
+                y = y + 8
+                folded = e.folded and true or false
+                e.mark:SetText(folded and "[+]" or "[-]")
+            elseif folded then
+                w:Hide()
+            else
+                w:Show()
+                w:ClearAllPoints()
+                w:SetPoint("TOPLEFT", content, "TOPLEFT", e.indent, -y)
+                if e.tail then tailShown = true else y = y + e.h + e.gap end
+            end
+        end
+        content:SetHeight(y + (tailShown and (self.tailH or 0) or 0) + 8)
+        UpdateThumb()
+    end
 
     function form:Place(w, h, indent, gap)
-        w:ClearAllPoints()
-        w:SetPoint("TOPLEFT", content, "TOPLEFT", indent or 4, -self.y)
-        self.y = self.y + h + (gap or 6)
-        content:SetHeight(self.y + 8)
-        UpdateThumb()
+        self.entries[#self.entries + 1] = { w = w, h = h, indent = indent or 4, gap = gap or 6 }
         self.items[#self.items + 1] = w
+        self:Layout()
         return w
     end
 
-    -- Places a widget at the current y without advancing (for a growing list at the end of the form).
+    -- Places a widget at the current end without advancing (for a growing list at the end of the form).
     function form:PlaceTail(w)
-        w:ClearAllPoints()
-        w:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -self.y)
+        self.entries[#self.entries + 1] = { w = w, tail = true, indent = 4 }
         self.items[#self.items + 1] = w
+        self:Layout()
     end
 
     function form:SetTail(h)
-        content:SetHeight(self.y + h + 8)
-        UpdateThumb()
+        self.tailH = h
+        self:Layout()
     end
 
     function form:Changed(extra)
@@ -74,15 +110,31 @@ function UI.NewForm(parent, onChange)
     end
 
     function form:Header(text)
-        self.y = self.y + 8
         local fs = UI.Header(content, text)
-        self:Place(fs, 14, 4, 4)
         local line = content:CreateTexture(nil, "ARTWORK")
         line:SetHeight(1)
-        line:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -self.y)
-        line:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -self.y)
-        line:SetColorTexture(0.55, 0.42, 0.2, 0.6)
-        self.y = self.y + 8
+        local hc = UI.PAL.hdrLine
+        line:SetColorTexture(hc[1], hc[2], hc[3], hc[4])
+
+        local hit = CreateFrame("Button", nil, content)
+        hit:SetHeight(20)
+        local hl = hit:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints()
+        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.1)
+        local mark = UI.Text(hit, "", 11, 0.6, 0.6, 0.6)
+        mark:SetPoint("RIGHT", hit, "RIGHT", -2, 0)
+
+        local key = (id or "") .. "/" .. tostring(text)
+        local folds = Folds()
+        local e = { header = true, w = fs, line = line, hit = hit, mark = mark, folded = folds and folds[key] and true or false }
+        hit:SetScript("OnClick", function()
+            e.folded = not e.folded
+            local fl = Folds()
+            if fl then fl[key] = e.folded or nil end
+            self:Layout()
+        end)
+        self.entries[#self.entries + 1] = e
+        self:Layout()
         return fs
     end
 

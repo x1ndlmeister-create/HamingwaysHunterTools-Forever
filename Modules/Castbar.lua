@@ -20,7 +20,7 @@ local M = HHT:NewModule("castbar", {
     positions = { main = { "CENTER", "CENTER", 0, -128 } },
     defaults = {
         showIcon = true, showLabel = true, showTime = true, showSpark = true, border = true,
-        hideDefault = false, barTexture = "blizzard", bevel = 0.6,
+        hideDefault = false, barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
         width = 260, height = 22, bgAlpha = 0.85,
         colors = {
             cast = { 0.67, 0.83, 0.45 },
@@ -134,12 +134,27 @@ end
 
 function M:OnCastEvent(event, unit)
     if unit ~= "player" then return end
+    local prev = self.state
     self:Sync()
+    -- a stop right at the end of the cast is a completion; earlier stops are cancels
+    if prev and not self.state and GetTime() >= prev.e - 0.25
+        and (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP") then
+        self:Complete(prev)
+    end
     -- FAILED also fires for spell queueing (e.g. Aimed Shot then Arcane Shot), so only real interrupts show
     if not self.state and event == "UNIT_SPELLCAST_INTERRUPTED" then
         self.failUntil = GetTime() + 0.6
         self.failText = L("Interrupted")
     end
+end
+
+-- Keeps the full bar on screen for the length of the flash.
+function M:Complete(st)
+    if not self.db.flash or not UI.Anim() or not self.frame then return end
+    if self.doneS == st.s and self.doneE == st.e then return end
+    self.doneS, self.doneE = st.s, st.e
+    self.done = { name = st.name, icon = st.icon, channel = st.channel, till = GetTime() + Bar.FLASH_TIME }
+    Bar.Flash(self.frame.bar)
 end
 
 function M:Tick()
@@ -148,7 +163,7 @@ function M:Tick()
     local db = self.db
     local now = GetTime()
     local st = self.state
-    local unlocked = HHT:IsUnlocked()
+    local unlocked = HHT:IsUnlocked(self)
     local bar = f.bar
 
     local name, icon, progress, remain, color
@@ -156,11 +171,13 @@ function M:Tick()
         local dur = st.e - st.s
         local t = now - st.s
         if t >= dur then
+            self:Complete(st)
             self.state = nil
             self:Sync()
             st = self.state
         end
     end
+    if st and not (self.doneS == st.s and self.doneE == st.e) then self.done = nil end
     if st then
         local dur = st.e - st.s
         local t = math.min(dur, math.max(0, now - st.s))
@@ -168,13 +185,25 @@ function M:Tick()
         remain = dur - t
         name, icon = st.name, st.icon
         color = st.channel and "channel" or "cast"
+    elseif self.done and now < self.done.till then
+        progress, remain, name, icon = 1, nil, self.done.name, self.done.icon
+        color = self.done.channel and "channel" or "cast"
     elseif self.failUntil and now < self.failUntil then
         progress, remain, name, color = 1, nil, self.failText, "fail"
         icon = f.icon.tex:GetTexture()
     elseif unlocked then
         local dur = 2.5
-        local t = now % dur
-        progress, remain, name, color = t / dur, dur - t, L("Cast bar"), "cast"
+        local pause = db.flash and Bar.FLASH_TIME or 0
+        local t = now % (dur + pause)
+        if t < dur then
+            progress, remain = t / dur, dur - t
+            self.demoFull = false
+        else
+            progress, remain = 1, nil
+            if not self.demoFull then Bar.Flash(bar) end
+            self.demoFull = true
+        end
+        name, color = L("Cast bar"), "cast"
         icon = HHT.Spells.Resolve("@autoShot").icon
     end
 
@@ -211,6 +240,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Bar height"), db, "height", 8, 48, 1)
     form:Stepper(L("Background opacity"), db, "bgAlpha", 0, 1, 0.05)
     Bar.AddOptions(form, db)
+    Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Hide the default cast bar"), db, "hideDefault")
     form:Header(L("Colors"))

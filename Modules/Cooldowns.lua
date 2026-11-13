@@ -126,7 +126,7 @@ function M:Tick()
     local f = self.frame
     if not f then return end
     local db = self.db
-    local show = HHT:ShouldShow(db.visibility)
+    local show = HHT:ShouldShow(db.visibility, self)
     if f:IsShown() ~= show then f:SetShown(show) end
     if not show then return end
 
@@ -148,6 +148,18 @@ function M:Tick()
             end
         end
     end
+    if HHT:IsUnlocked(self) and #list == 0 then
+        for _, e in ipairs(db.spells) do
+            if e.on and #list < 5 then
+                local rs = S.Resolve(e.spec)
+                list[#list + 1] = {
+                    rs = { icon = rs and rs.icon or "Interface\\Icons\\INV_Misc_QuestionMark", name = rs and rs.name or "" },
+                    onCd = (#list % 2 == 0), demo = true,
+                }
+                sig[#sig + 1] = "d" .. #list
+            end
+        end
+    end
     local signature = table.concat(sig, ",")
     local relayout = (signature ~= self.signature)
     self.signature = signature
@@ -162,14 +174,27 @@ function M:Tick()
         ic:SetIcon(item.rs.icon)
         HHT.Keys.Apply(ic, db, item.rs.name)
         ic.label:SetText(db.names and item.rs.name or "")
-        if item.onCd then
-            ic:ShowCooldown(item.dur)
+        if item.demo then
+            ic.cdId = nil
+            if item.onCd then
+                ic:SetTimer(GetTime() - 8, 30)
+                ic:SetDesaturated(db.desaturate)
+                ic:SetBorderColor(HHT.Col(db, "cd"))
+            else
+                ic:ClearCooldown()
+                ic:SetDesaturated(false)
+                ic:SetBorderColor(HHT.Col(db, "ready"))
+            end
+        elseif item.onCd then
             ic:SetDesaturated(db.desaturate)
             ic:SetBorderColor(HHT.Col(db, "cd"))
+            ic.cdId = item.rs.id
         else
             ic:ClearCooldown()
             ic:SetDesaturated(false)
             ic:SetBorderColor(HHT.Col(db, "ready"))
+            if ic.cdId == item.rs.id then ic:Flash() end
+            ic.cdId = nil
         end
         ic:Show()
         used = i
@@ -210,6 +235,7 @@ local function BuildSpellList(m, form)
                     row.icon:SetSize(18, 18)
                     row.icon:SetPoint("LEFT", row, "LEFT", 24, 0)
                     row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+                    HHT.Icon.Attach(row.icon)
                     row.text = UI.Text(row, "", 12)
                     row.text:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
                     row.text:SetWidth(190)
