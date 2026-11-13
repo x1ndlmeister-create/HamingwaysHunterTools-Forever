@@ -172,7 +172,9 @@ function M:Missing()
     local book = PD.ScanBook()
     local off = self.db.alertFor
     local list = { petName = info.name }
-    for _, a in ipairs(PD.FamilyAbilities(info.family)) do
+    local cand = PD.FamilyAbilities(info.family)
+    for _, a in ipairs(PD.trainerAbilities) do cand[#cand + 1] = a end
+    for _, a in ipairs(cand) do
         local have, want = book[a.key] or 0, nil
         if off[a.key] ~= false then
             for r = PD.KnownRank(a.key), 1, -1 do
@@ -280,6 +282,7 @@ function M:OnCraftShow()
     local PD = HHT.PetDex
     craftOpen = PD and PD.CraftIsBeast() or false
     self:SetButtons()
+    if craftOpen then self:Queue(0.5) end
     if not craftOpen and pending then HHT.Print("PetTrain: craft window opened but is not Beast Training (" .. CraftInfo() .. ")") end
     if craftOpen and pending and GetTime() - pending.t < 5 then
         local p = pending
@@ -367,6 +370,22 @@ function M:OnLockChanged() self:Refresh() end
 function M:Recheck()
     lastSig = nil
     self:Queue(0)
+    local PD = HHT.PetDex
+    if not PD then return end
+    local info = PD.PetInfo()
+    HHT.Print(string.format("PetTrain: pet=%s family=%s level=%s points=%s bookEntries=%d", tostring(info and info.name),
+        tostring(info and info.family), tostring(info and info.level), tostring(info and info.points), PD.PetBookCount()))
+    HHT.Print("PetTrain: craft " .. CraftInfo() .. " isBeast=" .. tostring(PD.CraftIsBeast()) .. " scan=" .. tostring(PD.ScanCraft()))
+    for i = 1, math.min(GetNumCrafts and GetNumCrafts() or 0, 8) do
+        local name, sub, kind, _, _, cost, req = GetCraftInfo(i)
+        HHT.Print(string.format("  craft %d: %s | %s | %s | cost=%s req=%s", i, tostring(name), tostring(sub), tostring(kind), tostring(cost), tostring(req)))
+    end
+    PD.ScanSpells()
+    local book = PD.ScanBook()
+    for _, a in ipairs(PD.trainerAbilities) do
+        local known = HHT.PetDex.KnownRank(a.key)
+        HHT.Print(string.format("PetTrain: %s known=%d petRank=%d alert=%s", a.name, known, book[a.key] or 0, tostring(self.db.alertFor[a.key])))
+    end
 end
 
 function M:BuildOptions(form)
@@ -383,5 +402,9 @@ function M:BuildOptions(form)
     local PD = HHT.PetDex
     if PD then
         for _, a in ipairs(PD.abilities) do form:Check(PD.AbilityName(a), db.alertFor, a.key) end
+        for _, a in ipairs(PD.trainerAbilities) do
+            if db.alertFor[a.key] == nil then db.alertFor[a.key] = true end
+            form:Check(PD.AbilityName(a), db.alertFor, a.key)
+        end
     end
 end

@@ -218,6 +218,29 @@ for _, a in ipairs(Data.abilities) do
 end
 table.sort(abilities, function(x, y) return x.name < y.name end)
 
+-- Pet trainer abilities: bought from pet trainers, not taught by beasts, so they stay out of the beast data and lists.
+local TRAINER_LEVELS = { 1, 12, 18, 24, 30, 36, 42, 48, 54, 60 }
+-- teach = the spell the hunter learns from the pet trainer; spells = the pet's own rank spells.
+local TRAINER_DEFS = {
+    { key = "greatstamina", name = "Great Stamina", spells = { 4187, 4188, 4189, 4190, 4191, 4192, 4193, 4194, 5041, 5042 },
+      teach = { 4195, 4196, 4197, 4198, 4199, 4200, 4201, 4202, 5048, 5049 } },
+    { key = "naturalarmor", name = "Natural Armor", spells = { 24545, 24549, 24550, 24551, 24552, 24553, 24554, 24555, 24629, 24630 },
+      teach = { 24547, 24556, 24557, 24558, 24559, 24560, 24561, 24562, 24631, 24632 } },
+}
+local teachSpell = {}
+PD.trainerAbilities = {}
+for _, def in ipairs(TRAINER_DEFS) do
+    local a = { key = def.key, name = def.name, families = {}, famSet = {}, byRank = {}, ranks = {}, all = true, trainer = true }
+    for i, spell in ipairs(def.spells) do
+        local r = { rank = i, spell = spell, level = TRAINER_LEVELS[i], npcs = {} }
+        a.ranks[i], a.byRank[i] = r, r
+        rankSpell[spell] = { a, i }
+        teachSpell[def.teach[i]] = { a, i }
+    end
+    a.maxRank = #a.ranks
+    PD.trainerAbilities[#PD.trainerAbilities + 1] = a
+end
+
 do
     local seen = {}
     for id, b in pairs(Data.beasts) do
@@ -375,12 +398,19 @@ local function NameKeys()
         map[Fold(a.name)] = a.key
         map[Fold(PD.AbilityName(a))] = a.key
     end
+    for _, a in ipairs(PD.trainerAbilities) do
+        map[Fold(a.name)] = a.key
+        map[Fold(PD.AbilityName(a))] = a.key
+    end
     return map
 end
 
 function PD.ScanSpells()
     local changed = false
     for id, hit in pairs(rankSpell) do
+        if SpellKnown(id) and Note(hit[1].key, hit[2]) then changed = true end
+    end
+    for id, hit in pairs(teachSpell) do
         if SpellKnown(id) and Note(hit[1].key, hit[2]) then changed = true end
     end
     return changed
