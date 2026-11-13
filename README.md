@@ -392,7 +392,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 ## Install
 
 1. Copy the `HamingwaysHunterTools` folder to `Interface\AddOns`.
-2. Start the game completely after adding new files, `/reload` is not enough for new files.
+2. Type `/reload` or start the game.
 3. Type `/hht` to open the settings.
 
 | Command | Effect |
