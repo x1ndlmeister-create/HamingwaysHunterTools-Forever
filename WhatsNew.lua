@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.6",
+        en = {
+            "Pet training hint: Growl is now included, so you are told when your pet can learn a higher Growl rank.",
+        },
+        de = {
+            "Pet-Training-Hinweis: Knurren (Growl) wird jetzt ebenfalls beruecksichtigt, du wirst benachrichtigt, wenn dein Tier einen hoeheren Knurren-Rang lernen kann.",
+        },
+    },
+    {
         v = "1.2.5",
         en = {
             "Cooldowns: the countdown numbers and the cooldown swipe on the icons are back.",

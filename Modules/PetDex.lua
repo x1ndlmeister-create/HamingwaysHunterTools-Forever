@@ -226,13 +226,15 @@ local TRAINER_DEFS = {
       teach = { 4195, 4196, 4197, 4198, 4199, 4200, 4201, 4202, 5048, 5049 } },
     { key = "naturalarmor", name = "Natural Armor", spells = { 24545, 24549, 24550, 24551, 24552, 24553, 24554, 24555, 24629, 24630 },
       teach = { 24547, 24556, 24557, 24558, 24559, 24560, 24561, 24562, 24631, 24632 } },
+    { key = "growl", name = "Growl", spells = { 2649, 14916, 14917, 14918, 14919, 14920, 14921 },
+      teach = { 2649, 14922, 14923, 14924, 14925, 14926, 14927 }, levels = { 1, 10, 20, 30, 40, 50, 60 } },
 }
 local teachSpell = {}
 PD.trainerAbilities = {}
 for _, def in ipairs(TRAINER_DEFS) do
     local a = { key = def.key, name = def.name, families = {}, famSet = {}, byRank = {}, ranks = {}, all = true, trainer = true }
     for i, spell in ipairs(def.spells) do
-        local r = { rank = i, spell = spell, level = TRAINER_LEVELS[i], npcs = {} }
+        local r = { rank = i, spell = spell, level = (def.levels or TRAINER_LEVELS)[i], npcs = {} }
         a.ranks[i], a.byRank[i] = r, r
         rankSpell[spell] = { a, i }
         teachSpell[def.teach[i]] = { a, i }
