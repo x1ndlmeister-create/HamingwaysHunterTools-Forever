@@ -712,6 +712,7 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
             local keys2 = {}
             for _, e in ipairs(w:Collect()) do keys2[#keys2 + 1] = e.key end
             HHT.Print("warnings: quiet=" .. tostring(w.Quiet()) .. " enabled=" .. tostring(w.enabled) .. " list=" .. table.concat(keys2, ","))
+            if w.PetDebug then HHT.Print(w:PetDebug()) end
         end
     elseif msg == "reset" then
         for _, m in pairs(HHT.modules) do m.db.pos = nil end

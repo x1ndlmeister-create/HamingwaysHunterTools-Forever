@@ -226,6 +226,78 @@ local function PetHealthPct()
     if hp and mx and mx > 0 then return hp / mx * 100 end
 end
 
+-- The pet's health is a secret value in this client, even out of combat, so it cannot be compared in Lua.
+-- A curve turns the health fraction into 1 (below the threshold) or 0 inside the client, and that result drives the icon alpha.
+local lowCurve, lowCurveFor
+local function LowCurve(pct)
+    if lowCurve and lowCurveFor == pct then return lowCurve end
+    lowCurve, lowCurveFor = nil, nil
+    if not (C_CurveUtil and C_CurveUtil.CreateCurve) then return nil end
+    local thr = pct / 100
+    local ok, c = pcall(C_CurveUtil.CreateCurve)
+    if not (ok and c) then return nil end
+    local okA = pcall(function()
+        c:AddPoint(0, 1)
+        c:AddPoint(thr - 0.002, 1)
+        c:AddPoint(thr, 0)
+        c:AddPoint(1, 0)
+    end)
+    if not okA then return nil end
+    -- self test with plain numbers: low health gives 1, healthy gives 0
+    local okL, lo = pcall(c.Evaluate, c, math.max(0, thr - 0.05))
+    local okH, hi = pcall(c.Evaluate, c, math.min(1, thr + 0.05))
+    if not (okL and okH and HHT.SafeNumber(lo) and HHT.SafeNumber(hi) and lo > 0.5 and hi < 0.5) then return nil end
+    lowCurve, lowCurveFor = c, pct
+    return c
+end
+
+-- 1 when the pet is below the threshold, else 0 (secret in combat); nil when it cannot be asked.
+local function PetLowValue(pct)
+    local c = LowCurve(pct)
+    if not (c and UnitHealthPercent) then return nil end
+    local ok, v = pcall(UnitHealthPercent, "pet", true, c)
+    if ok and v ~= nil then return v end
+end
+
+-- Entries with lowCheck are shown through the icon alpha, because only the client can compare the pet's health.
+local function ApplyLow(ic, e, db)
+    if not (e and e.lowCheck) then return end
+    local v = PetLowValue(db.petLowPct)
+    if v == nil then ic:SetAlpha(0) return end
+    if HHT.IsSecret(v) then
+        if not pcall(ic.SetAlpha, ic, v) then ic:SetAlpha(0) end
+    else
+        ic:SetAlpha(v >= 0.5 and 1 or 0)
+    end
+end
+
+-- One line for /hht debug: what the pet health warnings can read right now.
+function M:PetDebug()
+    local db = self.db
+    local okE, ex = pcall(UnitExists, "pet")
+    local okH, hp = pcall(UnitHealth, "pet")
+    local okM, mx = pcall(UnitHealthMax, "pet")
+    local mend = S.Resolve("@mendPet")
+    local pct = PetHealthPct()
+    local c = LowCurve(db.petLowPct)
+    local lowVal, alphaOk = "n/a", "n/a"
+    if c and UnitHealthPercent then
+        local okL, v = pcall(UnitHealthPercent, "pet", true, c)
+        if okL and v ~= nil then
+            lowVal = HHT.IsSecret(v) and "secret" or tostring(v)
+            self.dbgFrame = self.dbgFrame or CreateFrame("Frame")
+            alphaOk = tostring((pcall(self.dbgFrame.SetAlpha, self.dbgFrame, v)))
+        else
+            lowVal = "error"
+        end
+    end
+    return string.format("petwarn: exists=%s hp=%s max=%s pct=%s mendKnown=%s lowWarn=%s lowPct=%s hideInCombat=%s combat=%s quiet=%s curve=%s lowValue=%s setAlpha=%s",
+        tostring(okE and not HHT.IsSecret(ex) and ex), okH and (HHT.IsSecret(hp) and "secret" or tostring(hp)) or "error",
+        okM and (HHT.IsSecret(mx) and "secret" or tostring(mx)) or "error", tostring(pct and math.floor(pct)),
+        tostring(mend.known), tostring(db.petLowWarn), tostring(db.petLowPct), tostring(db.hideInCombat),
+        tostring(HHT.InCombat()), tostring(Quiet()), tostring(c ~= nil), lowVal, alphaOk)
+end
+
 -- true / false, nil when the autocast state cannot be read.
 local function GrowlAutocastOn(growl)
     local seen = false
@@ -304,6 +376,7 @@ function M:Collect()
     if Quiet() then return list end
     if db.hideInCombat and HHT.InCombat() then return list end
     local inCombat = HHT.InCombat()
+    local lowEntry
 
     -- Auras cannot be read in combat: aura based warnings only run out of combat.
     if (db.aspectWarn or db.aspectShow or db.packWarn) and not inCombat then
@@ -377,7 +450,17 @@ function M:Collect()
                 elseif db.petLowWarn or db.petRangeWarn then
                     local mend = S.Resolve("@mendPet")
                     local pct = mend.known and PetHealthPct()
-                    if pct and pct < db.petLowPct then
+                    if pct == nil and mend.known and PetLowValue(db.petLowPct) ~= nil then
+                        -- secret health: the entry is appended last and the client fades it in below the threshold
+                        local tmp = {}
+                        if db.petRangeWarn and S.InRange(mend.id, "pet") == false then
+                            Add(tmp, "petfar", mend.icon, L("Pet out of heal range"), true, mend.name)
+                        elseif db.petLowWarn then
+                            Add(tmp, "petlow", mend.icon, L("Pet low health"), true, mend.name, "/cast " .. mend.name)
+                        end
+                        lowEntry = tmp[1]
+                        if lowEntry then lowEntry.lowCheck = true end
+                    elseif pct and pct < db.petLowPct then
                         if db.petRangeWarn and S.InRange(mend.id, "pet") == false then
                             Add(list, "petfar", mend.icon, L("Pet out of heal range"), true, mend.name)
                         elseif db.petLowWarn then
@@ -429,6 +512,7 @@ function M:Collect()
             end
         end
     end
+    if lowEntry then list[#list + 1] = lowEntry end
     return list
 end
 
@@ -446,6 +530,7 @@ function M:Tick()
             if self.icons[i] then
                 ApplyKey(self.icons[i], db, e)
                 self:ApplyClick(self.icons[i], e)
+                ApplyLow(self.icons[i], e, db)
             end
         end
         return
@@ -467,7 +552,7 @@ function M:Tick()
         ic.label:SetWordWrap(true)
         ic.label:SetText(db.showText and e.text or "")
         ic.label:SetTextColor(HHT.Col(db, e.warn and "warn" or "ok"))
-        ic:SetBlink(e.warn and db.blink)
+        ic:SetBlink(e.warn and db.blink and not e.lowCheck)
         ApplyKey(ic, db, e)
         self:ApplyClick(ic, e)
         local per = math.max(1, db.perRow or 8)
@@ -478,9 +563,10 @@ function M:Tick()
         elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", across, -along)
         else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", across, along) end
         ic:SetAlpha(1)
+        ApplyLow(ic, e, db)
         ic:Show()
         nowKeys[e.key] = true
-        if prevKeys and not prevKeys[e.key] then ic:Flash() end
+        if prevKeys and not prevKeys[e.key] and not e.lowCheck then ic:Flash() end
         used = i
     end
     self.prevKeys = nowKeys
@@ -492,7 +578,7 @@ function M:Tick()
     end
 
     local warns = 0
-    for _, e in ipairs(list) do if e.warn then warns = warns + 1 end end
+    for _, e in ipairs(list) do if e.warn and not e.lowCheck then warns = warns + 1 end end
     if db.sound and warns > self.lastWarnCount and not HHT:IsUnlocked(self) then
         pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
     end

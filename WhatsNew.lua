@@ -15,6 +15,17 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.3",
+        en = {
+            "Warnings: the 'pet low health' warning works again. The game hides the pet's health from addons, so the icon is now faded in by the game itself when the pet drops below your threshold, in and out of combat.",
+            "/hht debug shows what the pet health warning can read.",
+        },
+        de = {
+            "Warnungen: Die Warnung 'Tier niedrige Gesundheit' funktioniert wieder. Das Spiel verbirgt die Gesundheit des Tiers vor Addons, deshalb blendet jetzt das Spiel selbst das Icon ein, sobald das Tier unter deine Schwelle faellt, im und ausserhalb des Kampfs.",
+            "/hht debug zeigt, was die Tier-Gesundheitswarnung lesen kann.",
+        },
+    },
+    {
         v = "1.2.2",
         en = {
             "Ammo vendors: positions and wares checked against the latest Questie data for Forever. Fixes vendors that were off the mark (for example in Redridge Mountains), vendors that sell only arrows or only bullets, and adds two missing vendors in Loch Modan and Ashenvale.",
