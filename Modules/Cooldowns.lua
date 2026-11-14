@@ -186,6 +186,7 @@ function M:Tick()
                 ic:SetBorderColor(HHT.Col(db, "ready"))
             end
         elseif item.onCd then
+            ic:ShowCooldown(item.dur)
             ic:SetDesaturated(db.desaturate)
             ic:SetBorderColor(HHT.Col(db, "cd"))
             ic.cdId = item.rs.id

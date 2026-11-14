@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.5",
+        en = {
+            "Cooldowns: the countdown numbers and the cooldown swipe on the icons are back.",
+        },
+        de = {
+            "Abklingzeiten: Die Zahlen und der Cooldown-Kreis auf den Icons werden wieder angezeigt.",
+        },
+    },
+    {
         v = "1.2.4",
         en = {
             "Warnings: fixed a Lua error when hovering the 'pet low health' icon. The icon no longer catches mouse clicks while it is faded out, so you no longer cast Mend Pet by accident.",
