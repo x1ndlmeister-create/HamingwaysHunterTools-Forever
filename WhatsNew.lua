@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.2",
+        en = {
+            "Ammo vendors: positions and wares checked against the latest Questie data for Forever. Fixes vendors that were off the mark (for example in Redridge Mountains), vendors that sell only arrows or only bullets, and adds two missing vendors in Loch Modan and Ashenvale.",
+        },
+        de = {
+            "Munitionshaendler: Positionen und Waren mit den aktuellen Questie-Daten fuer Forever abgeglichen. Behebt falsch eingetragene Haendler (zum Beispiel im Rotkammgebirge), Haendler die nur Pfeile oder nur Kugeln verkaufen, und ergaenzt zwei fehlende Haendler in Loch Modan und Ashenvale.",
+        },
+    },
+    {
         v = "1.2.1",
         en = {
             "Ammo upgrades: better quivers and ammo pouches are no longer suggested when you already wear or carry a better one, and worn quivers are now detected correctly. Ammo you already carry also hides the worse suggestions.",
