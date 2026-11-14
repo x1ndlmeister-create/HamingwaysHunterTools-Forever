@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.4",
+        en = {
+            "Warnings: fixed a Lua error when hovering the 'pet low health' icon. The icon no longer catches mouse clicks while it is faded out, so you no longer cast Mend Pet by accident.",
+        },
+        de = {
+            "Warnungen: Lua-Fehler beim Ueberfahren des Icons 'Tier niedrige Gesundheit' behoben. Das ausgeblendete Icon faengt keine Mausklicks mehr ab, damit du nicht versehentlich Tier heilen wirkst.",
+        },
+    },
+    {
         v = "1.2.3",
         en = {
             "Warnings: the 'pet low health' warning works again. The game hides the pet's health from addons, so the icon is now faded in by the game itself when the pet drops below your threshold, in and out of combat.",

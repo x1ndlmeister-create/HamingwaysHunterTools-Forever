@@ -179,7 +179,8 @@ local function ClickButton(ic)
     b:SetAttribute("useOnKeyDown", false)
     b:SetAttribute("type1", "spell")
     b:SetScript("OnEnter", function(self)
-        if not (GameTooltip and self.want) or self:GetParent():GetParent():GetAlpha() == 0 then return end
+        if not (GameTooltip and self.want) or self.lowCheck then return end
+        if (HHT.SafeNumber(self:GetParent():GetParent():GetAlpha()) or 1) == 0 then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         if self.tip then
             GameTooltip:AddLine(self.tip, 1, 1, 1)
@@ -205,6 +206,13 @@ function M:ApplyClick(ic, e)
     local h, b = ClickButton(ic)
     if not h then return end
     local want = e and (e.macro or e.spell)
+    b.lowCheck = e and e.lowCheck or nil
+    -- Only the client knows whether such an icon is visible, so it must not catch clicks while invisible.
+    if not InCombatLockdown() then
+        local mouse = not (e and e.lowCheck)
+        h:EnableMouse(mouse)
+        b:EnableMouse(mouse)
+    end
     if want and b.want ~= want and not InCombatLockdown() then
         if e.macro then
             b:SetAttribute("type1", "macro")
