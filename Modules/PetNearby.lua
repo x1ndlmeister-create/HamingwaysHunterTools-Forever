@@ -433,6 +433,14 @@ function M:PreviewZone()
     self:ShowZone(list, GetZoneText() or "?", true)
 end
 
+function M:TestZone()
+    if not (HHT.PetDex and self.zone) then return false end
+    self:PreviewZone()
+    self.zone.preview = nil
+    self.zone.hideAt = GetTime() + 30
+    return true
+end
+
 function M:OnZone()
     if not self.db.zoneList or not (C_Timer and C_Timer.After) then return end
     C_Timer.After(2, function() if self.enabled then self:CheckZone() end end)

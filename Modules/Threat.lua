@@ -125,11 +125,13 @@ function M:Tick()
     if HHT:IsUnlocked(self) then
         if not f:IsShown() then f:Show() end
         bar:SetAlpha(1)
+        local demo = HHT.shotValues and HHT.shotValues.threat or 75
+        local key = (demo >= 100 and "aggro") or (demo >= db.warnAt and "high") or (demo >= db.warnAt - 25 and "mid") or "low"
         bar.bar:SetMinMaxValues(0, 100)
-        bar.bar:SetValue(75)
-        bar.bar:SetStatusBarColor(HHT.Col(db, "high"))
-        bar.label:SetText(L("Threat"))
-        bar.time:SetText("75%")
+        bar.bar:SetValue(demo)
+        bar.bar:SetStatusBarColor(HHT.Col(db, key))
+        bar.label:SetText(demo >= 100 and L("Aggro!") or L("Threat"))
+        bar.time:SetText(string.format("%d%%", demo))
         return
     end
 

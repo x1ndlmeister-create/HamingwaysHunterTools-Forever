@@ -76,6 +76,7 @@ local GENERAL_DEFAULTS = {
     minimap = true,
     minimapAngle = 215,
     versionNotice = true,
+    whatsNew = true,
     scale = 1.0,
     alpha = 1.0,
     theme = "classic",
@@ -210,6 +211,7 @@ function HHT:IsUnlocked(m)
     local g = self.db and self.db.general
     if not g then return g end
     if g.locked == false then return true end
+    if m ~= nil and self.showcase and self.showcase[m.key] then return true end
     return m ~= nil and (m == self.previewModule or m.moveUnlock == true)
 end
 
@@ -530,6 +532,7 @@ end
 -- Init
 -- ---------------------------------------------------------------------------
 function HHT:InitDB()
+    self.firstRun = (HamingwaysHunterToolsDB == nil)
     HamingwaysHunterToolsDB = HamingwaysHunterToolsDB or {}
     local db = HamingwaysHunterToolsDB
     db.general = db.general or {}
@@ -595,6 +598,7 @@ local TESTS = {
     { "rare", "rare beast alert", function() local m = HHT.modules.petwatch; return m and m.enabled and m:Test() end },
     { "arrow", "direction arrow to a rare", function() return HHT.PetWatch and HHT.PetWatch.TestArrow() end },
     { "nearby", "pet ability alert", function() local m = HHT.modules.petnearby; return m and m.enabled and m:Test() end },
+    { "zone", "upgrade beast list of the current zone", function() local m = HHT.modules.petnearby; return m and m.enabled and m:TestZone() end },
     { "train", "pet training hint", function() local m = HHT.modules.pettrain; return m and m.enabled and m:Test() end },
     { "guide", "level 10 pet guide hint", function() local m = HHT.modules.petguide; return m and m.enabled and m:Test() end },
     { "minimap", "minimap pins around you", function() return HHT.PetMap and HHT.PetMap:TestMinimap() end },
@@ -617,7 +621,10 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     msg = (msg or ""):lower():match("^%s*(.-)%s*$")
     local testWhat = msg:match("^test%s*(.*)$")
     local petSearch = msg:match("^pets%s*(.*)$")
-    if petSearch then
+    local shotWhat = msg:match("^shot%s*(.*)$")
+    if shotWhat then
+        if HHT.RunShot then HHT.RunShot(shotWhat) end
+    elseif petSearch then
         if HHT.PetDex then HHT.PetDex:Toggle(petSearch ~= "" and petSearch or nil) end
     elseif testWhat then
         HHT.RunTest(testWhat)
@@ -669,6 +676,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     elseif msg == "tranq" then
         local tm = HHT.modules.tranq
         if tm and tm.enabled then tm:SetWindow(tm.db.show == false) end
+    elseif msg == "news" then
+        if HHT.WhatsNew then HHT.WhatsNew.Open("all") end
     elseif msg == "lock" then
         HHT:SetLocked(true)
     elseif msg == "unlock" then

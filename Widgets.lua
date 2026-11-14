@@ -402,11 +402,12 @@ function UI.Window(name, w, h, title)
     return f
 end
 
--- Paged pick list. items = { {label=, icon=, value=}, ... }; onPick(item)
+-- Paged pick list. items = { {label=, icon=, value=, tip=function(tooltip) end}, ... }; onPick(item)
 local PAGE = 14
 local menu
 
 local function MenuRefresh()
+    if GameTooltip then GameTooltip:Hide() end
     local first = (menu.page - 1) * PAGE
     local shown = 0
     for i = 1, PAGE do
@@ -448,7 +449,7 @@ local function MenuBuild()
     catcher:SetScript("OnClick", function() menu:Hide() end)
     catcher:Hide()
     menu:SetScript("OnShow", function() catcher:Show() end)
-    menu:SetScript("OnHide", function() catcher:Hide() end)
+    menu:SetScript("OnHide", function() catcher:Hide(); if GameTooltip then GameTooltip:Hide() end end)
     local bg = menu:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     Tint(bg, UI.PAL.menu)
@@ -474,6 +475,14 @@ local function MenuBuild()
             menu:Hide()
             if item and cb then cb(item) end
         end)
+        b:SetScript("OnEnter", function(self)
+            local item = self.item
+            if not (item and item.tip and GameTooltip) then return end
+            GameTooltip:SetOwner(menu, "ANCHOR_NONE")
+            GameTooltip:SetPoint("TOPLEFT", menu, "TOPRIGHT", 4, 0)
+            if pcall(item.tip, GameTooltip) then GameTooltip:Show() else GameTooltip:Hide() end
+        end)
+        b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
         menu.rows[i] = b
     end
     menu.pageText = UI.Text(menu, "", 11, 0.7, 0.7, 0.7)

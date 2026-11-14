@@ -28,6 +28,18 @@ HHT:AddGerman({
     ["Food blacklisted: %s"] = "Futter gesperrt: %s",
     ["Food allowed: %s"] = "Futter erlaubt: %s",
     ["Food is blacklisted (Shift+click to allow): %s"] = "Futter ist gesperrt (Umschalt+Klick zum Erlauben): %s",
+    ["Feed key: %s"] = "Fuetter-Taste: %s",
+    ["not set"] = "nicht gesetzt",
+    ["Clear key"] = "Taste entfernen",
+    ["The key replaces its normal function while it is set. Changes apply after combat."] = "Die Taste ersetzt ihre normale Funktion, solange sie gesetzt ist. Aenderungen gelten nach dem Kampf.",
+    ["Warn when the pet gets unhappy"] = "Warnen wenn der Begleiter unzufrieden wird",
+    ["Play a sound when the pet gets unhappy"] = "Ton wenn der Begleiter unzufrieden wird",
+    ["Warn when pet food runs low"] = "Warnen wenn das Begleiter-Futter knapp wird",
+    ["Low food below"] = "Wenig Futter unter",
+    ["Never pick buff food automatically"] = "Buff-Futter nie automatisch waehlen",
+    ["Your pet is unhappy: time to feed it."] = "Dein Begleiter ist unzufrieden: Zeit zum Fuettern.",
+    ["Low on pet food: %d left."] = "Wenig Begleiter-Futter: noch %d.",
+    ["Buff food"] = "Buff-Futter",
 })
 
 local M = HHT:NewModule("feeder", {
@@ -36,7 +48,8 @@ local M = HHT:NewModule("feeder", {
     positions = { main = { "CENTER", "CENTER", -260, -215 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1,
-        showText = true, showName = false, mode = "always", syncMacro = true,
+        showText = true, showName = false, mode = "always", syncMacro = true, key = "",
+        hungerWarn = true, hungerSound = false, supplyWarn = true, supplyBelow = 10, protectBuff = true,
         selected = {}, blacklist = {},
         colors = {
             happy = { 0.40, 0.80, 0.30 },
@@ -60,6 +73,12 @@ local FOODS = {
 local ITEM_DIET = {}
 for diet, ids in pairs(FOODS) do
     for _, id in ipairs(ids) do ITEM_DIET[id] = diet end
+end
+
+-- Fallback list of cooked dishes with a Well Fed style buff, used while an item tooltip is not loaded yet.
+local BUFF_FOOD = {}
+for _, id in ipairs({ 6887, 8953, 12209, 12210, 12212, 12213, 12215, 12216, 12217, 12218, 13851, 13927, 13928, 13929, 13930, 13932, 13933, 13935, 18045 }) do
+    BUFF_FOOD[id] = true
 end
 
 -- English and German diet names as returned by the client.
@@ -131,12 +150,28 @@ function M:OnInit()
     self.attrText = false
     self.macroId = false
     self.petKey = "default"
+    self.startAt = GetTime()
     HHT:Listen(self, "BAG_UPDATE_DELAYED", "MarkDirty")
     HHT:Listen(self, "UNIT_PET", "MarkDirty")
     HHT:Listen(self, "PLAYER_ENTERING_WORLD", "MarkDirty")
     HHT:Listen(self, "SPELLS_CHANGED", "MarkDirty")
     HHT:Listen(self, "PLAYER_REGEN_ENABLED", "MarkDirty")
     HHT:Every(self, 0.25, M.Tick)
+    self.owner = CreateFrame("Frame")
+    self.bindDirty = true
+    local f = CreateFrame("Frame")
+    f:RegisterEvent("PLAYER_REGEN_ENABLED")
+    f:SetScript("OnEvent", function() if M.bindDirty then M:ApplyBinding() end end)
+end
+
+function M:ApplyBinding()
+    if InCombatLockdown() then self.bindDirty = true; return end
+    if not (ClearOverrideBindings and SetOverrideBindingClick) then return end
+    self.bindDirty = false
+    ClearOverrideBindings(self.owner)
+    if self.enabled and self.db.key ~= "" then
+        pcall(SetOverrideBindingClick, self.owner, true, self.db.key, "HamingwaysHunterToolsFeederButton", "LeftButton")
+    end
 end
 
 function M:MarkDirty()
@@ -181,10 +216,13 @@ function M:OnEnable()
     self:Layout()
     self.dirty = true
     self.signature = false
+    self.bindDirty = true
 end
 
 function M:OnDisable()
     if self.frame then self.frame:Hide() end
+    self.bindDirty = true
+    self:ApplyBinding()
 end
 
 function M:Refresh()
@@ -267,13 +305,92 @@ function M:Scan()
     self.foods = list
 end
 
+-- Plain food reads "Use: Restores X health over Y sec. Must remain seated while eating." (two numbers).
+-- Buff food adds the buff text with its own duration and values, so its Use line holds more numbers.
+-- Counting numbers works in every language; the fixed BUFF_FOOD list is only the fallback for unloaded tooltips.
+local buffCache, buffTried = {}, {}
+local scanTip
+
+local function TooltipLines(id)
+    if C_TooltipInfo and C_TooltipInfo.GetItemByID then
+        local ok, data = pcall(C_TooltipInfo.GetItemByID, id)
+        if ok and type(data) == "table" and type(data.lines) == "table" then
+            local out = {}
+            for _, ln in ipairs(data.lines) do
+                local t = type(ln) == "table" and ln.leftText
+                if type(t) == "string" and not HHT.IsSecret(t) then out[#out + 1] = t end
+            end
+            return out
+        end
+    end
+    if not scanTip then
+        scanTip = CreateFrame("GameTooltip", "HHTFeedScanTip", UIParent, "GameTooltipTemplate")
+    end
+    scanTip:SetOwner(UIParent, "ANCHOR_NONE")
+    scanTip:ClearLines()
+    if not pcall(scanTip.SetHyperlink, scanTip, "item:" .. id) then return nil end
+    local out = {}
+    for i = 1, scanTip:NumLines() do
+        local fs = _G["HHTFeedScanTipTextLeft" .. i]
+        local t = fs and fs:GetText()
+        if type(t) == "string" and not HHT.IsSecret(t) then out[#out + 1] = t end
+    end
+    return out
+end
+
+local function UseLineNumbers(lines)
+    local trigger = ITEM_SPELL_TRIGGER_ONUSE or "Use:"
+    for _, t in ipairs(lines) do
+        if t:sub(1, #trigger) == trigger then
+            t = t:gsub("(%d)[%.,'](%d%d%d)", "%1%2")
+            local n = 0
+            for _ in t:gmatch("%d+") do n = n + 1 end
+            return n
+        end
+    end
+    return 0
+end
+
+local function IsBuffFood(id)
+    local c = buffCache[id]
+    if c ~= nil then return c end
+    local now = GetTime()
+    if buffTried[id] and now - buffTried[id] < 5 then return BUFF_FOOD[id] and true or false end
+    buffTried[id] = now
+    local ok, lines = pcall(TooltipLines, id)
+    if ok and lines and #lines >= 2 then
+        c = UseLineNumbers(lines) >= 4
+        buffCache[id] = c
+        return c
+    end
+    return BUFF_FOOD[id] and true or false
+end
+
+function M:IsProtected(id)
+    return self.db.protectBuff and IsBuffFood(id) or false
+end
+
+-- Food the automatic pick may use: not blacklisted, and no protected buff food unless it is the chosen one.
+function M:Usable(e)
+    if self:IsBlacklisted(e.id) then return false end
+    return e.id == self.db.selected[self.petKey] or not self:IsProtected(e.id)
+end
+
+function M:Supply()
+    local n = 0
+    for _, e in ipairs(self.foods) do
+        if self:Usable(e) then n = n + e.count end
+    end
+    return n
+end
+
 function M:Pick()
     local sel = self.db.selected[self.petKey]
     for _, e in ipairs(self.foods) do
         if e.id == sel and not self:IsBlacklisted(e.id) then return e end
     end
     for _, e in ipairs(self.foods) do
-        if not self:IsBlacklisted(e.id) then return e end
+        if self:Usable(e) then return e end
     end
 end
 
@@ -294,8 +411,19 @@ function M:OpenMenu(anchor)
             label = "|cffff5050[" .. L("Blacklisted") .. "]|r " .. label
         elseif e.id == sel then
             label = "|cffabd473> |r" .. label
+        elseif self:IsProtected(e.id) then
+            label = "|cffffd100[" .. L("Buff food") .. "]|r " .. label
         end
-        items[#items + 1] = { label = label, icon = e.icon, value = e.id, name = e.name }
+        local id = e.id
+        items[#items + 1] = { label = label, icon = e.icon, value = id, name = e.name,
+            tip = function(tt)
+                tt:SetHyperlink("item:" .. id)
+                if self:IsBlacklisted(id) then
+                    tt:AddLine(L("Blacklisted"), 1, 0.3, 0.3)
+                elseif self:IsProtected(id) then
+                    tt:AddLine(L("Buff food"), 1, 0.82, 0)
+                end
+            end }
     end
     UI.ShowMenu(anchor, items, function(item)
         if IsShiftKeyDown and IsShiftKeyDown() then
@@ -339,6 +467,45 @@ function M:SyncSecure()
     end
 end
 
+function M:Alert(text)
+    HHT.Print(text)
+    if UIErrorsFrame and UIErrorsFrame.AddMessage then pcall(UIErrorsFrame.AddMessage, UIErrorsFrame, text, 1, 0.3, 0.3) end
+end
+
+-- Hunger and supply warnings run even while the icon is hidden.
+function M:CheckAlerts(exists, dead, happy, unlocked)
+    local db = self.db
+    if unlocked or not exists or dead then
+        self.lastHappy, self.supplyLow = nil, false
+        return false
+    end
+    if happy then
+        if happy == 1 and self.lastHappy ~= 1 and db.hungerWarn then
+            self:Alert(L("Your pet is unhappy: time to feed it."))
+            if db.hungerSound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+        end
+        self.lastHappy = happy
+    end
+    -- bags are not fully loaded right after login, so the supply check waits a little
+    if not db.supplyWarn or GetTime() - (self.startAt or 0) < 15 or not next(self.diets or {}) then
+        self.supplyLow = false
+        return false
+    end
+    local supply = self:Supply()
+    self.supplyCount = supply
+    local low = supply < db.supplyBelow
+    -- the chat message comes once per drop below the threshold, not again when the pet is called anew
+    if low and not self.supplyWarned then self:Alert(string.format(L("Low on pet food: %d left."), supply)) end
+    self.supplyWarned = low
+    self.supplyLow = low
+    return low
+end
+
+-- State for the Warnings module: unhappy pet, low supply, the picked food and the feed macro text.
+function M:Status()
+    return self.lastHappy == 1, self.supplyLow and true or false, self.current, self.attrText or "", self.db.key ~= "" and self.db.key:upper() or nil, self.supplyCount
+end
+
 function M:Tick()
     local f = self.frame
     if not f then return end
@@ -346,6 +513,7 @@ function M:Tick()
     if self.dirty or GetTime() - (self.lastScan or 0) > 3 then self:Scan() end
     self.current = self:Pick()
     self:SyncSecure()
+    if self.bindDirty and not InCombatLockdown() then self:ApplyBinding() end
 
     local unlocked = HHT:IsUnlocked(self)
     local okE, ex = pcall(UnitExists, "pet")
@@ -353,6 +521,7 @@ function M:Tick()
     local dead = exists and HHT.SafeBool(UnitIsDead, "pet") == true
     local pm = HHT.modules.pet
     local happy = pm and pm.ReadHappiness and pm.ReadHappiness() or nil
+    local supplyLow = self:CheckAlerts(exists, dead, happy, unlocked)
 
     local show = exists and not dead
     if show and db.mode == "hungry" and happy == 3 then show = false end
@@ -362,11 +531,12 @@ function M:Tick()
 
     local cur = self.current
     local total = cur and cur.count or 0
-    local sig = table.concat({ cur and cur.id or 0, total, tostring(happy), tostring(db.showText), tostring(db.showName) }, ",")
+    local sig = table.concat({ cur and cur.id or 0, total, tostring(happy), tostring(db.showText), tostring(db.showName), db.key, tostring(supplyLow) }, ",")
     if sig == self.signature then return end
     self.signature = sig
 
     local ic = f.icon
+    ic:SetKey(db.key ~= "" and db.key:upper() or "", 12, "TOPRIGHT", 1, 1, 0.4)
     if cur then
         ic:SetIcon(cur.icon or S.FALLBACK_ICON)
         ic:SetDesaturated(false)
@@ -375,6 +545,7 @@ function M:Tick()
         ic:SetDesaturated(true)
     end
     ic.count:SetText(db.showText and cur and tostring(total) or "")
+    if supplyLow then ic.count:SetTextColor(1, 0.3, 0.3) else ic.count:SetTextColor(1, 1, 1) end
     ic.label:SetText(db.showName and (cur and cur.name or L("No food")) or "")
     local key = (happy == 3 and "happy") or (happy == 2 and "content") or (happy == 1 and "unhappy") or "neutral"
     ic:SetBorderColor(HHT.Col(db, key))
@@ -387,6 +558,11 @@ function M:Debug()
     if GetPetFoodTypes then pcall(function() for _, v in ipairs({ GetPetFoodTypes() }) do raw[#raw + 1] = tostring(v) end end) end
     HHT.Print(string.format("feeder: pet=%s rawDiet=%s diets=%s foods=%d current=%s",
         tostring(self.petKey), table.concat(raw, "/"), table.concat(d, ","), #(self.foods or {}), tostring(self:CurrentFoodName())))
+    local buff = {}
+    for _, e in ipairs(self.foods or {}) do
+        if IsBuffFood(e.id) then buff[#buff + 1] = e.name end
+    end
+    HHT.Print("feeder: buff food = " .. (#buff > 0 and table.concat(buff, ", ") or "none"))
 end
 
 function M:BuildOptions(form)
@@ -414,8 +590,34 @@ function M:BuildOptions(form)
         HHT.Print(L("Blacklist cleared."))
     end, 220)
     form:Check(L("Keep the HHT Feed macro up to date"), db, "syncMacro")
+    local keyBtn = form:Button("", function()
+        if HHT.CaptureKey then
+            HHT.CaptureKey(function(key)
+                db.key = key
+                self.bindDirty = true
+                self.signature = false
+                form:Refresh()
+            end)
+        end
+    end, 220)
+    function keyBtn:Refresh()
+        self:SetLabel(string.format(L("Feed key: %s"), db.key ~= "" and db.key:upper() or L("not set")))
+    end
+    keyBtn:Refresh()
+    form:Button(L("Clear key"), function()
+        db.key = ""
+        self.bindDirty = true
+        self.signature = false
+    end, 220)
+    form:Note(L("The key replaces its normal function while it is set. Changes apply after combat."))
     form:Button(L("Food vendors on map"), function() if HHT.FoodVendors then HHT.FoodVendors.Show() end end, 220)
     form:Button(L("Waypoint to nearest food vendor"), function() if HHT.FoodVendors then HHT.FoodVendors.Nearest() end end, 220)
+    form:Header(L("Warnings"))
+    form:Check(L("Warn when the pet gets unhappy"), db, "hungerWarn")
+    form:Check(L("Play a sound when the pet gets unhappy"), db, "hungerSound")
+    form:Check(L("Warn when pet food runs low"), db, "supplyWarn")
+    form:Stepper(L("Low food below"), db, "supplyBelow", 1, 100, 1)
+    form:Check(L("Never pick buff food automatically"), db, "protectBuff")
     form:Header(L("Colors"))
     form:Color(L("Happy color"), db.colors, "happy")
     form:Color(L("Content color"), db.colors, "content")

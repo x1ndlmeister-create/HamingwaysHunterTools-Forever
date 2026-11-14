@@ -12,7 +12,7 @@ local W, H = 626, 620
 -- Sidebar icons (classic icon files).
 local ICONS = {
     general = "INV_Misc_Gear_01", swing = "Ability_Whirlwind", castbar = "INV_Misc_PocketWatch_01",
-    cooldowns = "Spell_Nature_TimeStop", warnings = "Ability_Hunter_SniperShot", debuffs = "Ability_Hunter_Quickshot",
+    cooldowns = "Spell_Nature_TimeStop", warnings = "Ability_Hunter_SniperShot", aspects = "Ability_Mount_JungleTiger", debuffs = "Ability_Hunter_Quickshot",
     procs = "Spell_Nature_Lightning", summons = "Ability_Hunter_BeastCall", raidbuffs = "INV_Misc_Note_01",
     consumables = "INV_Potion_54", threat = "Ability_Hunter_Misdirection", distance = "Ability_Marksmanship",
     pet = "Ability_Hunter_BeastCall", feeder = "INV_Misc_Food_15", ammo = "INV_Ammo_Arrow_01",
@@ -26,7 +26,7 @@ local ICONS = {
 local PREVIEW = {
     swing = true, castbar = true, distance = true, threat = true, warnings = true, debuffs = true, procs = true,
     summons = true, ammo = true, pet = true, feeder = true, petnearby = true, petwatch = true, pettrain = true,
-    cooldowns = true, tranq = true, petguide = true,
+    cooldowns = true, tranq = true, petguide = true, aspects = true,
 }
 
 function HHT.CommonOptions(m, form)
@@ -94,6 +94,7 @@ function C:BuildGeneral(form)
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
     form:Check(L("Tell me about new versions"), g, "versionNotice")
+    form:Check(L("Show what's new after an update"), g, "whatsNew")
     form:Stepper(L("Global scale"), g, "scale", 0.5, 2, 0.05, function() HHT:ApplyAllLooks() end)
     form:Stepper(L("Global opacity"), g, "alpha", 0.1, 1, 0.05, function() HHT:ApplyAllLooks() end)
 

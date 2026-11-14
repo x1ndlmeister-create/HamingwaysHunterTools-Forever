@@ -191,6 +191,11 @@ function M:Tick()
     elseif self.failUntil and now < self.failUntil then
         progress, remain, name, color = 1, nil, self.failText, "fail"
         icon = f.icon.tex:GetTexture()
+    elseif unlocked and HHT.shotValues and HHT.shotValues.cast then
+        local pct = HHT.shotValues.cast
+        progress, remain = pct / 100, pct < 100 and 2.5 * (1 - pct / 100) or nil
+        name, color = L("Cast bar"), "cast"
+        icon = HHT.Spells.Resolve("@autoShot").icon
     elseif unlocked then
         local dur = 2.5
         local pause = db.flash and Bar.FLASH_TIME or 0

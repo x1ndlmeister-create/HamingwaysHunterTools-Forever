@@ -5,7 +5,7 @@
 ## Author: Hamingway
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.1.1
+## Version: 1.2.0
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 
 Widgets.lua
@@ -21,6 +21,7 @@ Modules\Swing.lua
 Modules\Castbar.lua
 Modules\Cooldowns.lua
 Modules\Warnings.lua
+Modules\AspectKeys.lua
 Modules\TargetDebuffs.lua
 Modules\Procs.lua
 Modules\Summons.lua
@@ -55,4 +56,6 @@ Modules\PetGuide.lua
 Modules\MapButton.lua
 Profile.lua
 VersionCheck.lua
+WhatsNew.lua
+Showcase.lua
 Config.lua

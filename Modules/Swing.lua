@@ -170,7 +170,8 @@ local function UpdateRow(self, row, t, now, demoPhase)
     if (not elapsed or elapsed >= duration) and demoPhase then
         demo = true
         duration = 2.2
-        elapsed = (now + demoPhase) % duration
+        local frozen = HHT.shotValues and HHT.shotValues.swingPct
+        elapsed = frozen and duration * frozen / 100 or (now + demoPhase) % duration
     end
     local progress, remain
     if elapsed and duration and elapsed < duration then
@@ -245,7 +246,11 @@ function M:Tick(dt)
 
     local unlocked = HHT:IsUnlocked(self)
     local state = self.rangeState
-    if unlocked and not state then state = "ranged" end
+    if unlocked and HHT.shotValues and HHT.shotValues.swing then
+        state = HHT.shotValues.swing
+    elseif unlocked and not state then
+        state = "ranged"
+    end
     if db.showRange then
         local info = state and RANGE_TEXT[state]
         if info then

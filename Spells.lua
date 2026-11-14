@@ -39,6 +39,15 @@ S.Catalog = {
     trackBeasts   = { en = "Track Beasts",       ids = { 1494 } },
     trackHumanoids = { en = "Track Humanoids",   ids = { 19883 } },
     trackHidden   = { en = "Track Hidden",       ids = { 19885 } },
+    trackUndead   = { en = "Track Undead",       ids = { 19884 } },
+    trackDemons   = { en = "Track Demons",       ids = { 19878 } },
+    trackElementals = { en = "Track Elementals", ids = { 19880 } },
+    trackGiants   = { en = "Track Giants",       ids = { 19882 } },
+    trackDragonkin = { en = "Track Dragonkin",   ids = { 19879 } },
+    findHerbs     = { en = "Find Herbs",         ids = { 2383 } },
+    findMinerals  = { en = "Find Minerals",      ids = { 2580 } },
+    findFish      = { en = "Find Fish",          ids = { 43308 } },
+    findTreasure  = { en = "Find Treasure",      ids = { 2481 } },
     growl         = { en = "Growl",              ids = { 2649 } },
     mendPet       = { en = "Mend Pet",           ids = { 136 } },
     callPet       = { en = "Call Pet",           ids = { 883 } },
@@ -59,6 +68,7 @@ S.Catalog = {
 }
 
 S.Aspects = { "aspectHawk", "aspectMonkey", "aspectCheetah", "aspectPack", "aspectWild", "aspectBeast", "aspectViper", "aspectDragonhawk" }
+S.Trackings = { "trackBeasts", "trackHumanoids", "trackHidden", "trackUndead", "trackDemons", "trackElementals", "trackGiants", "trackDragonkin", "findHerbs", "findMinerals", "findFish", "findTreasure" }
 
 -- ---------------------------------------------------------------------------
 -- Safe wrappers

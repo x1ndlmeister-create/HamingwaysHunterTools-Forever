@@ -275,6 +275,11 @@ function M:Build()
         t:Hide()
         self.pvs[i] = t
     end
+    local sb = CreateFrame("StatusBar", nil, f)
+    sb:SetMinMaxValues(0, 1)
+    sb:SetFrameLevel(f:GetFrameLevel() + 1)
+    sb:Hide()
+    self.shotBar = sb
     HHT:MakeMovable(f, self, "main", L("Proc Overlay"))
     self.bar = HHT.AuraBar.New(f, function() return { size = self.db.size, spacing = 0 } end)
     self.bar.initFn = function(_, button, key) M:InitArt(button, key) end
@@ -307,7 +312,39 @@ function M:Layout()
             t:Hide()
         end
     end
+    self:LayoutShot()
     HHT:ApplyGlobalLook(f)
+end
+
+-- Screenshot scene (/hht shot proc <0-100>): the first proc with a frozen drain bar.
+function M:LayoutShot()
+    local sb, pct = self.shotBar, HHT.shotValues and HHT.shotValues.proc
+    if not sb then return end
+    if not pct then sb:Hide() return end
+    local db, k = self.db, nil
+    for i = 1, MAXP do
+        local e = db.entries[i]
+        if e and not e.off then k = k or i end
+        self.pvs[i]:Hide()
+    end
+    local e = db.entries[k or 1] or {}
+    local a = ArtOf(e)
+    local size, x, y = db.size * (e.scale or 1), e.x or 0, e.y or 0
+    local t = self.pvs[k or 1]
+    LayoutArt(t, self.frame, a, size, x, y)
+    t:SetAlpha(db.drain and 0.3 or 1)
+    t:Show()
+    sb:ClearAllPoints()
+    sb:SetPoint("CENTER", self.frame, "CENTER", x, y)
+    sb:SetSize(size, a[3] == "W" and size / 2 or size)
+    sb:SetStatusBarTexture(a[2])
+    local tex = sb:GetStatusBarTexture()
+    if tex then tex:SetBlendMode("ADD") end
+    local from = e.from or "top"
+    sb:SetOrientation((from == "top" or from == "bottom") and "VERTICAL" or "HORIZONTAL")
+    sb:SetReverseFill(from == "bottom" or from == "left")
+    sb:SetValue(pct / 100)
+    if db.drain then sb:Show() else sb:Hide() end
 end
 
 function M:OnEnable()

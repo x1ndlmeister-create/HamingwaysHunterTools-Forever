@@ -552,7 +552,10 @@ function M:Preview()
     local pd = PD()
     if not pd or not self.frame then return end
     local b
-    for _, x in ipairs(pd.beasts) do if x.r then b = x; break end end
+    for _, x in ipairs(pd.beasts) do
+        if x.n == "Humar the Pridelord" then b = x; break end
+        if x.r and not b then b = x end
+    end
     if b then self:Show({ kind = "rare", beast = b }, true) end
     local a = self.arrowFrame
     if a then

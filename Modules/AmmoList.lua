@@ -28,10 +28,17 @@ HHT:AddGerman({
     ["Conjured by the legendary bow"] = "Erzeugt vom legendaeren Bogen",
     ["Vendor in Halaa (if your faction holds the town)"] = "Haendler in Halaa (wenn deine Fraktion die Stadt haelt)",
     ["Alterac Valley quartermaster"] = "Alteractal-Rueckmeister",
+    ["Alterac Valley PvP reputation vendor"] = "PvP-Ruf-Haendler im Alteractal",
     ["In your bags: %d"] = "In deinen Taschen: %d",
     ["Mouse wheel: scroll.  Green: you carry it.  Red: level too high."] = "Mausrad: scrollen.  Gruen: im Besitz.  Rot: Stufe zu hoch.",
     ["Required level"] = "Benoetigte Stufe",
     ["Damage bonus per second"] = "Schadensbonus pro Sekunde",
+    ["Crafted by Leatherworkers"] = "Hergestellt von Lederern",
+    ["Better quiver"] = "Besserer Koecher",
+    ["Better ammo pouch"] = "Besserer Munitionsbeutel",
+    ["%s  %d slots, +%d%% speed"] = "%s  %d Plaetze, +%d%% Tempo",
+    ["Quest: %s (%s)"] = "Quest: %s (%s)",
+    ["Drop: %s (%s)"] = "Beute: %s (%s)",
 })
 
 local AL = {}
@@ -102,6 +109,9 @@ local function SourceText(src)
     elseif t == "q" then return string.format(L("Quest: %s"), src[2])
     elseif t == "d" then return string.format(L("Drop: %s"), src[2])
     elseif t == "e" then return string.format(L("Crafted by Engineers (skill %s)"), src[2])
+    elseif t == "l" then return L("Crafted by Leatherworkers")
+    elseif t == "qz" then return string.format(L("Quest: %s (%s)"), src[2], src[3])
+    elseif t == "dz" then return string.format(L("Drop: %s (%s)"), src[2], src[3])
     elseif t == "r" then return string.format(L("Reputation vendor: %s (%s)"), L(src[2]), L(src[3]))
     end
     return L(src[2])
@@ -141,6 +151,95 @@ end
 local ROWS, ROW_H = 14, 26
 local win
 
+-- Ammo of the same kind that adds more damage than the equipped one and is usable at your level, best first.
+function AL.Upgrades(kind, equipped, includeEngineered)
+    local plevel = AL.shotLevel or tonumber(UnitLevel and UnitLevel("player")) or 0
+    local base
+    local ename = equipped and equipped.name and equipped.name:lower()
+    for _, e in ipairs(entries[kind] or {}) do
+        if equipped and ((e.id and e.id == equipped.id) or (ename and (ItemName(e):lower() == ename or e.name:lower() == ename))) then
+            base = e.dps
+            break
+        end
+    end
+    local out = {}
+    if not base then return out end
+    for _, e in ipairs(entries[kind]) do
+        local lvl = e.level or GameLevel(e) or 999
+        local engineered = e.src and e.src[2] == "Engineering"
+        if e.dps and e.dps > base and lvl <= plevel and not e.name:find("^Depricated") and not e.name:find("^Monster")
+            and (includeEngineered or not engineered) then
+            out[#out + 1] = e
+        end
+    end
+    table.sort(out, function(a, b) return a.dps > b.dps end)
+    return out
+end
+AL.ItemName, AL.ItemIcon, AL.SourceText = ItemName, ItemIcon, SourceText
+
+-- Quivers hold arrows, ammo pouches hold bullets. kind, item id, name, slots, ranged speed %, required level, faction, source
+local BAGS = {
+    { "arrow", 2101, "Light Quiver", 6, 10, 1, nil, { "v" } },
+    { "arrow", 5439, "Small Quiver", 8, 10, 1, nil, { "v" } },
+    { "arrow", 7278, "Light Leather Quiver", 8, 10, 1, nil, { "l" } },
+    { "arrow", 11362, "Medium Quiver", 10, 10, 10, nil, { "v" } },
+    { "arrow", 3573, "Hunting Quiver", 10, 10, 1, nil, { "q", "Vyrin's Revenge" } },
+    { "arrow", 286734, "Ban'ethil Quiver", 10, 10, 1, "Alliance", { "qz", "Escaping Ban'ethil", "Teldrassil" } },
+    { "arrow", 3605, "Quiver of the Night Watch", 12, 11, 1, nil, { "q", "The Night Watch" } },
+    { "arrow", 7371, "Heavy Quiver", 14, 12, 30, nil, { "l" } },
+    { "arrow", 274926, "Matriarch Quiver", 14, 13, 35, "Horde", { "qz", "A Hunter's Quiver", "Riverglades" } },
+    { "arrow", 8217, "Quickdraw Quiver", 16, 13, 40, nil, { "l" } },
+    { "arrow", 2662, "Ribbly's Quiver", 16, 14, 50, nil, { "dz", "Ribbly Screwspigot", "Blackrock Depths" } },
+    { "arrow", 19319, "Harpy Hide Quiver", 16, 15, 55, nil, { "o", "Alterac Valley PvP reputation vendor" } },
+    { "arrow", 18714, "Ancient Sinew Wrapped Lamina", 18, 15, 60, nil, { "q", "Ancient Sinew Wrapped Lamina" } },
+    { "bullet", 2102, "Small Ammo Pouch", 6, 10, 1, nil, { "v" } },
+    { "bullet", 5441, "Small Shot Pouch", 8, 10, 1, nil, { "v" } },
+    { "bullet", 7279, "Small Leather Ammo Pouch", 8, 10, 1, nil, { "l" } },
+    { "bullet", 11363, "Medium Shot Pouch", 10, 10, 10, nil, { "v" } },
+    { "bullet", 3574, "Hunting Ammo Sack", 10, 10, 1, nil, { "q", "Vyrin's Revenge" } },
+    { "bullet", 3604, "Bandolier of the Night Watch", 12, 11, 1, nil, { "q", "The Night Watch" } },
+    { "bullet", 7372, "Heavy Leather Ammo Pouch", 14, 12, 30, nil, { "l" } },
+    { "bullet", 8218, "Thick Leather Ammo Pouch", 16, 13, 40, nil, { "l" } },
+    { "bullet", 2663, "Ribbly's Bandolier", 16, 14, 50, nil, { "dz", "Ribbly Screwspigot", "Blackrock Depths" } },
+    { "bullet", 19320, "Gnoll Skin Bandolier", 16, 15, 55, nil, { "o", "Alterac Valley PvP reputation vendor" } },
+}
+local bagById = {}
+for _, d in ipairs(BAGS) do
+    bagById[d[2]] = { kind = d[1], id = d[2], name = d[3], slots = d[4], haste = d[5], level = d[6], faction = d[7], src = d[8] }
+end
+
+-- The kind ("arrow" or "bullet") a known quiver or ammo pouch belongs to.
+function AL.BagKind(id)
+    local b = bagById[id]
+    return b and b.kind
+end
+
+-- Quivers or pouches of the kind that beat the equipped one (more speed, then more slots), usable by this character, best first.
+-- equippedId nil means none is equipped; an equipped bag this list does not know gives no suggestions.
+function AL.BagUpgrades(kind, equippedId)
+    local cur
+    if equippedId then
+        cur = bagById[equippedId]
+        if not cur then return {} end
+    end
+    local plevel = AL.shotLevel or tonumber(UnitLevel and UnitLevel("player")) or 0
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    local out = {}
+    for _, b in pairs(bagById) do
+        if b.kind == kind and b.level <= plevel and (not b.faction or b.faction == faction)
+            and (not cur or b.haste > cur.haste or (b.haste == cur.haste and b.slots > cur.slots)) then
+            out[#out + 1] = b
+        end
+    end
+    table.sort(out, function(a, b)
+        if a.haste ~= b.haste then return a.haste > b.haste end
+        if a.slots ~= b.slots then return a.slots > b.slots end
+        return a.id < b.id
+    end)
+    while #out > 5 do out[#out] = nil end
+    return out
+end
+
 local function OwnedMap()
     local byId, byName = {}, {}
     local am = HHT.modules.ammo
@@ -161,7 +260,7 @@ function AL:Refresh()
     local maxOff = math.max(0, #list - ROWS)
     win.offset = math.min(maxOff, math.max(0, win.offset))
     local byId, byName = OwnedMap()
-    local plevel = tonumber(UnitLevel and UnitLevel("player")) or 0
+    local plevel = AL.shotLevel or tonumber(UnitLevel and UnitLevel("player")) or 0
     for i = 1, ROWS do
         local row = win.rows[i]
         local e = list[win.offset + i]

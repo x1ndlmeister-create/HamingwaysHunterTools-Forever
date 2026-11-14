@@ -182,7 +182,8 @@ function M:Tick()
     if HHT:IsUnlocked(self) then
         if not f:IsShown() then f:Show() end
         f.body:SetAlpha(1)
-        if self.band ~= "Y25" then self.band = "Y25"; self:Paint("Y25") end
+        local demo = HHT.shotValues and HHT.shotValues.distance or "Y25"
+        if self.band ~= demo then self.band = demo; self:Paint(demo) end
         return
     end
 

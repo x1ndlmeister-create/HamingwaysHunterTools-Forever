@@ -2,9 +2,11 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 24 modules, 18 ready-made macros, English and German. Every module can be switched on or off and adjusted. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 25 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
 
-A richer overview with all pictures is in [Overview.html](Overview.html).
+**Version 1.2.0:** aspect and tracking buttons, pet warnings with a click (feed, Mend Pet, Revive Pet), smarter feeding, Aspect of the Pack warning, ammo, quiver and ammo pouch upgrades, and a What's New window. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+
+A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
 **Contents:** [English](#english) | [Deutsch](#deutsch) | [Install](#install) | [Credits](#credits)
 
@@ -14,14 +16,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Group | Modules |
 | --- | --- |
-| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Cooldowns, Target debuffs, Proc overlay, Summons |
+| Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Aspect and tracking, Cooldowns, Target debuffs, Proc overlay, Summons |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq rotation |
 | Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide |
 | Map | Stable masters, Ammo vendors, Food vendors, Trainers, Map button |
 
 ### Combat
 
-![Swing timer and distance](images/swing_distance.png)
+![Swing timer and distance](images/swing_distance.gif)
 
 **Swing timer**
 - Auto Shot and main hand bars with label and remaining time
@@ -36,7 +38,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Pulse and sound when entering the dead zone
 - Square or round icon, size, a colour for every band
 
-![Cast bar and threat](images/cast_threat.png)
+![Cast bar and threat](images/cast_threat.gif)
 
 **Cast bar**
 - Spell icon, name, remaining time and spark
@@ -56,8 +58,18 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - No aspect active, or not your preferred aspect
 - Trueshot Aura missing
 - Hunter's Mark missing: elites and bosses only, or every enemy
-- Pet missing or dead, with the matching spell as icon
+- Pet missing or dead, with the matching spell as icon; click to revive, the key shows on the icon
+- Pet hurt (threshold adjustable): click casts Mend Pet; own warning when out of Mend Pet range
+- Pet hungry: click feeds. Food low: tooltip with the count, right-click hides it, it returns when food drops below the limit again
+- Growl on autocast: click switches it off. Aspect of the Pack in a dungeon or raid: click switches to your preferred aspect
 - Show the active aspect, blink, sound, hide in combat
+
+**Aspect and tracking**
+- One button and one key each for aspect and tracking
+- Toggles between two spells you choose
+- Shift, Ctrl and Alt pick other variants, for both the click and the key
+- Right-click opens a list of every aspect or tracking type you know
+- Tracking also covers Find Herbs, Find Minerals, Find Fish and Find Treasure; a small X turns it off
 
 **Cooldowns**
 - Default: Rapid Fire, Bestial Wrath, Intimidation, Scatter Shot, traps, Feign Death, Deterrence and more; the list is freely editable
@@ -73,7 +85,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Placeholder on all targets, elites and bosses, or bosses only; optionally blinking
 - Only your debuffs or all, count, size and border adjustable
 
-![Proc overlay](images/procs.png)
+![Proc overlay](images/procs.gif)
 
 **Proc overlay**
 - Big art around your character while a proc or buff is active, also in combat
@@ -101,10 +113,15 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Low warning below a limit: red, blink, sound
 - Reminder when entering a dungeon and on ready check
 - Click: choose and equip other ammo; list of all ammunition
+- Green arrow when better ammo for your level is in your bags; click to see and equip the upgrades
+- Also suggests better quivers (arrows) and ammo pouches (bullets) that match your equipped ammo, with the source: crafted, quest, drop or PvP reputation
+- Engineer-crafted ammo can be switched on
 - Show ammo vendors on the map, waypoint to the nearest
 
 **Pet feeder**
-- Click feeds, right-click picks the food, Shift-click blacklists
+- Click feeds, right-click picks the food, Shift-click blacklists; also works with its own key
+- Warns when the pet gets unhappy (optional sound) and when food runs low
+- Buff food is never picked automatically
 - Food choice and blacklist per pet
 - Always show, or only when the pet is not happy
 - Keeps the HHT Feed macro up to date
@@ -161,6 +178,8 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - A Learn button per ability trains the rank right away
 - Abilities can be ignored; display time, sound, test hint and border colour adjustable
 
+![Pet guide](images/guide.png)
+
 **Pet guide**
 - One-time popup when a character reaches level 10, with buttons for the trainer on the map, a waypoint and the Guide tab
 - Test with `/hht test guide`, open the tab with `/hht guide`
@@ -193,6 +212,21 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 **Tranq rotation** - lists the hunters of your group with their Tranquilizing Shot cooldown. The raid leader or an assistant sets the order and a backup list and sends it to everyone who runs the addon; the raid chat shows who changed it. After a shot the hunter moves to the end, a missed shot marks him red until his cooldown is over, and the next free hunter is always on top. When it is your turn a "you are next to tranq" notice appears. Hunters without the addon are tracked by their visible casts. Optionally only hunters who know the spell are listed. Includes a test mode with fake hunters, plus an announcer that tells a chat channel of your choice about your own shot (own text, test button). `/hht tranq` shows or hides the window.
 
+### Customise and learn
+
+Enter it yourself:
+- Procs: add any buff by spell ID, even several IDs for one entry; read the ID with `/hht auras` while the proc is active
+- Target debuffs: add your own debuffs by spell ID, several ranks separated by commas
+- Cooldowns: add spells from your spellbook, unknown spells stay hidden, the default list can be restored
+- Aspect and tracking keys: your own spells per key, plus Shift, Ctrl and Alt variants
+- Feed key: Shift-click blacklists or allows a food per pet
+
+Learned automatically:
+- Procs: "Scan for new procs" adds short buffs you gain out of combat to the list switched off, then you switch them on
+- Stable masters and food vendors: missing ones are learned when you open their window; the built-in list stays the base
+- Pet database: known ranks are read from Beast Training and the pet spellbook, "Scan now" starts it by hand; seen and tamed beasts are counted
+- Everything learned can be forgotten again per module
+
 ### Settings
 
 ![Settings](images/settings.png)
@@ -222,7 +256,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 | Gruppe | Module |
 | --- | --- |
-| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
+| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Aspekt und Aufspüren, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Tranq-Rotation |
 | Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber |
 | Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
@@ -258,8 +292,18 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Kein Aspekt aktiv oder nicht der bevorzugte Aspekt
 - Aura des Volltreffers fehlt
 - Mal des Jägers fehlt: nur bei Elite und Bossen oder bei jedem Gegner
-- Tier fehlt oder ist tot, mit dem passenden Zauber als Symbol
+- Tier fehlt oder ist tot, mit dem passenden Zauber als Symbol; Klick belebt wieder, die Taste steht auf dem Symbol
+- Tier verletzt (Schwelle einstellbar): Klick wirkt Tier heilen; außerhalb der Heilreichweite eigene Warnung
+- Tier hungrig: Klick füttert. Futter knapp: Tooltip mit Anzahl, Rechtsklick blendet aus, kommt wieder, wenn das Futter erneut unter die Schwelle fällt
+- Knurren auf Autocast: Klick schaltet es aus. Aspekt des Rudels im Dungeon oder Schlachtzug: Klick wechselt zum bevorzugten Aspekt
 - Aktiven Aspekt anzeigen, Blinken, Ton, im Kampf ausblendbar
+
+**Aspekt und Aufspüren**
+- Je ein Knopf und eine Taste für Aspekt und Aufspüren
+- Wechselt zwischen zwei Zaubern, die du festlegst
+- Shift, Strg und Alt wählen andere Varianten, sowohl beim Klick als auch bei der Taste
+- Rechtsklick öffnet eine Liste aller Aspekte oder Aufspüren-Arten, die du kennst
+- Aufspüren kennt auch Kräuter, Erz, Fische und Schätze finden; ein kleines X schaltet es aus
 
 **Abklingzeiten**
 - Vorgabe: Schnellfeuer, Zorn des Wilden, Einschüchterung, Streuschuss, Fallen, Totstellen, Abschreckung und mehr; Liste frei änderbar
@@ -295,10 +339,15 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 - Warnung unter einer Grenze: rot, Blinken, Ton
 - Erinnerung beim Betreten eines Dungeons und beim Bereitschaftscheck
 - Klick: andere Munition wählen und anlegen; Liste aller Munition
+- Grüner Pfeil, wenn bessere Munition für deine Stufe in den Taschen liegt; Klick zeigt die Aufwertungen und legt sie an
+- Schlägt auch bessere Köcher (Pfeile) und Munitionsbeutel (Kugeln) vor, passend zur angelegten Munition, mit Quelle: Handwerk, Quest, Drop oder PvP-Ruf
+- Von Ingenieuren hergestellte Munition lässt sich zuschalten
 - Munitionshändler auf der Karte zeigen, Wegpunkt zum nächsten
 
 **Tier füttern**
-- Klick füttert, Rechtsklick wählt das Futter, Umschalt-Klick sperrt
+- Klick füttert, Rechtsklick wählt das Futter, Umschalt-Klick sperrt; auch per eigener Taste
+- Warnt, wenn das Tier unzufrieden wird (Ton optional) und wenn das Futter knapp wird
+- Buff-Futter wird nicht automatisch gewählt
 - Futterwahl und Sperrliste pro Tier
 - Immer anzeigen oder nur wenn das Tier nicht zufrieden ist
 - Hält das Makro HHT Feed aktuell
@@ -373,6 +422,21 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 
 **Tranq-Rotation** - listet die Jäger deiner Gruppe mit ihrer Abklingzeit des Einlullenden Schusses. Schlachtzugsleiter oder Assistenten legen Reihenfolge und Backup fest und senden sie an alle mit dem Addon; der Raid-Chat zeigt, wer sie geändert hat. Nach einem Schuss rückt der Jäger ans Ende, ein Fehlschuss markiert ihn rot bis zum Ende der Abklingzeit, und der nächste freie Jäger steht immer oben. Bist du dran, erscheint der Hinweis "Du bist mit Tranq dran". Jäger ohne Addon werden über ihre sichtbaren Zauber erkannt. Auf Wunsch werden nur Jäger gelistet, die den Zauber kennen. Mit Testmodus (falsche Jäger) und einem Ansager, der deinen eigenen Schuss in einen Chatkanal deiner Wahl meldet (eigener Text, Testknopf). `/hht tranq` blendet das Fenster ein oder aus.
 
+### Anpassen und Lernen
+
+Selbst eintragen:
+- Procs: beliebige Buffs per Zauber-ID hinzufügen, auch mehrere IDs für einen Eintrag; die ID liest du mit `/hht auras` aus, solange der Proc aktiv ist
+- Ziel-Debuffs: eigene Debuffs per Zauber-ID ergänzen, mehrere Ränge durch Komma getrennt
+- Abklingzeiten: Zauber aus deinem Zauberbuch hinzufügen, unbekannte Zauber bleiben ausgeblendet, die Standardliste lässt sich wiederherstellen
+- Aspekt- und Aufspüren-Tasten: eigene Zauber je Taste, dazu Umschalt-, Strg- und Alt-Varianten
+- Futter-Taste: Umschalt-Klick sperrt oder erlaubt ein Futter pro Tier
+
+Automatisch gelernt:
+- Procs: "Nach neuen Procs suchen" nimmt kurze Buffs, die du außerhalb des Kampfes bekommst, ausgeschaltet in die Liste auf, du schaltest sie dann ein
+- Stallmeister und Futterhändler: fehlende werden gelernt, sobald du ihr Fenster öffnest; die eingebaute Liste bleibt die Basis
+- Tierdatenbank: bekannte Ränge werden aus der Tierausbildung und dem Begleiter-Zauberbuch gelesen, "Jetzt einlesen" startet es von Hand; gesehene und gezähmte Tiere werden mitgezählt
+- Alles Gelernte lässt sich je Modul wieder vergessen
+
 ### Einstellungen
 
 - Jedes Modul hat einen eigenen Schalter und eine eigene Seite
@@ -407,6 +471,10 @@ A richer overview with all pictures is in [Overview.html](Overview.html).
 | `/hht stable` / `/hht stable go` | Show stable masters on the map or set a waypoint to the nearest |
 | `/hht food` / `/hht food go` | Show food vendors for your pet on the map or set a waypoint to the nearest |
 | `/hht trainer` / `/hht trainer go` | Show hunter and pet trainers on the map or set a waypoint to the nearest |
+| `/hht news` | Show what's new in recent updates |
+| `/hht auras` | Print the IDs of your active buffs, for the proc overlay |
+| `/hht test` / `/hht test zone` | Show demo output, or the beast list of the current zone for 30 seconds |
+| `/hht shot` | Screenshot scenes with sample data (`/hht shot off` ends them) |
 
 ## Credits
 
