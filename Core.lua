@@ -636,6 +636,9 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if HHT.AmmoVendors then HHT.AmmoVendors.Show() end
     elseif msg == "ammo go" then
         if HHT.AmmoVendors then HHT.AmmoVendors.Nearest() end
+    elseif msg == "ammo debug" then
+        local am = HHT.modules.ammo
+        if am and am.Debug then am:Debug() end
     elseif msg == "stable" then
         if HHT.StableMasters then HHT.StableMasters.Show() end
     elseif msg == "stable go" then

@@ -15,6 +15,21 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.1",
+        en = {
+            "Ammo upgrades: better quivers and ammo pouches are no longer suggested when you already wear or carry a better one, and worn quivers are now detected correctly. Ammo you already carry also hides the worse suggestions.",
+            "Ammo upgrades: hovering a suggestion shows the item tooltip and where to get it.",
+            "Ammo list: damage of Miniature Cannon Balls and the source of Explosive Arrow corrected.",
+            "/hht ammo debug prints what the ammo and quiver detection sees.",
+        },
+        de = {
+            "Munitions-Aufwertungen: Bessere Koecher und Munitionsbeutel werden nicht mehr vorgeschlagen, wenn du schon einen besseren traegst oder dabeihast, getragene Koecher werden jetzt richtig erkannt. Auch Munition, die du schon dabeihast, blendet schlechtere Vorschlaege aus.",
+            "Munitions-Aufwertungen: Beim Ueberfahren eines Vorschlags erscheint der Gegenstands-Tooltip samt Bezugsquelle.",
+            "Munitionsliste: Schaden der Miniature Cannon Balls und Quelle der Explosive Arrow korrigiert.",
+            "/hht ammo debug zeigt, was die Munitions- und Koecher-Erkennung sieht.",
+        },
+    },
+    {
         v = "1.2.0",
         en = {
             "New module Aspect and tracking: one button and key each, toggle between two spells, Shift, Ctrl and Alt variants. A small X on the tracking icon turns tracking off.",

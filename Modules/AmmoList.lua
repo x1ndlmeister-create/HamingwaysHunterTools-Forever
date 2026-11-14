@@ -54,7 +54,7 @@ local DATA = {
     { "arrow", "Depricated Razor Arrow", 30, 8.5, { "o", "Unknown" } },
     { "arrow", "Feathered Arrow", 30, 9.5, { "o", "Quests" }, 3464 },
     { "arrow", "Precision Arrow", 35, 11.5, { "d", "Baelog, Uldaman" }, { 9345, 9399 } },
-    { "arrow", "Explosive Arrow", 37, 14.5, { "o", "Unknown" }, 10579 },
+    { "arrow", "Explosive Arrow", 37, 14.5, { "o", "Engineering" }, 10579 },
     { "arrow", "Jagged Arrow", 40, 13.0, { "v" }, 11285 },
     { "arrow", "Ice Threaded Arrow", 51, 16.5, { "v" }, 19316 },
     { "arrow", "Thorium Headed Arrow", 52, 17.5, { "o", "Quest, vendor" }, { 18042, 15997 } },
@@ -77,7 +77,7 @@ local DATA = {
     { "bullet", "Rockshard Pellets", 47, 18.0, { "d", "Lord Roccor, Blackrock Depths" }, 17758 },
     { "bullet", "Ice Threaded Bullet", 51, 16.5, { "v" }, { 19317, 19319 } },
     { "bullet", "Thorium Shells", 52, 17.5, { "o", "Crafted, vendor" }, 15997 },
-    { "bullet", "Miniature Cannon Balls", 56, nil, { "d", "Cannon Master Willey, Stratholme" }, { 13377, 18679 } },
+    { "bullet", "Miniature Cannon Balls", 56, 20.5, { "d", "Cannon Master Willey, Stratholme" }, { 13377, 18679 } },
     { "bullet", "Swiftstrike Shot", 60, 24.5, { "o", "Engineering" }, 274388 },
 }
 local PROJECTILE_SUB = { arrow = 2, bullet = 3 }
@@ -151,8 +151,15 @@ end
 local ROWS, ROW_H = 14, 26
 local win
 
+local function SameItem(e, s)
+    if e.id and e.id == s.id then return true end
+    local n = s.name and s.name:lower()
+    return n ~= nil and (n == e.name:lower() or n == ItemName(e):lower())
+end
+
 -- Ammo of the same kind that adds more damage than the equipped one and is usable at your level, best first.
-function AL.Upgrades(kind, equipped, includeEngineered)
+-- owned (the scanned stacks) hides everything below the best ammo you already carry.
+function AL.Upgrades(kind, equipped, includeEngineered, owned)
     local plevel = AL.shotLevel or tonumber(UnitLevel and UnitLevel("player")) or 0
     local base
     local ename = equipped and equipped.name and equipped.name:lower()
@@ -173,6 +180,22 @@ function AL.Upgrades(kind, equipped, includeEngineered)
         end
     end
     table.sort(out, function(a, b) return a.dps > b.dps end)
+    if owned then
+        local best
+        for _, e in ipairs(out) do
+            for _, s in ipairs(owned) do
+                if SameItem(e, s) then best = e break end
+            end
+            if best then break end
+        end
+        if best then
+            local kept = {}
+            for _, e in ipairs(out) do
+                if e == best or e.dps > best.dps then kept[#kept + 1] = e end
+            end
+            out = kept
+        end
+    end
     return out
 end
 AL.ItemName, AL.ItemIcon, AL.SourceText = ItemName, ItemIcon, SourceText
@@ -203,9 +226,10 @@ local BAGS = {
     { "bullet", 2663, "Ribbly's Bandolier", 16, 14, 50, nil, { "dz", "Ribbly Screwspigot", "Blackrock Depths" } },
     { "bullet", 19320, "Gnoll Skin Bandolier", 16, 15, 55, nil, { "o", "Alterac Valley PvP reputation vendor" } },
 }
-local bagById = {}
+local bagById, bagByName = {}, {}
 for _, d in ipairs(BAGS) do
     bagById[d[2]] = { kind = d[1], id = d[2], name = d[3], slots = d[4], haste = d[5], level = d[6], faction = d[7], src = d[8] }
+    bagByName[d[3]:lower()] = d[2]
 end
 
 -- The kind ("arrow" or "bullet") a known quiver or ammo pouch belongs to.
@@ -214,13 +238,61 @@ function AL.BagKind(id)
     return b and b.kind
 end
 
+-- True when the item lies in a bag slot (a worn quiver does not).
+local function InBags(id)
+    if not (C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemID) then return true end
+    for bag = 0, (NUM_BAG_SLOTS or 4) do
+        local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
+        n = okN and HHT.SafeNumber(n) or 0
+        for slot = 1, n do
+            local ok, cid = pcall(C_Container.GetContainerItemID, bag, slot)
+            if ok and HHT.SafeNumber(cid) == id then return true end
+        end
+    end
+    return false
+end
+
+-- The quivers and ammo pouches worn in the bag slots: item ids, read from the inventory slot, its link or the bag name.
+-- Returns a set of ids and the ids that are not in this list (matched by name when possible).
+function AL.WornBagIds()
+    local ids = {}
+    local toInv = (C_Container and C_Container.ContainerIDToInventoryID) or ContainerIDToInventoryID
+    local bagName = (C_Container and C_Container.GetBagName) or GetBagName
+    for bag = 1, (NUM_BAG_SLOTS or 4) do
+        local inv
+        if toInv then
+            local ok, v = pcall(toInv, bag)
+            inv = ok and HHT.SafeNumber(v) or nil
+        end
+        inv = inv or (bag + 19)
+        local id
+        local okI, v = pcall(GetInventoryItemID, "player", inv)
+        id = okI and HHT.SafeNumber(v) or nil
+        if not id and GetInventoryItemLink then
+            local okL, link = pcall(GetInventoryItemLink, "player", inv)
+            id = okL and type(link) == "string" and tonumber(link:match("item:(%d+)")) or nil
+        end
+        if not id and bagName then
+            local okN, n = pcall(bagName, bag)
+            id = okN and type(n) == "string" and bagByName[n:lower()] or nil
+        end
+        if id then ids[id] = true end
+    end
+    return ids
+end
+
 -- Quivers or pouches of the kind that beat the equipped one (more speed, then more slots), usable by this character, best first.
--- equippedId nil means none is equipped; an equipped bag this list does not know gives no suggestions.
+-- equippedId nil: the worn ones are looked up. A worn bag this list does not know gives no suggestions.
 function AL.BagUpgrades(kind, equippedId)
+    local worn = (not AL.shotLevel) and AL.WornBagIds() or {}
     local cur
     if equippedId then
         cur = bagById[equippedId]
         if not cur then return {} end
+    end
+    for id in pairs(worn) do
+        local b = bagById[id]
+        if b and b.kind == kind and (not cur or b.haste > cur.haste or (b.haste == cur.haste and b.slots > cur.slots)) then cur = b end
     end
     local plevel = AL.shotLevel or tonumber(UnitLevel and UnitLevel("player")) or 0
     local faction = UnitFactionGroup and UnitFactionGroup("player")
@@ -236,6 +308,15 @@ function AL.BagUpgrades(kind, equippedId)
         if a.slots ~= b.slots then return a.slots > b.slots end
         return a.id < b.id
     end)
+    -- Cut everything below the best one you already carry in your bags.
+    if not AL.shotLevel and GetItemCount then
+        for i, b in ipairs(out) do
+            if (HHT.SafeNumber(GetItemCount(b.id)) or 0) > 0 or InBags(b.id) then
+                while #out > i do out[#out] = nil end
+                break
+            end
+        end
+    end
     while #out > 5 do out[#out] = nil end
     return out
 end
