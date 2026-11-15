@@ -12,7 +12,6 @@ HHT.PetData = {
       { rank = 6, spell = 17259, level = 40, cost = 17, npcs = {769,1087,4345,4841,5286,5356,8211,8762,8959,13599,14233,14339} },
       { rank = 7, spell = 17260, level = 48, cost = 21, npcs = {1817,1824,2505,2681,3581,6585,8213,8277,8933,8961} },
       { rank = 8, spell = 17261, level = 56, cost = 25, npcs = {9696,11370,16934,18466,19350} },
-      { rank = 9, spell = 27050, level = 64, cost = 29, npcs = {18467,20634,21956} },
     } },
     { key = "cower", name = "Cower", families = {}, ranks = {
       { rank = 1, spell = 1742, level = 5, cost = 8, npcs = {1199,1553,2042,2070,2321,2957,3035,3068,3121,3246} },
@@ -21,7 +20,6 @@ HHT.PetData = {
       { rank = 4, spell = 1755, level = 35, cost = 14, npcs = {2731,2732,4861} },
       { rank = 5, spell = 1756, level = 45, cost = 16, npcs = {2522,8600,8601,8927} },
       { rank = 6, spell = 16697, level = 55, cost = 18, npcs = {7430,8602} },
-      { rank = 7, spell = 27048, level = 65, cost = 21, npcs = {20671,21022,22807} },
     } },
     { key = "thunderstomp", name = "Thunderstomp", families = {"Gorilla"}, ranks = {
       { rank = 1, spell = 26090, level = 30, cost = 15, npcs = {1108,1114} },
@@ -36,7 +34,6 @@ HHT.PetData = {
       { rank = 2, spell = 24577, level = 24, cost = 15, npcs = {4158,4694,4861} },
       { rank = 3, spell = 24578, level = 48, cost = 20, npcs = {1809,7097,8927} },
       { rank = 4, spell = 24579, level = 56, cost = 25, npcs = {7456,8602,17035} },
-      { rank = 5, spell = 27051, level = 64, cost = 29, npcs = {17129,18257,19055,21042} },
     } },
     { key = "firebreath", name = "Fire Breath", families = {"Dragonhawk"}, ranks = {
       { rank = 1, spell = 34889, level = 1, cost = 5, npcs = {15649,15650} },
@@ -88,7 +85,6 @@ HHT.PetData = {
       { rank = 2, spell = 24583, level = 24, cost = 15, npcs = {4139,4140,4696,4697,4699,5937,7078} },
       { rank = 3, spell = 24586, level = 40, cost = 20, npcs = {5422,5423,5424,5988,7405,7803,8926,9691,9695,11735} },
       { rank = 4, spell = 24587, level = 56, cost = 25, npcs = {9698,11736,11737,14476} },
-      { rank = 5, spell = 27060, level = 64, cost = 29, npcs = {21864,22100} },
     } },
     { key = "prowl", name = "Prowl", families = {"Cat"}, ranks = {
       { rank = 1, spell = 24450, level = 30, cost = 15, npcs = {684,768,2406,2731} },
@@ -107,7 +103,6 @@ HHT.PetData = {
       { rank = 6, spell = 35295, level = 40, cost = 17, npcs = {} },
       { rank = 7, spell = 35296, level = 48, cost = 21, npcs = {5992} },
       { rank = 8, spell = 35297, level = 56, cost = 25, npcs = {16117,16934,19189,19349} },
-      { rank = 9, spell = 35298, level = 63, cost = 29, npcs = {22123} },
     } },
     { key = "claw", name = "Claw", families = {"Bear", "Bird of Prey", "Carrion Bird", "Cat", "Crab", "Raptor", "Scorpid", "Warp Stalker"}, ranks = {
       { rank = 1, spell = 16827, level = 1, cost = 1, npcs = {1196,1995,3106,3124,3281,250926,250937,251115} },
@@ -118,7 +113,6 @@ HHT.PetData = {
       { rank = 6, spell = 16832, level = 40, cost = 17, npcs = {731,922,1088,5268,5352,5422} },
       { rank = 7, spell = 3010, level = 48, cost = 21, npcs = {1816,5274,7099,7444,7455,8301,8958,9695,14343,14344} },
       { rank = 8, spell = 3009, level = 56, cost = 25, npcs = {7445,7456,17034,17039} },
-      { rank = 9, spell = 27049, level = 64, cost = 29, npcs = {17129,18220,18257,20671,22100,22265} },
     } },
     { key = "dash", name = "Dash", families = {"Bear", "Boar", "Cat", "Hyena", "Raptor", "Ravager", "Tallstrider", "Wolf"}, ranks = {
       { rank = 1, spell = 23099, level = 30, cost = 15, npcs = {682,729,767,976,2727,2728,2729,2850,4304,4662,4688,4950} },
