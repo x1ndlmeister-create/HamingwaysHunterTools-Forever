@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.3.1",
+        en = {
+            "Pet database: removed ability ranks above level 60 (Bite 9, Claw 9, Gore 9, Cower 7, Screech 5, Scorpid Poison 5). They do not exist on WoW Forever, so the highest rank shown is now the real one.",
+        },
+        de = {
+            "Tier-Datenbank: Faehigkeitsraenge ueber Level 60 entfernt (Biss 9, Klaue 9, Aufspiessen 9, Ducken 7, Kreischen 5, Skorpidgift 5). Sie existieren auf WoW Forever nicht, der hoechste angezeigte Rang ist jetzt der echte.",
+        },
+    },
+    {
         v = "1.3.0",
         en = {
             "New look: rounded windows and popups with themes, a banner header, tabs and a new icon set (Lucide). Popups adapt their width to their content.",
