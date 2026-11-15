@@ -156,6 +156,10 @@ function M:OnInit()
         if m.zonePending then m.zonePending = nil; m:CheckZone() end
     end)
     HHT:Listen(self, "ZONE_CHANGED_NEW_AREA", "OnZone")
+    HHT:Listen(self, "PLAYER_ENTERING_WORLD", "OnZone")
+    for _, ev in ipairs({ "ZONE_CHANGED_NEW_AREA", "PLAYER_ENTERING_WORLD", "UNIT_LEVEL", "UNIT_PET", "SPELLS_CHANGED", "LEARNED_SPELL_IN_TAB" }) do
+        HHT:Listen(self, ev, "MarkUpgradesDirty")
+    end
     HHT:Listen(self, "UNIT_SPELLCAST_START", "OnCast")
     HHT:Every(self, 0.5, M.Tick)
 end
@@ -443,23 +447,21 @@ end
 
 function M:OnZone()
     if not self.db.zoneList or not (C_Timer and C_Timer.After) then return end
-    C_Timer.After(2, function() if self.enabled then self:CheckZone() end end)
+    -- PLAYER_ENTERING_WORLD (login/reload/loading screen) needs a bit longer until map and pet data are ready
+    C_Timer.After(2.5, function() if self.enabled then self:CheckZone() end end)
 end
 
-function M:CheckZone()
+-- Beasts in the current zone that teach one of your pets a higher rank. Returns list, zone name, map (list is nil when empty).
+function M:BuildZoneList()
     local db, PD = self.db, HHT.PetDex
-    if not (db.zoneList and PD and PD.module.enabled and HHT.PetMap and C_Map and C_Map.GetBestMapForUnit) then return end
-    if HHT:IsUnlocked(self) or GetTime() < snoozeUntil then return end
+    if not (PD and PD.module.enabled and HHT.PetMap and C_Map and C_Map.GetBestMapForUnit) then return end
     local pl = tonumber(UnitLevel("player")) or 0
     if pl < 10 then return end
     if not db.inInstances and IsInInstance and IsInInstance() then return end
-    if HHT.InCombat() or InCombatLockdown() then self.zonePending = true; return end
     local okM, map = pcall(C_Map.GetBestMapForUnit, "player")
     if not okM or not map then return end
-    local now = GetTime()
-    if zoneSeen[map] and now - zoneSeen[map] < db.repeatMinutes * 60 then return end
     local fams = PD.MyFamilies(db.showFor == "all")
-    if not next(fams) then return end
+    if not next(fams) then return nil, nil, map end
     local ign, list = Ignored(db), {}
     for _, b in ipairs(PD.beasts) do
         if b.sp and b.sp[map] and b.lo <= pl then
@@ -468,8 +470,7 @@ function M:CheckZone()
             if best then list[#list + 1] = { beast = b, best = best } end
         end
     end
-    if #list == 0 then return end
-    zoneSeen[map] = now
+    if #list == 0 then return nil, nil, map end
     table.sort(list, function(x, y)
         local gx, gy = x.best.rank - x.best.known, y.best.rank - y.best.known
         if gx ~= gy then return gx > gy end
@@ -479,8 +480,51 @@ function M:CheckZone()
     local zoneName
     local okI, info = pcall(C_Map.GetMapInfo, map)
     if okI and type(info) == "table" and type(info.name) == "string" then zoneName = info.name end
-    self:ShowZone(list, zoneName or GetZoneText() or "?")
+    return list, zoneName or GetZoneText() or "?", map
+end
+
+function M:CheckZone()
+    local db = self.db
+    if not db.zoneList then return end
+    if HHT:IsUnlocked(self) or GetTime() < snoozeUntil then return end
+    if HHT.InCombat() or InCombatLockdown() then self.zonePending = true; return end
+    local list, zoneName, map = self:BuildZoneList()
+    if not list then return end
+    local now = GetTime()
+    if zoneSeen[map] and now - zoneSeen[map] < db.repeatMinutes * 60 then return end
+    zoneSeen[map] = now
+    self:ShowZone(list, zoneName)
     if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+end
+
+-- Cached for the upgrade arrow on the pet portrait: rebuilt after zone, level, pet or spell changes.
+function M:ZoneUpgrades()
+    if not self.enabled then return nil end
+    local now = GetTime()
+    local c = self.upCache
+    if not c then c = { at = -999, dirtyAt = nil }; self.upCache = c end
+    if (c.dirtyAt and now >= c.dirtyAt) or now - c.at > 60 then
+        c.at, c.dirtyAt = now, nil
+        c.list, c.name = self:BuildZoneList()
+    end
+    return c.list, c.name
+end
+
+function M:MarkUpgradesDirty()
+    local c = self.upCache
+    if not c then c = { at = -999 }; self.upCache = c end
+    c.dirtyAt = GetTime() + 2
+end
+
+-- Opens or closes the zone list on demand; stays open until closed.
+function M:ToggleZone()
+    local z = self.zone
+    if not z or HHT.InCombat() or InCombatLockdown() then return end
+    if z:IsShown() and not z.preview then z:Hide(); return end
+    local list, name = self:ZoneUpgrades()
+    if not list then return end
+    self:ShowZone(list, name)
+    z.hideAt = nil
 end
 
 function M:OnUnit(event, unit)

@@ -43,6 +43,9 @@ HHT:AddGerman({
     ["Show ability border"] = "Rahmen der Faehigkeiten zeigen",
     ["Show Frenzy"] = "Raserei zeigen",
     ["Frenzy icon size"] = "Groesse Raserei-Symbol",
+    ["Show upgrade arrow"] = "Upgrade-Pfeil zeigen",
+    ["Pet upgrades in this zone: %d"] = "Begleiter-Upgrades in dieser Zone: %d",
+    ["Click to show the list."] = "Klick zeigt die Liste.",
 })
 
 local M = HHT:NewModule("pet", {
@@ -55,7 +58,7 @@ local M = HHT:NewModule("pet", {
         showLabel = true, showTime = true, showHappiness = true, hideNoPet = true,
         showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10, barSpacing = 2,
         showAbilities = true, showFocus = true, showFocusLabel = true, showFocusValue = true, abilitySize = 18, abilityNumbers = true, abilityBorder = true, showAutocast = true,
-        showFrenzy = true, frenzySize = 26,
+        showFrenzy = true, frenzySize = 26, showUpgrades = true,
         colors = {
             health = { 0.67, 0.83, 0.45 },
             xp = { 0.58, 0.40, 0.85 },
@@ -122,6 +125,30 @@ function M:Build()
     end)
     f.frenzyDemo = Icon.New(f)
     f.frenzyDemo:Hide()
+    f.up = CreateFrame("Button", nil, f)
+    f.up:SetSize(24, 24)
+    f.up:SetFrameLevel(f.portrait:GetFrameLevel() + 3)
+    f.up:SetPoint("TOPLEFT", f.portrait, "TOPLEFT", -8, 8)
+    f.up:RegisterForClicks("AnyUp")
+    f.up:SetNormalTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    f.up:SetPushedTexture("Interface\\GossipFrame\\AvailableQuestIcon")
+    f.up:SetHighlightTexture("Interface\\GossipFrame\\AvailableQuestIcon", "ADD")
+    f.up:GetPushedTexture():SetVertexColor(0.7, 0.7, 0.7)
+    f.up:SetScript("OnClick", function()
+        local pn = HHT.modules.petnearby
+        if pn and pn.ToggleZone then pn:ToggleZone() end
+    end)
+    f.up:SetScript("OnEnter", function(btn)
+        if not GameTooltip then return end
+        local pn = HHT.modules.petnearby
+        local list = pn and pn.enabled and pn:ZoneUpgrades()
+        GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(string.format(L("Pet upgrades in this zone: %d"), list and #list or 0), 1, 0.82, 0)
+        GameTooltip:AddLine(L("Click to show the list."), 0.8, 0.8, 0.8)
+        GameTooltip:Show()
+    end)
+    f.up:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    f.up:Hide()
     HHT:MakeMovable(f, self, "main", L("Pet status"))
     self:Layout()
 end
@@ -295,12 +322,26 @@ function M:SetHealth(bar)
     end
 end
 
+function M:UpdateUpgrade(unlocked)
+    local up = self.frame.up
+    local pn = HHT.modules.petnearby
+    local list = (self.db.showUpgrades and not unlocked and pn and pn.enabled) and pn:ZoneUpgrades() or nil
+    local show = list and #list > 0 and true or false
+    if up:IsShown() ~= show then up:SetShown(show) end
+    if show then
+        local combat = InCombatLockdown() and true or false
+        up:EnableMouse(not combat)
+        up:SetAlpha(combat and 0.5 or 1)
+    end
+end
+
 function M:Tick()
     local f = self.frame
     if not f then return end
     local db = self.db
     local unlocked = HHT:IsUnlocked(self)
     local bar = f.bar
+    self:UpdateUpgrade(unlocked)
 
     local ok, ex = pcall(UnitExists, "pet")
     local exists = ok and not HHT.IsSecret(ex) and ex and true or false
@@ -604,6 +645,7 @@ function M:BuildOptions(form)
     form:Check(L("Show health percent"), db, "showTime")
     form:Check(L("Show happiness"), db, "showHappiness")
     form:Check(L("Show Frenzy"), db, "showFrenzy")
+    form:Check(L("Show upgrade arrow"), db, "showUpgrades")
     form:Stepper(L("Frenzy icon size"), db, "frenzySize", 14, 48, 2)
     form:Check(L("Show focus bar"), db, "showFocus")
     form:Check(L("Show focus name"), db, "showFocusLabel")

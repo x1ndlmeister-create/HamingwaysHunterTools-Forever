@@ -15,6 +15,17 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.2.7",
+        en = {
+            "Pet status: a yellow exclamation mark on the pet portrait shows when beasts in your current zone teach your pet a higher ability rank. Click it to open or close the zone list (greyed out and not clickable in combat). Can be switched off in the Pet status options.",
+            "Pet ability alerts: the zone list now also appears after logging in or reloading, not only when you enter a new zone.",
+        },
+        de = {
+            "Begleiter-Status: Ein gelbes Ausrufezeichen am Pet-Portrait zeigt, wenn Tiere in deiner aktuellen Zone deinem Begleiter einen hoeheren Faehigkeitsrang beibringen. Klick oeffnet oder schliesst die Zonenliste (im Kampf ausgegraut und nicht klickbar). In den Optionen des Begleiter-Status abschaltbar.",
+            "Begleiter-Faehigkeiten-Hinweis: Die Zonenliste erscheint jetzt auch nach dem Einloggen oder /reload, nicht nur beim Betreten einer neuen Zone.",
+        },
+    },
+    {
         v = "1.2.6",
         en = {
             "Pet training hint: Growl is now included, so you are told when your pet can learn a higher Growl rank.",
