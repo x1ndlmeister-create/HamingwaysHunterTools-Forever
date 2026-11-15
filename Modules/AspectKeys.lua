@@ -9,6 +9,7 @@ HHT:AddGerman({
     ["Tracking"] = "Aufspueren",
     ["Turn tracking off"] = "Aufspueren ausschalten",
     ["Key: %s"] = "Taste: %s",
+    ["could not be bound"] = "konnte nicht belegt werden",
     ["not set"] = "nicht gesetzt",
     ["Press a key (Esc cancels)"] = "Taste druecken (Esc bricht ab)",
     ["Clear key"] = "Taste entfernen",
@@ -324,7 +325,7 @@ function M:ApplyBindings()
             for _, s in ipairs(SLOTS) do
                 if SlotSummary(gd, s[1]) then
                     local target = g.slotBtn[s[1]] and g.slotBtn[s[1]]:GetName() or g.btn
-                    pcall(SetOverrideBindingClick, self.owner, true, s[3] .. gd.key, target, "LeftButton")
+                    HHT.BindClick(self.owner, gd.key, target, s[3])
                 end
             end
         end
@@ -383,6 +384,8 @@ local MODS = {
     LMETA = true, RMETA = true,
 }
 
+local UMLAUTS = { ["ü"] = "Ü", ["ö"] = "Ö", ["ä"] = "Ä" }
+
 local capture
 local function CaptureKey(done)
     if not capture then
@@ -396,7 +399,11 @@ local function CaptureKey(done)
             local cb = self.done
             self.done = nil
             self:Hide()
-            if key ~= "ESCAPE" and cb then cb(key) end
+            if key ~= "ESCAPE" and cb then
+                key = UMLAUTS[key] or key
+                HHT.Print(string.format(L("Key: %s"), key))
+                cb(key)
+            end
         end)
     end
     capture.done = done

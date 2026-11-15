@@ -1,4 +1,4 @@
--- Settings window: sidebar (General + one entry per module) and a scrolling option page.
+-- Settings window: banner, category tabs on top, module list on the left and a scrolling option page.
 local ADDON, HHT = ...
 local UI = HHT.UI
 local L = HHT.L
@@ -7,20 +7,45 @@ local C = {}
 HHT.Config = C
 
 C.pages = {}
-local W, H = 626, 620
+local W, H = 760, 640
+local BANNER, TABS, SIDE_W = 62, 36, 184
+local TOP = BANNER + TABS + 12
 
--- Sidebar icons (classic icon files).
-local ICONS = {
-    general = "INV_Misc_Gear_01", swing = "Ability_Whirlwind", castbar = "INV_Misc_PocketWatch_01",
-    cooldowns = "Spell_Nature_TimeStop", warnings = "Ability_Hunter_SniperShot", aspects = "Ability_Mount_JungleTiger", debuffs = "Ability_Hunter_Quickshot",
-    procs = "Spell_Nature_Lightning", summons = "Ability_Hunter_BeastCall", raidbuffs = "INV_Misc_Note_01",
-    consumables = "INV_Potion_54", threat = "Ability_Hunter_Misdirection", distance = "Ability_Marksmanship",
-    pet = "Ability_Hunter_BeastCall", feeder = "INV_Misc_Food_15", ammo = "INV_Ammo_Arrow_01",
-    tranq = "Spell_Nature_Drowsy", macros = "INV_Scroll_03", petdex = "INV_Misc_Book_09",
-    petwatch = "INV_Misc_Spyglass_02", petnearby = "Ability_Hunter_BeastSoothe", pettrain = "INV_Misc_Book_11",
-    ammovendors = "INV_Ammo_Arrow_02", stablemasters = "INV_Misc_Map_01", foodvendors = "INV_Misc_Food_15",
-    trainers = "INV_Misc_Book_11", mapbutton = "INV_Misc_Map02", petguide = "INV_Misc_Book_08",
+-- Extra pages besides the modules (shown in the "General" category).
+local SPECIAL = {
+    general = { name = "General", desc = "Language, colours, look and behaviour of all modules." },
+    modules = { name = "Modules", desc = "Switch single modules on or off." },
+    support = { name = "Settings & support", desc = "Reset, reload, export your settings and support the addon." },
 }
+
+-- Categories: tab label, glyph and the pages listed on the left. Modules not listed here end up in the last one.
+local CATS = {
+    { id = "general", name = "General", icon = "settings", keys = { "general", "modules", "support" } },
+    { id = "combat", name = "Combat", icon = "swords",
+      keys = { "swing", "castbar", "cooldowns", "threat", "distance", "procs", "debuffs", "tranq" } },
+    { id = "alerts", name = "Alerts & buffs", icon = "bell-ring",
+      keys = { "warnings", "aspects", "summons", "raidbuffs", "consumables" } },
+    { id = "pets", name = "Pets", icon = "paw-print",
+      keys = { "pet", "feeder", "petdex", "petnearby", "pettrain", "petwatch", "petguide" } },
+    { id = "ammo", name = "Ammo & map", icon = "map",
+      keys = { "ammo", "ammovendors", "foodvendors", "stablemasters", "trainers", "mapbutton" } },
+    { id = "tools", name = "Tools", icon = "wrench", keys = { "macros" } },
+}
+
+-- Glyphs per page: white line icons in Media\Icons (Lucide), tinted at runtime.
+local ICONS = {
+    general = "sliders-horizontal", modules = "layout-grid", support = "heart",
+    swing = "gauge", castbar = "hourglass", cooldowns = "timer-reset", warnings = "triangle-alert", aspects = "bird",
+    debuffs = "skull", procs = "zap", summons = "megaphone", raidbuffs = "users", consumables = "flask-round",
+    threat = "shield-alert", distance = "ruler", pet = "heart-pulse", feeder = "drumstick", ammo = "crosshair",
+    tranq = "moon", macros = "scroll-text", petdex = "book-open", petwatch = "binoculars", petnearby = "radar",
+    pettrain = "graduation-cap", ammovendors = "store", stablemasters = "house", foodvendors = "utensils",
+    trainers = "book-open-check", mapbutton = "map-pin", petguide = "compass",
+}
+
+local function Glyph(tex, name)
+    tex:SetTexture("Interface\\AddOns\\" .. ADDON .. "\\Media\\Icons\\" .. (name or "settings"))
+end
 
 -- Modules shown in demo mode while their settings page is open.
 local PREVIEW = {
@@ -61,7 +86,7 @@ end
 -- ---------------------------------------------------------------------------
 function C:BuildGeneral(form)
     local g = HHT.db.general
-    form:Header(L("General"))
+    form:Header(L("Appearance"))
     form:Cycle(L("Language"), g, "lang", {
         { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
         function() C:Relang() end)
@@ -86,6 +111,7 @@ function C:BuildGeneral(form)
     form:Check(L("Animations"), g, "animations")
     form:Check(L("Live preview"), g, "preview", function() C:Select(C.current or "general") end)
 
+    form:Header(L("Behavior"))
     local unlock = UI.Check(form.content, L("Unlock frames (move with mouse)"),
         function() return g.locked == false end,
         function(v) HHT:SetLocked(not v) end)
@@ -95,21 +121,32 @@ function C:BuildGeneral(form)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
     form:Check(L("Tell me about new versions"), g, "versionNotice")
     form:Check(L("Show what's new after an update"), g, "whatsNew")
+    form:Header(L("Size"))
     form:Stepper(L("Global scale"), g, "scale", 0.5, 2, 0.05, function() HHT:ApplyAllLooks() end)
     form:Stepper(L("Global opacity"), g, "alpha", 0.1, 1, 0.05, function() HHT:ApplyAllLooks() end)
+end
 
-    form:Header(L("Modules"))
-    HHT:EachModule(function(m)
-        if m.wip then
-            form:Note(L(m.name) .. ": " .. L("WIP - coming soon"), 0.55, 0.52, 0.45)
-            return
+function C:BuildModulesPage(form)
+    for _, cat in ipairs(self.cats) do
+        local any = false
+        for _, key in ipairs(cat.keys) do
+            local m = HHT.modules[key]
+            if m then
+                if not any then form:Header(L(cat.name)); any = true end
+                if m.wip then
+                    form:Note(L(m.name) .. ": " .. L("WIP - coming soon"), 0.55, 0.52, 0.45)
+                else
+                    form:Check(L(m.name), m.db, "enabled", function()
+                        HHT:SetEnabled(m, m.db.enabled)
+                        C:UpdateSidebar()
+                    end)
+                end
+            end
         end
-        form:Check(L(m.name), m.db, "enabled", function()
-            HHT:SetEnabled(m, m.db.enabled)
-            C:UpdateSidebar()
-        end)
-    end)
+    end
+end
 
+function C:BuildSupport(form)
     form:Header(L("Settings"))
     form:Button(L("Reset all positions"), function()
         HHT:EachModule(function(m) m.db.pos = nil end)
@@ -131,31 +168,78 @@ function C:BuildGeneral(form)
     form:Note("v" .. HHT.version .. "  |  /hht  |  /hht unlock  |  /hht lock  |  /hht reset", 0.55, 0.52, 0.45)
 end
 
+local function PageName(key)
+    local sp, m = SPECIAL[key], HHT.modules[key]
+    local name = sp and L(sp.name) or L(m.name)
+    if m and m.wip then name = name .. " (WIP)" end
+    return name
+end
+
 function C:BuildPage(key)
     local parent = CreateFrame("Frame", nil, self.content)
     parent:SetAllPoints(self.content)
+    local sp, m = SPECIAL[key], HHT.modules[key]
+    local P = UI.PAL
+
+    local tile = CreateFrame("Frame", nil, parent)
+    tile:SetSize(40, 40)
+    tile:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -4)
+    UI.Round(tile, 10, P.head[1], P.head[2], P.head[3], 0.16, "BACKGROUND")
+    UI.RoundBorder(tile, 10, P.head[1], P.head[2], P.head[3], 0.4)
+    local icon = tile:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(26, 26)
+    icon:SetPoint("CENTER", tile, "CENTER", 0, 0)
+    Glyph(icon, ICONS[key])
+    icon:SetVertexColor(P.head[1], P.head[2], P.head[3])
+    local title = UI.Text(parent, PageName(key), 18, 1, 1, 1)
+    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 54, -4)
+    local desc = UI.Text(parent, sp and L(sp.desc) or L(m.desc), 11, 0.68, 0.65, 0.58)
+    desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+    desc:SetWidth(m and not m.wip and 300 or 450)
+    desc:SetJustifyH("LEFT")
+    desc:SetWordWrap(true)
+    local headH = math.max(50, 32 + desc:GetStringHeight() + 8)
+
+    local switch
+    if m and not m.wip then
+        switch = UI.Switch(parent, function() return m.db.enabled end, function(v)
+            m.db.enabled = v and true or false
+            HHT:SetEnabled(m, m.db.enabled)
+            C:UpdateSidebar()
+        end)
+        switch:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -10)
+        local sl = UI.Text(parent, L("Module enabled"), 12, 0.85, 0.85, 0.85)
+        sl:SetPoint("RIGHT", switch, "LEFT", -8, 0)
+    end
+    local rule = UI.FadeLine(parent, P.head[1], P.head[2], P.head[3], 0.5)
+    rule:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -headH)
+    rule:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -4, -headH)
+
+    local body = CreateFrame("Frame", nil, parent)
+    body:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -(headH + 6))
+    body:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
+
     local form
-    if key == "general" then
-        form = UI.NewForm(parent, nil, key)
-        self:BuildGeneral(form)
+    if key == "general" or key == "modules" or key == "support" then
+        form = UI.NewForm(body, nil, key)
+        if key == "general" then self:BuildGeneral(form)
+        elseif key == "modules" then self:BuildModulesPage(form)
+        else self:BuildSupport(form) end
     else
-        local m = HHT.modules[key]
-        form = UI.NewForm(parent, function() HHT:RefreshModule(m) end, key)
-        form:Header(L(m.name))
-        form:Note(L(m.desc))
+        form = UI.NewForm(body, function() HHT:RefreshModule(m) end, key)
         if m.wip then
             form:Header(L("WIP - coming soon"))
             form:Note(L("This module is not available yet and cannot be enabled."))
         else
-            form:Check(L("Module enabled"), m.db, "enabled", function()
-                HHT:SetEnabled(m, m.db.enabled)
-                C:UpdateSidebar()
-            end)
             HHT.CommonOptions(m, form)
             if m.BuildOptions then m:BuildOptions(form) end
         end
     end
     local page = { frame = parent, form = form }
+    function page.Refresh()
+        form:Refresh()
+        if switch then switch:Refresh() end
+    end
     self.pages[key] = page
     return page
 end
@@ -166,13 +250,16 @@ function C:InvalidatePage(key)
 end
 
 function C:Select(key)
+    local cat = self.catOf and self.catOf[key]
+    if cat and self.cat ~= cat then self:ShowCategory(cat) end
+    if cat then self.lastKey[cat] = key end
     self.current = key
     for k, p in pairs(self.pages) do
         if k ~= key then p.frame:Hide() end
     end
     local page = self.pages[key] or self:BuildPage(key)
     page.frame:Show()
-    page.form:Refresh()
+    page.Refresh()
     self:UpdateSidebar()
     local open = self.window and self.window:IsShown()
     HHT:SetPreview(open and PREVIEW[key] and HHT.db.general.preview ~= false and HHT.modules[key] or nil)
@@ -182,28 +269,30 @@ function C:UpdateSidebar()
     if not self.side then return end
     local a = UI.ACCENT
     for key, b in pairs(self.side) do
+        local m = HHT.modules[key]
         local on = true
-        local label
-        if key == "general" then
-            label = L("General")
-        else
-            local m = HHT.modules[key]
-            on = m.db.enabled and not m.wip
-            label = L(m.name)
-            if m.wip then label = label .. " (WIP)" end
-        end
-        b:SetLabel(label)
+        if m then on = m.db.enabled and not m.wip end
+        b:SetLabel(PageName(key))
         if key == self.current then
-            b.label:SetTextColor(a[1], a[2], a[3])
+            b.label:SetTextColor(1, 1, 1)
         elseif on then
-            b.label:SetTextColor(0.92, 0.94, 0.97)
+            b.label:SetTextColor(0.82, 0.84, 0.88)
         else
             b.label:SetTextColor(0.45, 0.43, 0.40)
         end
-        b.icon:SetDesaturated(not on)
-        b.icon:SetAlpha(on and 1 or 0.45)
-        b.sel:SetShown(key == self.current)
-        b.selBg:SetShown(key == self.current)
+        b.icon:SetVertexColor(on and a[1] or 0.4, on and a[2] or 0.4, on and a[3] or 0.4)
+        b.icon:SetAlpha(on and 1 or 0.6)
+        b.dot:SetShown(m ~= nil)
+        b.dot:SetVertexColor(on and a[1] or 0.35, on and a[2] or 0.33, on and a[3] or 0.3, on and 0.9 or 0.8)
+        b:SetSelected(key == self.current)
+    end
+    for id, t in pairs(self.tabs) do
+        local sel = id == self.cat
+        t.label:SetTextColor(sel and 1 or 0.72, sel and 1 or 0.72, sel and 1 or 0.72)
+        t.icon:SetVertexColor(sel and a[1] or 0.7, sel and a[2] or 0.7, sel and a[3] or 0.7)
+        t.icon:SetAlpha(sel and 1 or 0.8)
+        t.glow:SetShown(sel)
+        t.line:SetShown(sel)
     end
 end
 
@@ -211,14 +300,66 @@ function C:Relang()
     for k, p in pairs(self.pages) do p.frame:Hide(); self.pages[k] = nil end
     HHT:RefreshAll()
     if self.window then
-        self.window.title:SetText("Hamingway's HunterTools  v" .. HHT.version)
+        self:LayoutTabs()
         self:Select(self.current or "general")
+    end
+end
+
+-- Places the category tabs left to right; widths follow the (translated) labels.
+function C:LayoutTabs()
+    local x = 12
+    for _, cat in ipairs(self.cats) do
+        local t = self.tabs[cat.id]
+        t.label:SetText(L(cat.name))
+        t:SetWidth(12 + 18 + 7 + t.label:GetStringWidth() + 16)
+        t:ClearAllPoints()
+        t:SetPoint("TOPLEFT", self.tabBar, "TOPLEFT", x, 0)
+        x = x + t:GetWidth() + 2
+    end
+end
+
+function C:ShowCategory(id)
+    self.cat = id
+    local cat = self.catById[id]
+    for _, b in pairs(self.side) do b:Hide() end
+    for i, key in ipairs(cat.keys) do
+        local b = self.side[key]
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", self.sideList, "TOPLEFT", 4, -6 - (i - 1) * 32)
+        b:Show()
+    end
+    self.sideList:SetHeight(12 + #cat.keys * 32)
+    self.sideScroll:SetVerticalScroll(0)
+    self.sideThumb()
+end
+
+function C:BuildCats()
+    self.cats, self.catById, self.catOf, self.lastKey = {}, {}, {}, {}
+    for _, def in ipairs(CATS) do
+        local cat = { id = def.id, name = def.name, icon = def.icon, keys = {} }
+        for _, key in ipairs(def.keys) do
+            if SPECIAL[key] or HHT.modules[key] then
+                cat.keys[#cat.keys + 1] = key
+                self.catOf[key] = cat.id
+            end
+        end
+        self.cats[#self.cats + 1] = cat
+        self.catById[cat.id] = cat
+    end
+    local last = self.cats[#self.cats]
+    for _, key in ipairs(HHT.moduleList) do
+        if not self.catOf[key] then
+            last.keys[#last.keys + 1] = key
+            self.catOf[key] = last.id
+        end
     end
 end
 
 function C:Create()
     if self.window then return end
-    local w = UI.Window("HamingwaysHunterToolsConfig", W, H, "Hamingway's HunterTools  v" .. HHT.version)
+    local w = UI.Window("HamingwaysHunterToolsConfig", W, H, "Hamingway's HunterTools", BANNER)
+    local saved = tonumber(HHT.db.general.menuScale)
+    if saved then w:SetScale(math.min(1.6, math.max(0.6, saved))) end
     w:SetPoint("CENTER")
     local pos = HHT.db.general.menuPos
     if pos then
@@ -236,86 +377,179 @@ function C:Create()
         HHT.db.general.menuOpen = false
         HHT:SetPreview(nil)
     end)
+    self:BuildCats()
     local logoHolder = CreateFrame("Frame", nil, w)
-    logoHolder:SetSize(50, 50)
-    logoHolder:SetPoint("TOPLEFT", w, "TOPLEFT", -14, 14)
+    logoHolder:SetSize(56, 56)
+    logoHolder:SetPoint("TOPLEFT", w, "TOPLEFT", 12, -3)
     logoHolder:SetFrameLevel(w:GetFrameLevel() + 20)
     local logo = logoHolder:CreateTexture(nil, "OVERLAY")
     logo:SetAllPoints()
     logo:SetTexture("Interface\\AddOns\\" .. ADDON .. "\\Media\\HHT_Logo")
+    w.title:SetFont(UI.FONT, 20, "")
     w.title:ClearAllPoints()
-    w.title:SetPoint("TOPLEFT", w, "TOPLEFT", 44, -8)
+    w.title:SetPoint("TOPLEFT", w, "TOPLEFT", 78, -13)
+    local sub = UI.Text(w, L("Your toolbox for WoW Forever hunters"), 11, 1, 1, 1)
+    sub:SetAlpha(0.7)
+    sub:SetPoint("TOPLEFT", w.title, "BOTTOMLEFT", 1, -4)
+    local pill = CreateFrame("Frame", nil, w)
+    local ver = UI.Text(pill, "v" .. HHT.version, 11, 1, 1, 1)
+    pill:SetSize(ver:GetStringWidth() + 16, 18)
+    pill:SetPoint("LEFT", w.title, "RIGHT", 10, -1)
+    ver:SetPoint("CENTER", pill, "CENTER", 0, 0)
+    UI.Round(pill, 7, 0, 0, 0, 0.35, "BACKGROUND")
+    w.close:ClearAllPoints()
+    w.close:SetPoint("TOPRIGHT", w, "TOPRIGHT", -10, -10)
     if UISpecialFrames then table.insert(UISpecialFrames, "HamingwaysHunterToolsConfig") end
 
+    -- grip in the bottom-right corner: drag to scale the window, right-click resets
+    local grip = CreateFrame("Button", nil, w)
+    grip:SetSize(18, 18)
+    grip:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -3, 3)
+    grip:SetFrameLevel(w:GetFrameLevel() + 30)
+    grip:RegisterForClicks("RightButtonUp")
+    local dots = {}
+    for _, p in ipairs({ { 4, 4 }, { 10, 4 }, { 4, 10 } }) do
+        local d = grip:CreateTexture(nil, "OVERLAY")
+        d:SetTexture(UI.TEX_CIRCLE)
+        d:SetSize(3, 3)
+        d:SetPoint("BOTTOMRIGHT", grip, "BOTTOMRIGHT", -p[1] + 3, p[2] - 3)
+        dots[#dots + 1] = d
+    end
+    local function GripColor(a, hot)
+        for _, d in ipairs(dots) do
+            if hot then d:SetVertexColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.9) else d:SetVertexColor(1, 1, 1, a) end
+        end
+    end
+    GripColor(0.3)
+    local function SaveView()
+        local g = HHT.db.general
+        g.menuScale = w:GetScale()
+        local p, _, rp, x, y = w:GetPoint()
+        g.menuPos = { p, rp, x, y }
+    end
+    local drag
+    grip:SetScript("OnMouseDown", function(self, btn)
+        if btn ~= "LeftButton" then return end
+        local s = w:GetScale()
+        drag = { left = w:GetLeft() * s, top = w:GetTop() * s }
+    end)
+    grip:SetScript("OnMouseUp", function()
+        if drag then drag = nil; SaveView() end
+    end)
+    grip:SetScript("OnUpdate", function()
+        if not drag then return end
+        local ps = UIParent:GetEffectiveScale()
+        local cx, cy = GetCursorPosition()
+        cx, cy = cx / ps, cy / ps
+        local ns = ((cx - drag.left) / W + (drag.top - cy) / H) / 2
+        ns = math.min(1.6, math.max(0.6, ns))
+        if math.abs(ns - 1) < 0.03 then ns = 1 end
+        w:SetScale(ns)
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", drag.left / ns, drag.top / ns)
+    end)
+    grip:SetScript("OnClick", function()
+        local s = w:GetScale()
+        local left, top = w:GetLeft() * s, w:GetTop() * s
+        w:SetScale(1)
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        SaveView()
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GripColor(0, true)
+        GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+        GameTooltip:SetText(L("Drag to scale, right-click to reset"))
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GripColor(0.3); GameTooltip:Hide() end)
+
+    -- category tabs
+    local tabBar = CreateFrame("Frame", nil, w)
+    tabBar:SetPoint("TOPLEFT", w, "TOPLEFT", 0, -(BANNER + 2))
+    tabBar:SetPoint("TOPRIGHT", w, "TOPRIGHT", 0, -(BANNER + 2))
+    tabBar:SetHeight(TABS)
+    self.tabBar, self.tabs = tabBar, {}
+    local a = UI.ACCENT
+    for _, cat in ipairs(self.cats) do
+        local t = CreateFrame("Button", nil, tabBar)
+        t:SetHeight(TABS)
+        t.glow = t:CreateTexture(nil, "BACKGROUND")
+        t.glow:SetAllPoints()
+        UI.Gradient(t.glow, true, a[1], a[2], a[3], 0.22, 0)
+        t.glow:Hide()
+        local hl = t:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints()
+        UI.Gradient(hl, true, 1, 1, 1, 0.07, 0)
+        t.line = t:CreateTexture(nil, "ARTWORK")
+        t.line:SetPoint("BOTTOMLEFT", t, "BOTTOMLEFT", 6, 0)
+        t.line:SetPoint("BOTTOMRIGHT", t, "BOTTOMRIGHT", -6, 0)
+        t.line:SetHeight(2)
+        UI.Tint(t.line, a, 1)
+        t.line:Hide()
+        t.icon = t:CreateTexture(nil, "ARTWORK")
+        t.icon:SetSize(18, 18)
+        t.icon:SetPoint("LEFT", t, "LEFT", 12, 0)
+        Glyph(t.icon, cat.icon)
+        t.label = UI.Text(t, "", 13)
+        t.label:SetPoint("LEFT", t, "LEFT", 37, 0)
+        local id = cat.id
+        t:SetScript("OnClick", function() C:Select(C.lastKey[id] or C.catById[id].keys[1]) end)
+        self.tabs[cat.id] = t
+    end
+    local tabRule = UI.FadeLine(w, UI.PAL.head[1], UI.PAL.head[2], UI.PAL.head[3], 0.55)
+    tabRule:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -(BANNER + TABS + 2))
+    tabRule:SetPoint("TOPRIGHT", w, "TOPRIGHT", -10, -(BANNER + TABS + 2))
+
     local side = CreateFrame("Frame", nil, w)
-    side:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -40)
-    side:SetSize(154, H - 52)
-    local sbg = side:CreateTexture(nil, "BACKGROUND")
-    sbg:SetAllPoints()
-    UI.Tint(sbg, UI.PAL.side)
+    side:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -TOP)
+    side:SetSize(SIDE_W, H - TOP - 12)
+    local divider = w:CreateTexture(nil, "ARTWORK")
+    divider:SetWidth(1)
+    divider:SetPoint("TOPLEFT", w, "TOPLEFT", 10 + SIDE_W + 8, -TOP)
+    divider:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 10 + SIDE_W + 8, 12)
+    UI.Gradient(divider, true, UI.PAL.head[1], UI.PAL.head[2], UI.PAL.head[3], 0, 0.35)
 
     self.content = CreateFrame("Frame", nil, w)
-    self.content:SetPoint("TOPLEFT", w, "TOPLEFT", 176, -40)
-    self.content:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -12, 12)
+    self.content:SetPoint("TOPLEFT", w, "TOPLEFT", 10 + SIDE_W + 20, -TOP)
+    self.content:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -14, 12)
 
     self.side = {}
-    local keys = { "general" }
-    for _, k in ipairs(HHT.moduleList) do keys[#keys + 1] = k end
-
     local sf = CreateFrame("ScrollFrame", nil, side)
     sf:SetPoint("TOPLEFT", side, "TOPLEFT", 0, 0)
     sf:SetPoint("BOTTOMRIGHT", side, "BOTTOMRIGHT", 0, 0)
     local list = CreateFrame("Frame", nil, sf)
-    list:SetSize(154, 10 + #keys * 30)
+    list:SetSize(SIDE_W, 100)
     sf:SetScrollChild(list)
-    sf:EnableMouseWheel(true)
-    local thumb = sf:CreateTexture(nil, "OVERLAY")
-    thumb:SetWidth(3)
-    thumb:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.45)
-    local function UpdateThumb()
-        local viewH, contentH = sf:GetHeight(), list:GetHeight()
-        if contentH <= viewH + 1 then thumb:Hide(); return end
-        local h = math.max(20, viewH * viewH / contentH)
-        thumb:SetHeight(h)
-        thumb:ClearAllPoints()
-        thumb:SetPoint("TOPRIGHT", sf, "TOPRIGHT", -1, -((viewH - h) * (sf:GetVerticalScroll() / (contentH - viewH))))
-        thumb:Show()
-    end
-    sf:SetScript("OnMouseWheel", function(self, delta)
-        local range = math.max(0, list:GetHeight() - self:GetHeight())
-        self:SetVerticalScroll(math.min(range, math.max(0, self:GetVerticalScroll() - delta * 60)))
-        UpdateThumb()
-    end)
-    sf:SetScript("OnSizeChanged", UpdateThumb)
-    UpdateThumb()
+    local UpdateThumb = UI.ScrollBar(sf, list, 6, 60)
+    self.sideList, self.sideScroll, self.sideThumb = list, sf, UpdateThumb
 
-    for i, key in ipairs(keys) do
-        local b = UI.Button(list, 144, 26, "", function() C:Select(key) end)
-        b:SetPoint("TOPLEFT", list, "TOPLEFT", 5, -5 - (i - 1) * 30)
-        b.noPress = true
-        b.icon = b:CreateTexture(nil, "ARTWORK")
-        b.icon:SetSize(18, 18)
-        b.icon:SetPoint("LEFT", b, "LEFT", 8, 0)
-        b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        HHT.Icon.Attach(b.icon)
-        b.icon:SetTexture("Interface\\Icons\\" .. (ICONS[key] or "INV_Misc_QuestionMark"))
-        b.label:ClearAllPoints()
-        b.label:SetPoint("LEFT", b, "LEFT", 32, 0)
-        b.label:SetWidth(108)
-        b.label:SetJustifyH("LEFT")
-        b.label:SetWordWrap(false)
-        b.selBg = b:CreateTexture(nil, "BORDER")
-        b.selBg:SetAllPoints()
-        b.selBg:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.14)
-        b.selBg:Hide()
-        b.sel = b:CreateTexture(nil, "ARTWORK")
-        b.sel:SetPoint("TOPLEFT", b, "TOPLEFT", 0, 0)
-        b.sel:SetPoint("BOTTOMLEFT", b, "BOTTOMLEFT", 0, 0)
-        b.sel:SetWidth(3)
-        b.sel:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 1)
-        b.sel:Hide()
-        self.side[key] = b
+    for _, cat in ipairs(self.cats) do
+        for _, key in ipairs(cat.keys) do
+            local b = CreateFrame("Button", nil, list)
+            b:SetSize(SIDE_W - 8, 30)
+            UI.Selectable(b)
+            b.icon = b:CreateTexture(nil, "ARTWORK")
+            b.icon:SetSize(18, 18)
+            b.icon:SetPoint("LEFT", b, "LEFT", 11, 0)
+            Glyph(b.icon, ICONS[key])
+            b.label = UI.Text(b, "", 12)
+            b.label:SetPoint("LEFT", b, "LEFT", 38, 0)
+            b.label:SetWidth(SIDE_W - 8 - 38 - 22)
+            b.label:SetJustifyH("LEFT")
+            b.label:SetWordWrap(false)
+            b.dot = b:CreateTexture(nil, "ARTWORK")
+            b.dot:SetTexture(UI.TEX_CIRCLE)
+            b.dot:SetSize(7, 7)
+            b.dot:SetPoint("RIGHT", b, "RIGHT", -10, 0)
+            function b:SetLabel(t) self.label:SetText(t) end
+            b:SetScript("OnClick", function() C:Select(key) end)
+            b:Hide()
+            self.side[key] = b
+        end
     end
+    self:LayoutTabs()
+    self:ShowCategory("general")
     self.current = "general"
 end
 
@@ -393,7 +627,7 @@ end
 
 function C:Refresh()
     if self.window and self.window:IsShown() and self.pages[self.current] then
-        self.pages[self.current].form:Refresh()
+        self.pages[self.current].Refresh()
     end
 end
 

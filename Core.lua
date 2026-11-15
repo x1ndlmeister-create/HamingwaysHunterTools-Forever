@@ -235,7 +235,7 @@ end
 
 function HHT:ApplyPosition(frame)
     local info = frame.hht
-    if not info then return end
+    if not info or frame.hhtFollow then return end
     local m = info.module
     local pos = m.db.pos and m.db.pos[info.key]
     if not pos then
@@ -252,9 +252,14 @@ end
 
 function HHT:ApplyLock()
     local outline = self.db.general.outline
+    local combat = InCombatLockdown()
     for _, f in ipairs(self.movables) do
-        local can = self:CanMove(f.hht and f.hht.module) and true or false
-        f:EnableMouse(can)
+        local can = not f.hhtFollow and self:CanMove(f.hht and f.hht.module) and true or false
+        if combat and f:IsProtected() then
+            self.lockPending = true
+        else
+            f:EnableMouse(can)
+        end
         if f.hhtOutline then f.hhtOutline:SetShown(can and outline and true or false) end
         if f.hhtLabel then f.hhtLabel:SetShown(can and outline and true or false) end
     end
@@ -262,6 +267,21 @@ function HHT:ApplyLock()
         if m.enabled and m.OnLockChanged then m:OnLockChanged(self:IsUnlocked(m)) end
     end)
     self:ApplyAllLooks()
+end
+
+-- Moving frames and previews end when combat starts, so nothing stays behind on screen.
+function HHT:LockForCombat()
+    local g = self.db and self.db.general
+    if not g then return end
+    local was = g.locked == false or self.previewModule ~= nil
+    self:EachModule(function(m)
+        if m.moveUnlock then was = true; m.moveUnlock = nil end
+    end)
+    if not was then return end
+    g.locked = true
+    self.previewModule = nil
+    self:ApplyLock()
+    self.Print(self.L("Frames locked because combat started."))
 end
 
 function HHT:SetLocked(locked)
@@ -278,7 +298,7 @@ function HHT:ApplyGlobalLook(frame)
     local info = frame.hht
     local ms = info and info.module.db.scale or 1
     local ma = info and info.module.db.alpha or 1
-    local hidden = info and info.module.db.onlyCombat and not self:IsUnlocked(info.module) and not self.InCombat()
+    local hidden = frame.hhtFaded or (info and info.module.db.onlyCombat and not self:IsUnlocked(info.module) and not self.InCombat())
     frame:SetScale((g.scale or 1) * ms)
     frame:SetAlpha(hidden and 0 or (g.alpha or 1) * ma)
 end
@@ -450,9 +470,10 @@ function HHT:MakeMovable(frame, m, key, label)
     self.movables[#self.movables + 1] = frame
     self:ApplyPosition(frame)
     self:ApplyGlobalLook(frame)
-    frame:EnableMouse(self:CanMove(m) and true or false)
-    o:SetShown(self:CanMove(m) and self.db.general.outline and true or false)
-    fs:SetShown(self:CanMove(m) and self.db.general.outline and true or false)
+    local can = not frame.hhtFollow and self:CanMove(m) and true or false
+    frame:EnableMouse(can)
+    o:SetShown(can and self.db.general.outline and true or false)
+    fs:SetShown(can and self.db.general.outline and true or false)
 end
 
 -- ---------------------------------------------------------------------------
@@ -463,6 +484,61 @@ function HHT.HasAttackableTarget()
     if UnitIsDead("target") then return false end
     local ok, r = pcall(UnitCanAttack, "player", "target")
     return ok and r == true
+end
+
+-- Keys that are named differently for bindings than the name the key press reports (German layout).
+local KEY_ALIASES = { ["Ü"] = "[", ["Ö"] = ";", ["Ä"] = "'", ["ß"] = "-", ["´"] = "=", ["^"] = "`", ["#"] = "\\", ["+"] = "]" }
+
+local KEY_LOWER = { ["Ü"] = "ü", ["Ö"] = "ö", ["Ä"] = "ä" }
+
+-- Binds a key to click a button. The game accepts the reported name of some keys without ever firing it, so the
+-- lowercase umlaut the game reports and the US alias are bound as well. Returns true when at least one name is bound.
+function HHT.BindClick(owner, key, button, prefix)
+    prefix = prefix or ""
+    local tries = { key }
+    if KEY_LOWER[key] then tries[#tries + 1] = KEY_LOWER[key] end
+    if KEY_ALIASES[key] then tries[#tries + 1] = KEY_ALIASES[key] end
+    local bound = false
+    for _, k in ipairs(tries) do
+        pcall(SetOverrideBindingClick, owner, true, prefix .. k, button, "LeftButton")
+        local act = GetBindingAction and GetBindingAction(prefix .. k, true)
+        if act == nil or act ~= "" then bound = true end
+    end
+    return bound
+end
+
+-- /hht key: shows what the game reports for a pressed key and which binding names it accepts.
+function HHT.KeyTest()
+    if HHT.InCombat() then return end
+    local f = HHT.keyTestFrame
+    if not f then
+        f = CreateFrame("Frame", nil, UIParent)
+        f:SetSize(1, 1)
+        f:SetPoint("CENTER")
+        f:EnableKeyboard(true)
+        f.btn = CreateFrame("Button", "HamingwaysHunterToolsKeyTestBtn", UIParent, "SecureActionButtonTemplate")
+        f:SetScript("OnKeyDown", function(self, key)
+            if key == "LSHIFT" or key == "RSHIFT" or key == "LCTRL" or key == "RCTRL" or key == "LALT" or key == "RALT" then return end
+            self:Hide()
+            local bytes = {}
+            for i = 1, #key do bytes[#bytes + 1] = string.byte(key, i) end
+            HHT.Print("key=[" .. key .. "] len=" .. #key .. " bytes=" .. table.concat(bytes, ","))
+            local seen, list = {}, { key, key:upper(), key:lower() }
+            for _, a in pairs(KEY_ALIASES) do list[#list + 1] = a end
+            for _, k in ipairs(list) do
+                if not seen[k] then
+                    seen[k] = true
+                    local ok, err = pcall(SetOverrideBindingClick, self.btn, true, k, "HamingwaysHunterToolsKeyTestBtn", "LeftButton")
+                    local act = GetBindingAction and GetBindingAction(k, true)
+                    HHT.Print("try [" .. k .. "] ok=" .. tostring(ok) .. " action=[" .. tostring(act) .. "]" .. (err and (" err=" .. tostring(err)) or ""))
+                end
+            end
+            ClearOverrideBindings(self.btn)
+        end)
+        HHT.keyTestFrame = f
+    end
+    f:Show()
+    HHT.Print("Press a key (test)")
 end
 
 function HHT.InCombat()
@@ -562,7 +638,15 @@ function HHT:Start()
         local f = self.combatFrame or CreateFrame("Frame")
         self.combatFrame = f
         f:RegisterEvent(ev)
-        f:SetScript("OnEvent", function() HHT:ApplyAllLooks() end)
+        f:SetScript("OnEvent", function(_, event)
+            if event == "PLAYER_REGEN_DISABLED" then
+                HHT:LockForCombat()
+            elseif event == "PLAYER_REGEN_ENABLED" and HHT.lockPending then
+                HHT.lockPending = nil
+                HHT:ApplyLock()
+            end
+            HHT:ApplyAllLooks()
+        end)
     end
     self:ApplyAllLooks()
 end
@@ -714,6 +798,11 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
             HHT.Print("warnings: quiet=" .. tostring(w.Quiet()) .. " enabled=" .. tostring(w.enabled) .. " list=" .. table.concat(keys2, ","))
             if w.PetDebug then HHT.Print(w:PetDebug()) end
         end
+    elseif msg == "cd" then
+        local cm = HHT.modules.cooldowns
+        if cm and cm.Debug then cm:Debug() end
+    elseif msg == "key" then
+        HHT.KeyTest()
     elseif msg == "reset" then
         for _, m in pairs(HHT.modules) do m.db.pos = nil end
         HHT:ApplyAllPositions()

@@ -197,6 +197,13 @@ function methods:SetDesaturated(on)
     self.tex:SetDesaturated(on and true or false)
 end
 
+-- Colours the icon texture (usable hint); 1,1,1 is normal.
+function methods:SetTint(r, g, b)
+    if self.tintR == r and self.tintG == g and self.tintB == b then return end
+    self.tintR, self.tintG, self.tintB = r, g, b
+    self.tex:SetVertexColor(r, g, b)
+end
+
 function methods:ShowCooldown(durObj)
     if not durObj then self.cool:Clear(); return false end
     if pcall(self.cool.SetCooldownFromDurationObject, self.cool, durObj, true) then return true end

@@ -321,6 +321,18 @@ function S.InRange(id, unit)
     return nil
 end
 
+-- Usable now (nil = unknown/secret) and whether resources are missing (mana, focus ...).
+function S.Usable(id)
+    local fn = (C_Spell and C_Spell.IsSpellUsable) or IsUsableSpell
+    if type(fn) ~= "function" then return nil end
+    local ok, usable, noPower = pcall(fn, id)
+    if not ok or IsSecret(usable) then return nil end
+    local u = (usable == true or usable == 1) and true or (usable == false or usable == 0) and false or nil
+    if u == nil then return nil end
+    local np = (not IsSecret(noPower)) and (noPower == true or noPower == 1)
+    return u, np
+end
+
 local f = CreateFrame("Frame")
 for _, ev in ipairs({ "SPELLS_CHANGED", "LEARNED_SPELL_IN_TAB", "PLAYER_LOGIN", "PLAYER_TALENT_UPDATE", "ACTIVE_TALENT_GROUP_CHANGED" }) do
     pcall(f.RegisterEvent, f, ev)

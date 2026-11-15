@@ -57,9 +57,9 @@ local M = HHT:NewModule("petnearby", {
     },
 })
 
-local W, H = 370, 112
-local ZW, ZROWS, ROW_H, ROW_TOP = 400, 6, 22, 63
+local W, H = 440, 132
 local RARE_COLOR = { rare = { 0.45, 0.75, 1 }, rareelite = { 0.75, 0.55, 1 }, elite = { 1, 0.82, 0.3 } }
+local ZW, ZROWS, ROW_H, ROW_TOP = 400, 6, 26, 82
 local snoozeUntil, alerted, tamedNpc = 0, {}, nil
 local zoneSeen = {}
 
@@ -71,17 +71,7 @@ local function NpcId(unit)
     return tonumber(id)
 end
 
-local function StyleButton(b, text)
-    local bg = b:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    UI.Tint(bg, UI.PAL.button)
-    UI.Border(b, 1, 1, 1, 0.08)
-    local hl = b:CreateTexture(nil, "HIGHLIGHT")
-    hl:SetAllPoints()
-    hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.25)
-    b.label = UI.Text(b, text, 11)
-    b.label:SetPoint("CENTER")
-end
+local StyleButton = UI.StyleButton
 
 function M:Build()
     if self.frame then return end
@@ -90,48 +80,29 @@ function M:Build()
     f:SetFrameStrata("DIALOG")
     self.frame = f
     f.border = UI.Panel(f, 0.67, 0.83, 0.45)
-
-    f.icon = f:CreateTexture(nil, "ARTWORK")
-    f.icon:SetSize(44, 44)
-    f.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -12)
-    f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    UI.PopupHead(f, W, { icon = true, subLines = 2, noDiv = true, onClose = function() HHT.HideSecure(f) end })
     HHT.Icon.Attach(f.icon)
-    f.eyebrow = UI.Text(f, "", 10, 0.67, 0.83, 0.45)
-    f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -8)
-    f.title = UI.Text(f, "", 13, 1, 1, 1)
-    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -22)
-    f.title:SetWidth(W - 100)
-    f.title:SetJustifyH("LEFT")
-    f.title:SetWordWrap(false)
-    f.sub = UI.Text(f, "", 11, 0.8, 0.8, 0.8)
-    f.sub:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -40)
-    f.sub:SetWidth(W - 76)
-    f.sub:SetJustifyH("LEFT")
-    f.sub:SetJustifyV("TOP")
-    f.sub:SetHeight(30)
-
-    local close = UI.Button(f, 18, 18, "x", function() HHT.HideSecure(f) end)
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
+    f.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
-    f.target:SetSize(78, 20)
-    f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 10, 8)
+    f.target:SetSize(78, 24)
+    f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
     f.target:RegisterForClicks("AnyDown", "AnyUp")
     StyleButton(f.target, L("Target"))
 
-    f.map = UI.Button(f, 56, 20, L("Map"), function()
+    f.map = UI.Button(f, 56, 24, L("Map"), function()
         if f.beast and HHT.PetMap then HHT.PetMap:ShowBeasts({ f.beast }, true) end
     end)
-    f.map:SetPoint("LEFT", f.target, "RIGHT", 6, 0)
+    f.map:SetPoint("LEFT", f.target, "RIGHT", 8, 0)
 
-    f.snooze = UI.Button(f, 96, 20, L("Snooze 15 min"), function()
+    f.snooze = UI.Button(f, 100, 24, L("Snooze 15 min"), function()
         snoozeUntil = GetTime() + 900
         HHT.Print(L("Pet ability alerts paused for 15 minutes."))
         HHT.HideSecure(f)
     end)
-    f.snooze:SetPoint("LEFT", f.map, "RIGHT", 6, 0)
+    f.snooze:SetPoint("LEFT", f.map, "RIGHT", 8, 0)
 
-    f.ignore = UI.Button(f, 108, 20, "", function()
+    f.ignore = UI.Button(f, 136, 24, "", function()
         local key = f.abilityKey
         if key then
             M.db.alertFor[key] = false
@@ -139,7 +110,7 @@ function M:Build()
         end
         HHT.HideSecure(f)
     end)
-    f.ignore:SetPoint("LEFT", f.snooze, "RIGHT", 6, 0)
+    f.ignore:SetPoint("LEFT", f.snooze, "RIGHT", 8, 0)
 
     f:Hide()
     HHT:MakeMovable(f, self, "main", L("Pet ability alerts"))
@@ -179,17 +150,19 @@ function M:Refresh()
     if not f then return end
     local c = self.db.colors.border
     f.border:SetColor(c[1], c[2], c[3], 0.9)
+    UI.SetPrimary(f.target, c[1], c[2], c[3])
     HHT:ApplyGlobalLook(f)
     local z = self.zone
     if z then
         z.border:SetColor(c[1], c[2], c[3], 0.9)
+        UI.SetPrimary(z.mapAll, c[1], c[2], c[3])
         HHT:ApplyGlobalLook(z)
     end
     if HHT:IsUnlocked(self) then
         self:Preview()
         self:PreviewZone()
     else
-        if f.preview then f:Hide(); f.preview = nil end
+        if f.preview then HHT.HideSecure(f); f.preview = nil end
         if z and z.preview then z:Hide(); z.preview = nil end
     end
 end
@@ -226,6 +199,10 @@ function M:Show(data, preview)
     f.sub:SetText(data.sub)
     f.beast, f.abilityKey, f.abilityName, f.preview = data.beast, data.abilityKey, data.abilityName, preview
     f.ignore.label:SetText(string.format(L("Ignore %s"), data.abilityName or ""))
+    if not InCombatLockdown() then
+        f.ignore:SetWidth(math.max(100, math.ceil(f.ignore.label:GetStringWidth()) + 24))
+        UI.PopupFit(f, 78 + 8 + 56 + 8 + 100 + 8 + f.ignore:GetWidth(), 300, 520)
+    end
     f.hideAt = (not preview and db.duration > 0) and (GetTime() + db.duration) or nil
     if not InCombatLockdown() then
         f.target:SetAttribute("type", "macro")
@@ -270,80 +247,87 @@ function M:BuildZone()
     z:SetFrameStrata("DIALOG")
     self.zone = z
     z.border = UI.Panel(z, 0.67, 0.83, 0.45)
-
-    z.icon = z:CreateTexture(nil, "ARTWORK")
-    z.icon:SetSize(44, 44)
-    z.icon:SetPoint("TOPLEFT", z, "TOPLEFT", 10, -12)
-    z.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    UI.PopupHead(z, ZW, { icon = true, divY = 70, onClose = function() z:Hide() end })
     HHT.Icon.Attach(z.icon)
-    z.eyebrow = UI.Text(z, "", 10, 0.67, 0.83, 0.45)
-    z.eyebrow:SetPoint("TOPLEFT", z, "TOPLEFT", 64, -8)
-    z.title = UI.Text(z, "", 13, 1, 1, 1)
-    z.title:SetPoint("TOPLEFT", z, "TOPLEFT", 64, -22)
-    z.title:SetWidth(ZW - 100)
-    z.title:SetJustifyH("LEFT")
-    z.title:SetWordWrap(false)
-    z.sub = UI.Text(z, "", 11, 0.8, 0.8, 0.8)
-    z.sub:SetPoint("TOPLEFT", z, "TOPLEFT", 64, -40)
-    z.sub:SetWidth(ZW - 76)
-    z.sub:SetJustifyH("LEFT")
-    z.sub:SetWordWrap(false)
-    z.div = z:CreateTexture(nil, "ARTWORK")
-    z.div:SetColorTexture(1, 1, 1, 0.08)
-    z.div:SetHeight(1)
-    z.div:SetPoint("TOPLEFT", z, "TOPLEFT", 10, -57)
-    z.div:SetPoint("TOPRIGHT", z, "TOPRIGHT", -10, -57)
-
-    local close = UI.Button(z, 18, 18, "x", function() z:Hide() end)
-    close:SetPoint("TOPRIGHT", z, "TOPRIGHT", -4, -4)
+    z.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
     z.rows = {}
     for i = 1, ZROWS do
         local r = CreateFrame("Button", nil, z)
-        r:SetSize(ZW - 20, ROW_H)
-        r:SetPoint("TOPLEFT", z, "TOPLEFT", 10, -(ROW_TOP + (i - 1) * (ROW_H + 2)))
+        r:SetSize(ZW - 32, ROW_H)
+        r:SetPoint("TOPLEFT", z, "TOPLEFT", 16, -(ROW_TOP + (i - 1) * (ROW_H + 4)))
         r:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        local bg = r:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(1, 1, 1, 0.04)
-        local hl = r:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetAllPoints()
-        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.2)
+        UI.Round(r, 6, 1, 1, 1, 0.04, "BACKGROUND")
+        UI.Round(r, 6, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.2, "HIGHLIGHT")
         r.icon = r:CreateTexture(nil, "ARTWORK")
-        r.icon:SetSize(16, 16)
-        r.icon:SetPoint("LEFT", r, "LEFT", 4, 0)
+        r.icon:SetSize(18, 18)
+        r.icon:SetPoint("LEFT", r, "LEFT", 6, 0)
         r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
         HHT.Icon.Attach(r.icon)
         r.name = UI.Text(r, "", 11, 1, 1, 1)
-        r.name:SetPoint("LEFT", r, "LEFT", 28, 0)
+        r.name:SetPoint("LEFT", r, "LEFT", 34, 0)
         r.name:SetWidth(150)
         r.name:SetJustifyH("LEFT")
         r.name:SetWordWrap(false)
         r.lvl = UI.Text(r, "", 11, 0.65, 0.65, 0.65)
-        r.lvl:SetPoint("LEFT", r, "LEFT", 182, 0)
-        r.lvl:SetWidth(44)
+        r.lvl:SetPoint("LEFT", r, "LEFT", 190, 0)
+        r.lvl:SetWidth(40)
         r.lvl:SetJustifyH("LEFT")
         r.ab = UI.Text(r, "", 11, 0.4, 0.93, 0.4)
-        r.ab:SetPoint("LEFT", r, "LEFT", 228, 0)
-        r.ab:SetWidth(ZW - 20 - 228 - 4)
+        r.ab:SetPoint("LEFT", r, "LEFT", 236, 0)
+        r.ab:SetWidth(ZW - 32 - 236 - 8)
         r.ab:SetJustifyH("LEFT")
         r.ab:SetWordWrap(false)
-        r:SetScript("OnEnter", function(self)
+        -- Over the ability icon or its name the tooltip is the ability; elsewhere in the row it is the beast.
+        local function Over(region)
+            local l, rt, t, bt = region:GetLeft(), region:GetRight(), region:GetTop(), region:GetBottom()
+            if not (l and rt and t and bt) then return false end
+            local x, y = GetCursorPosition()
+            local s = region:GetEffectiveScale()
+            x, y = x / s, y / s
+            return x >= l and x <= rt and y >= bt and y <= t
+        end
+        local function RowTip(self)
             local b, best = self.beast, self.best
             if not b then return end
+            local onAbility = (best and (Over(self.icon) or Over(self.ab))) and true or false
+            if self.tipMode == onAbility and GameTooltip:IsOwned(self) then return end
+            self.tipMode = onAbility
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(b.n, 1, 1, 1)
-            GameTooltip:AddLine(L(b.f) .. ", " .. L("Level") .. " " .. b.l, 0.7, 0.7, 0.7)
-            if best then
-                GameTooltip:AddLine(HHT.PetDex.AbilityName(best.a) .. " " .. best.rank, 0.4, 0.93, 0.4)
+            if onAbility then
+                local spell
+                for _, x in ipairs(best.a.ranks) do
+                    if x.rank == best.rank then spell = x.spell end
+                end
+                local ok = spell and GameTooltip.SetSpellByID and pcall(GameTooltip.SetSpellByID, GameTooltip, spell)
+                if not ok then
+                    GameTooltip:ClearLines()
+                    GameTooltip:AddLine(HHT.PetDex.AbilityName(best.a) .. " " .. best.rank, 0.4, 0.93, 0.4)
+                end
                 GameTooltip:AddLine(string.format(L("For: %s"), table.concat(best.fits or {}, ", ")), 0.8, 0.8, 0.8, true)
+            else
+                GameTooltip:AddLine(b.n, 1, 1, 1)
+                GameTooltip:AddLine(L(b.f) .. ", " .. L("Level") .. " " .. b.l, 0.7, 0.7, 0.7)
+                if best then
+                    GameTooltip:AddLine(HHT.PetDex.AbilityName(best.a) .. " " .. best.rank, 0.4, 0.93, 0.4)
+                    GameTooltip:AddLine(string.format(L("For: %s"), table.concat(best.fits or {}, ", ")), 0.8, 0.8, 0.8, true)
+                end
+                GameTooltip:AddLine(L("Click: show on map"), 0.5, 0.8, 1)
+                GameTooltip:AddLine(L("Right-click: arrow"), 0.5, 0.8, 1)
+                GameTooltip:AddLine(L("Shift-click: waypoint"), 0.5, 0.8, 1)
             end
-            GameTooltip:AddLine(L("Click: show on map"), 0.5, 0.8, 1)
-            GameTooltip:AddLine(L("Right-click: arrow"), 0.5, 0.8, 1)
-            GameTooltip:AddLine(L("Shift-click: waypoint"), 0.5, 0.8, 1)
             GameTooltip:Show()
+        end
+        r:SetScript("OnEnter", function(self)
+            self.tipMode = nil
+            RowTip(self)
+            self:SetScript("OnUpdate", RowTip)
         end)
-        r:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        r:SetScript("OnLeave", function(self)
+            self:SetScript("OnUpdate", nil)
+            self.tipMode = nil
+            GameTooltip:Hide()
+        end)
         r:SetScript("OnClick", function(self, button)
             local b, pm = self.beast, HHT.PetMap
             if not b or not pm then return end
@@ -361,20 +345,20 @@ function M:BuildZone()
     end
 
     z.more = UI.Text(z, "", 10, 0.6, 0.6, 0.6)
-    z.mapAll = UI.Button(z, 100, 20, L("All on map"), function()
+    z.mapAll = UI.Button(z, 110, 24, L("All on map"), function()
         local pm = HHT.PetMap
         if not (pm and z.list) then return end
         local t = {}
         for _, e in ipairs(z.list) do t[#t + 1] = e.beast end
         pm:ShowBeasts(t, true)
     end)
-    z.mapAll:SetPoint("BOTTOMLEFT", z, "BOTTOMLEFT", 10, 8)
-    z.snooze = UI.Button(z, 96, 20, L("Snooze 15 min"), function()
+    z.mapAll:SetPoint("BOTTOMLEFT", z, "BOTTOMLEFT", 16, 14)
+    z.snooze = UI.Button(z, 100, 24, L("Snooze 15 min"), function()
         snoozeUntil = GetTime() + 900
         HHT.Print(L("Pet ability alerts paused for 15 minutes."))
         z:Hide()
     end)
-    z.snooze:SetPoint("LEFT", z.mapAll, "RIGHT", 6, 0)
+    z.snooze:SetPoint("LEFT", z.mapAll, "RIGHT", 8, 0)
 
     z:Hide()
     HHT:MakeMovable(z, self, "zone", L("Pet upgrade list"))
@@ -390,6 +374,7 @@ function M:ShowZone(entries, zoneName, preview)
     z.eyebrow:SetText(L("PET UPGRADES IN THIS ZONE"))
     z.title:SetText(zoneName)
     z.sub:SetText(string.format(L("Beasts here with abilities for your pet: %d"), #entries))
+    local nameW, abW, lvlW = 0, 0, 0
     for i, r in ipairs(z.rows) do
         local e = entries[i]
         if i <= n then
@@ -400,7 +385,10 @@ function M:ShowZone(entries, zoneName, preview)
             r.name:SetText(b.n)
             r.name:SetTextColor(c[1], c[2], c[3])
             r.lvl:SetText(tostring(b.l))
+            lvlW = math.max(lvlW, r.lvl:GetStringWidth())
+            r.ab:SetWidth(400)
             r.ab:SetText(PD.AbilityName(best.a) .. " " .. best.rank)
+            nameW, abW = math.max(nameW, r.name:GetStringWidth()), math.max(abW, r.ab:GetStringWidth())
             if best.petGap then r.ab:SetTextColor(0.9, 0.9, 0.9) else r.ab:SetTextColor(0.4, 0.93, 0.4) end
             r:Show()
         else
@@ -408,17 +396,36 @@ function M:ShowZone(entries, zoneName, preview)
             r:Hide()
         end
     end
-    local y = ROW_TOP + n * (ROW_H + 2)
+    -- Columns and window width follow the longest beast name and ability text.
+    nameW = math.ceil(math.min(200, nameW)) + 2
+    abW = math.ceil(abW) + 2
+    lvlW = math.ceil(lvlW) + 2
+    local GAP = 26
+    local lvlX = 34 + nameW + GAP
+    local abX = lvlX + lvlW + GAP
+    local w = UI.PopupFit(z, math.max(abX + abW + 8, 110 + 8 + 100), 340, 560)
+    for i = 1, n do
+        local r = z.rows[i]
+        r:SetWidth(w - 32)
+        r.name:SetWidth(nameW)
+        r.lvl:ClearAllPoints()
+        r.lvl:SetPoint("LEFT", r, "LEFT", lvlX, 0)
+        r.lvl:SetWidth(lvlW)
+        r.ab:ClearAllPoints()
+        r.ab:SetPoint("LEFT", r, "LEFT", abX, 0)
+        r.ab:SetWidth(math.min(abW, w - 32 - abX - 8))
+    end
+    local y = ROW_TOP + n * (ROW_H + 4)
     z.more:ClearAllPoints()
     if #entries > n then
         z.more:SetText(string.format(L("+%d more (see the pet database)"), #entries - n))
-        z.more:SetPoint("TOPLEFT", z, "TOPLEFT", 12, -(y + 1))
+        z.more:SetPoint("TOPLEFT", z, "TOPLEFT", 18, -(y + 1))
         z.more:Show()
-        y = y + 15
+        y = y + 16
     else
         z.more:Hide()
     end
-    z:SetHeight(y + 3 + 20 + 8)
+    z:SetHeight(y + 4 + 24 + 14)
     z.hideAt = (not preview and self.db.duration > 0) and (GetTime() + math.max(self.db.duration, 20)) or nil
     z:Show()
 end

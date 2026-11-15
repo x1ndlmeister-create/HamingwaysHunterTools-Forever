@@ -364,6 +364,7 @@ function AL:Refresh()
         end
     end
     win.range:SetText(string.format("%d-%d / %d", math.min(#list, win.offset + 1), math.min(#list, win.offset + ROWS), #list))
+    win.bar:Update()
     for k, tab in pairs(win.tabs) do
         local on = (k == win.kind)
         tab.label:SetTextColor(on and UI.ACCENT[1] or 0.7, on and UI.ACCENT[2] or 0.7, on and UI.ACCENT[3] or 0.7)
@@ -417,16 +418,10 @@ local function Build()
 
     for i = 1, ROWS do
         local row = CreateFrame("Button", nil, win)
-        row:SetSize(666, ROW_H)
+        row:SetSize(650, ROW_H)
         row:SetPoint("TOPLEFT", win, "TOPLEFT", 12, -88 - (i - 1) * ROW_H)
-        local hl = row:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetAllPoints()
-        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.15)
-        if i % 2 == 0 then
-            local stripe = row:CreateTexture(nil, "BACKGROUND")
-            stripe:SetAllPoints()
-            stripe:SetColorTexture(1, 1, 1, 0.03)
-        end
+        UI.Round(row, 5, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.15, "HIGHLIGHT")
+        if i % 2 == 0 then UI.Round(row, 5, 1, 1, 1, 0.03, "BACKGROUND") end
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(22, 22)
         row.icon:SetPoint("LEFT", row, "LEFT", 2, 0)
@@ -442,7 +437,7 @@ local function Build()
         row.name = Cell(40, 190)
         row.lvl = Cell(236, 30)
         row.dps = Cell(270, 40)
-        row.src = Cell(314, 354)
+        row.src = Cell(314, 338)
         row.src:SetTextColor(0.8, 0.8, 0.8)
         row:SetScript("OnEnter", ShowTip)
         row:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -459,6 +454,10 @@ local function Build()
         row:EnableMouseWheel(true)
         row:SetScript("OnMouseWheel", Wheel)
     end
+
+    win.bar = UI.OffsetBar(win, ROWS * ROW_H, ROWS, function() return #entries[win.kind] end,
+        function() return win.offset end, function(v) win.offset = v; AL:Refresh() end)
+    win.bar:SetPoint("TOPLEFT", win, "TOPLEFT", 668, -88)
 
     win.range = UI.Text(win, "", 12, 0.7, 0.7, 0.7)
     win.range:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -12, 10)

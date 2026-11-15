@@ -38,6 +38,8 @@ HHT:AddGerman({
     ["Low food below"] = "Wenig Futter unter",
     ["Never pick buff food automatically"] = "Buff-Futter nie automatisch waehlen",
     ["Your pet is unhappy: time to feed it."] = "Dein Begleiter ist unzufrieden: Zeit zum Fuettern.",
+    ["Your pet is only content: feed it for full damage."] = "Dein Begleiter ist nur zufrieden: fuettere ihn fuer vollen Schaden.",
+    ["Also warn when the pet is only content (not green)"] = "Auch warnen wenn der Begleiter nur zufrieden ist (nicht gruen)",
     ["Low on pet food: %d left."] = "Wenig Begleiter-Futter: noch %d.",
     ["Buff food"] = "Buff-Futter",
 })
@@ -49,7 +51,7 @@ local M = HHT:NewModule("feeder", {
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1,
         showText = true, showName = false, mode = "always", syncMacro = true, key = "",
-        hungerWarn = true, hungerSound = false, supplyWarn = true, supplyBelow = 10, protectBuff = true,
+        hungerWarn = true, hungerContent = true, hungerSound = false, supplyWarn = true, supplyBelow = 10, protectBuff = true,
         selected = {}, blacklist = {},
         colors = {
             happy = { 0.40, 0.80, 0.30 },
@@ -170,7 +172,7 @@ function M:ApplyBinding()
     self.bindDirty = false
     ClearOverrideBindings(self.owner)
     if self.enabled and self.db.key ~= "" then
-        pcall(SetOverrideBindingClick, self.owner, true, self.db.key, "HamingwaysHunterToolsFeederButton", "LeftButton")
+        HHT.BindClick(self.owner, self.db.key, "HamingwaysHunterToolsFeederButton")
     end
 end
 
@@ -476,15 +478,17 @@ end
 function M:CheckAlerts(exists, dead, happy, unlocked)
     local db = self.db
     if unlocked or not exists or dead then
-        self.lastHappy, self.supplyLow = nil, false
+        self.lastHappy, self.hungry, self.supplyLow = nil, false, false
         return false
     end
     if happy then
-        if happy == 1 and self.lastHappy ~= 1 and db.hungerWarn then
-            self:Alert(L("Your pet is unhappy: time to feed it."))
+        local limit = db.hungerContent and 2 or 1
+        local hungry = happy <= limit
+        if hungry and db.hungerWarn and (not self.hungry or happy < (self.lastHappy or 3)) then
+            self:Alert(happy == 1 and L("Your pet is unhappy: time to feed it.") or L("Your pet is only content: feed it for full damage."))
             if db.hungerSound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
         end
-        self.lastHappy = happy
+        self.hungry, self.lastHappy = hungry, happy
     end
     -- bags are not fully loaded right after login, so the supply check waits a little
     if not db.supplyWarn or GetTime() - (self.startAt or 0) < 15 or not next(self.diets or {}) then
@@ -503,7 +507,7 @@ end
 
 -- State for the Warnings module: unhappy pet, low supply, the picked food and the feed macro text.
 function M:Status()
-    return self.lastHappy == 1, self.supplyLow and true or false, self.current, self.attrText or "", self.db.key ~= "" and self.db.key:upper() or nil, self.supplyCount
+    return self.hungry and true or false, self.supplyLow and true or false, self.current, self.attrText or "", self.db.key ~= "" and self.db.key:upper() or nil, self.supplyCount
 end
 
 function M:Tick()
@@ -614,6 +618,7 @@ function M:BuildOptions(form)
     form:Button(L("Waypoint to nearest food vendor"), function() if HHT.FoodVendors then HHT.FoodVendors.Nearest() end end, 220)
     form:Header(L("Warnings"))
     form:Check(L("Warn when the pet gets unhappy"), db, "hungerWarn")
+    form:Check(L("Also warn when the pet is only content (not green)"), db, "hungerContent")
     form:Check(L("Play a sound when the pet gets unhappy"), db, "hungerSound")
     form:Check(L("Warn when pet food runs low"), db, "supplyWarn")
     form:Stepper(L("Low food below"), db, "supplyBelow", 1, 100, 1)

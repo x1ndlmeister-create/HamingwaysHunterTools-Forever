@@ -25,7 +25,7 @@ local M = HHT:NewModule("summons", {
 HHT.Summons = M
 
 local MAXS = MAX_TOTEMS or 4
-local HAWK = "Interface\\Icons\\Spell_Nature_RavenForm"
+local HAWK = "Interface\\Icons\\Ability_Hunter_AnimalHandler"
 
 local function IsSecret(v)
     return issecretvalue and issecretvalue(v) or false

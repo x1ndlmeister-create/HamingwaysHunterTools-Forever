@@ -183,7 +183,7 @@ end
 -- ---------------------------------------------------------------------------
 -- Level 10 popup
 -- ---------------------------------------------------------------------------
-local W, H = 400, 130
+local W, H = 440, 156
 
 function M:Build()
     if self.frame then return end
@@ -192,48 +192,28 @@ function M:Build()
     f:SetFrameStrata("DIALOG")
     self.frame = f
     f.border = UI.Panel(f, 0.67, 0.83, 0.45)
-
-    f.icon = f:CreateTexture(nil, "ARTWORK")
-    f.icon:SetSize(44, 44)
-    f.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -12)
-    f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    UI.PopupHead(f, W, { icon = true, divY = 70, onClose = function() f:Hide() end })
     f.icon:SetTexture("Interface\\Icons\\Ability_Hunter_BeastCall")
     HHT.Icon.Attach(f.icon)
-    f.eyebrow = UI.Text(f, L("LEVEL 10 REACHED"), 10, 0.67, 0.83, 0.45)
-    f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -8)
-    f.title = UI.Text(f, L("Time for your first pet"), 13, 1, 1, 1)
-    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -22)
-    f.title:SetWidth(W - 100)
-    f.title:SetJustifyH("LEFT")
-    f.title:SetWordWrap(false)
-    f.sub = UI.Text(f, "", 11, 0.8, 0.8, 0.8)
-    f.sub:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -40)
-    f.sub:SetWidth(W - 76)
-    f.sub:SetJustifyH("LEFT")
-    f.sub:SetWordWrap(false)
-    f.div = f:CreateTexture(nil, "ARTWORK")
-    f.div:SetColorTexture(1, 1, 1, 0.08)
-    f.div:SetHeight(1)
-    f.div:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -57)
-    f.div:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -57)
-    f.body = UI.Text(f, L("Take the pet quest from your hunter trainer. Finish both parts before you tame, the second one teaches feeding."), 11, 0.92, 0.94, 0.97)
-    f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -63)
-    f.body:SetWidth(W - 24)
+    f.eyebrow:SetText(L("LEVEL 10 REACHED"))
+    f.eyebrow:SetTextColor(0.67, 0.83, 0.45)
+    f.title:SetText(L("Time for your first pet"))
+    f.body = UI.Text(f, L("Take the pet quest from your hunter trainer. Finish both parts before you tame, the second one teaches feeding."), 12, 0.92, 0.94, 0.97)
+    f.body:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -82)
+    f.body:SetWidth(W - 32)
     f.body:SetHeight(32)
     f.body:SetJustifyH("LEFT")
     f.body:SetJustifyV("TOP")
 
-    local close = UI.Button(f, 18, 18, "x", function() f:Hide() end)
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
-
-    f.map = UI.Button(f, 70, 20, L("Map"), G.ShowTrainers)
-    f.map:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 10, 8)
-    f.way = UI.Button(f, 90, 20, L("Waypoint"), G.TrainerWaypoint)
-    f.way:SetPoint("LEFT", f.map, "RIGHT", 6, 0)
-    f.guide = UI.Button(f, 110, 20, L("Pet guide"), function()
+    f.map = UI.Button(f, 70, 24, L("Map"), G.ShowTrainers)
+    f.map:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
+    f.way = UI.Button(f, 90, 24, L("Waypoint"), G.TrainerWaypoint)
+    f.way:SetPoint("LEFT", f.map, "RIGHT", 8, 0)
+    f.guide = UI.Button(f, 110, 24, L("Pet guide"), function()
         if HHT.PetDex then HHT.PetDex:Open("guide") end
     end)
-    f.guide:SetPoint("LEFT", f.way, "RIGHT", 6, 0)
+    f.guide:SetPoint("LEFT", f.way, "RIGHT", 8, 0)
+    UI.SetPrimary(f.guide, 0.67, 0.83, 0.45)
 
     f:Hide()
     HHT:MakeMovable(f, self, "main", L("Pet guide"))
@@ -244,6 +224,12 @@ function M:Show(preview)
     if not f then return end
     local t = G.NearestTrainer()
     f.sub:SetText(t and string.format(L("Hunter trainer: %s, %s"), t[4] or "?", ZoneName(t[1])) or L("Hunter trainer: see the map"))
+    f.body:SetWidth(2000)
+    local w = UI.PopupFit(f, math.max(70 + 8 + 90 + 8 + 110, f.body:GetStringWidth()), 340, 440)
+    f.body:SetWidth(w - 32)
+    local bodyH = math.ceil(f.body:GetStringHeight())
+    f.body:SetHeight(bodyH)
+    f:SetHeight(82 + bodyH + 4 + 24 + 14)
     f.preview = preview
     f.hideAt = (not preview and self.db.duration > 0) and (GetTime() + self.db.duration) or nil
     f:Show()

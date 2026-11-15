@@ -15,6 +15,25 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.3.0",
+        en = {
+            "New look: rounded windows and popups with themes, a banner header, tabs and a new icon set (Lucide). Popups adapt their width to their content.",
+            "Beast popup (Pet watch): rebuilt with cards for stats, food, what the beast teaches and what the family learns. Food types have icons, and the stats and abilities have tooltips (abilities show the spell tooltip, green when you can learn a higher rank).",
+            "Cooldowns: new layouts 'Individual icons' and 'One bar'. Icons are clickable and show the key, a tooltip and a tint when the ability is not usable.",
+            "Move mode locks itself when combat starts, so frames with clickable buttons cannot get stuck.",
+            "Keys with umlauts (for example the key U with umlaut) can now be bound for clicks. Right-click a key button to clear it.",
+            "Pet feeder: the hunger warning now also appears when the pet is only content (yellow), not just unhappy. Can be switched off in the Pet feeder options.",
+        },
+        de = {
+            "Neuer Look: Abgerundete Fenster und Popups mit Themes, Banner-Kopfzeile, Tabs und neuem Icon-Set (Lucide). Popups passen ihre Breite an den Inhalt an.",
+            "Tier-Popup (Pet watch): Neu gebaut mit Karten fuer Werte, Futter, was das Tier lehrt und was die Familie lernt. Futterarten haben Icons, Werte und Faehigkeiten haben Tooltips (Faehigkeiten zeigen den Zauber-Tooltip, gruen wenn du einen hoeheren Rang lernen kannst).",
+            "Abklingzeiten: Neue Layouts 'Einzelne Icons' und 'Eine Leiste'. Icons sind klickbar und zeigen Taste, Tooltip und eine Faerbung, wenn die Faehigkeit nicht nutzbar ist.",
+            "Der Verschieben-Modus sperrt sich automatisch, wenn ein Kampf beginnt, damit Frames mit klickbaren Buttons nicht haengen bleiben.",
+            "Tasten mit Umlauten (zum Beispiel Ue) lassen sich jetzt fuer Klicks belegen. Rechtsklick auf einen Tasten-Button loescht die Belegung.",
+            "Begleiter-Futter: Die Hunger-Warnung erscheint jetzt auch, wenn der Begleiter nur zufrieden (gelb) ist, nicht erst bei unzufrieden. In den Optionen des Futter-Moduls abschaltbar.",
+        },
+    },
+    {
         v = "1.2.7",
         en = {
             "Pet status: a yellow exclamation mark on the pet portrait shows when beasts in your current zone teach your pet a higher ability rank. Click it to open or close the zone list (greyed out and not clickable in combat). Can be switched off in the Pet status options.",
@@ -167,11 +186,7 @@ local function Window()
     content:SetWidth(CONTENT_W + 20)
     content:SetHeight(1)
     sf:SetScrollChild(content)
-    sf:EnableMouseWheel(true)
-    sf:SetScript("OnMouseWheel", function(self, d)
-        local max = math.max(0, content:GetHeight() - self:GetHeight())
-        self:SetVerticalScroll(math.min(max, math.max(0, self:GetVerticalScroll() - d * 40)))
-    end)
+    win.updateBar = UI.ScrollBar(sf, content, 8, 40)
     win.scroll, win.content, win.rows = sf, content, {}
 
     local chk = UI.Check(win, L("Show this window after updates"),
@@ -233,6 +248,7 @@ local function Fill(entries)
     win.scroll:SetHeight(body)
     win:SetHeight(40 + body + 12 + 44)
     win.scroll:SetVerticalScroll(0)
+    win.updateBar()
 end
 
 -- entries: NOTES entries to show (newest first) or "all".

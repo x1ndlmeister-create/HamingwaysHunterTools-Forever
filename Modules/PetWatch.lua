@@ -29,8 +29,17 @@ HHT:AddGerman({
     ["Arrow off"] = "Pfeil aus",
     ["Wishlist"] = "Wunschliste",
     ["* Wishlist"] = "* Wunschliste",
-    ["Teaches: %s"] = "Lehrt: %s",
-    ["Family learns: %s"] = "Familie lernt: %s",
+    ["TEACHES"] = "LEHRT",
+    ["FOOD"] = "FUTTER",
+    ["FAMILY LEARNS"] = "FAMILIE LERNT",
+    ["Rank %d"] = "Rang %d",
+    ["Pet health compared with the base value."] = "Leben des Begleiters im Vergleich zum Basiswert.",
+    ["Pet armor compared with the base value."] = "Ruestung des Begleiters im Vergleich zum Basiswert.",
+    ["Pet damage compared with the base value."] = "Schaden des Begleiters im Vergleich zum Basiswert.",
+    ["Attack speed"] = "Angriffstempo",
+    ["Seconds between two attacks."] = "Sekunden zwischen zwei Angriffen.",
+    ["Food type your pet eats."] = "Nahrung, die dein Begleiter frisst.",
+    ["You can learn a higher rank"] = "Du kannst einen hoeheren Rang lernen",
     ["Show a 3D model of the beast"] = "3D-Modell des Tiers zeigen",
     ["Tameable"] = "Zaehmbar",
     ["Teaches %s (new for %s)"] = "Lehrt %s (neu fuer %s)",
@@ -72,8 +81,9 @@ local M = HHT:NewModule("petwatch", {
 local PW = {}
 HHT.PetWatch = PW
 
-local W, H = 400, 112
-local MODEL_W, MODEL_H = 110, 150
+local W, H = 440, 150
+local BODY, FOOT = 90, 52
+local MODEL_W = 150
 local ARROW_TEX = "Interface\\Minimap\\ROTATING-MINIMAPARROW"
 local snoozeUntil, alerted = 0, {}
 local tameId, tameAt
@@ -185,17 +195,7 @@ end
 -- ---------------------------------------------------------------------------
 -- Alert bar
 -- ---------------------------------------------------------------------------
-local function StyleButton(b, text)
-    local bg = b:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    UI.Tint(bg, UI.PAL.button)
-    UI.Border(b, 1, 1, 1, 0.08)
-    local hl = b:CreateTexture(nil, "HIGHLIGHT")
-    hl:SetAllPoints()
-    hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.25)
-    b.label = UI.Text(b, text, 11)
-    b.label:SetPoint("CENTER")
-end
+local StyleButton = UI.StyleButton
 
 local function UpdateButtons()
     local f = M.frame
@@ -219,74 +219,47 @@ function M:Build()
     f:SetFrameStrata("DIALOG")
     self.frame = f
     f.border = UI.Panel(f, 0.75, 0.55, 1)
-
-    f.icon = f:CreateTexture(nil, "ARTWORK")
-    f.icon:SetSize(44, 44)
-    f.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -12)
-    f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    UI.PopupHead(f, W, { icon = true, onClose = CloseAlert })
     HHT.Icon.Attach(f.icon)
-    f.eyebrow = UI.Text(f, "", 10, 0.75, 0.55, 1)
-    f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -8)
-    f.title = UI.Text(f, "", 13, 1, 1, 1)
-    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -22)
-    f.title:SetWidth(W - 100)
-    f.title:SetJustifyH("LEFT")
-    f.title:SetWordWrap(false)
-    f.sub = UI.Text(f, "", 11, 0.8, 0.8, 0.8)
-    f.sub:SetPoint("TOPLEFT", f, "TOPLEFT", 64, -40)
-    f.sub:SetWidth(W - 76)
-    f.sub:SetJustifyH("LEFT")
-    f.sub:SetWordWrap(false)
-    f.div = f:CreateTexture(nil, "ARTWORK")
-    f.div:SetColorTexture(1, 1, 1, 0.08)
-    f.div:SetHeight(1)
-    f.div:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -57)
-    f.div:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -57)
-    local function Detail(r, g, b)
-        local fs = UI.Text(f, "", 11, r, g, b)
-        fs:SetWidth(W - 24)
-        fs:SetJustifyH("LEFT")
-        fs:SetJustifyV("TOP")
-        return fs
-    end
-    f.stats = Detail(0.85, 0.85, 0.85)
-    f.stats2 = Detail(0.85, 0.85, 0.85)
-    f.teach = Detail(0.8, 0.8, 0.8)
-    f.fam = Detail(0.6, 0.6, 0.6)
+    -- Body columns: the rows are created on demand in Body().
+    f.cells, f.arows, f.foods, f.heads, f.hits, f.cards = {}, {}, {}, {}, {}, {}
+    f.cardLayer = CreateFrame("Frame", nil, f)
+    f.cardLayer:SetAllPoints(f)
+    f.body = CreateFrame("Frame", nil, f)
+    f.body:SetAllPoints(f)
+    f.body:SetFrameLevel(f.cardLayer:GetFrameLevel() + 2)
 
-    f.modelBg = f:CreateTexture(nil, "ARTWORK")
-    f.modelBg:SetColorTexture(0, 0, 0, 0.3)
-    f.modelBg:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -63)
-    f.modelBg:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 34)
+    -- The 3D view is a second card docked to the left edge, outside the popup itself.
+    f.modelBg = CreateFrame("Frame", nil, f)
+    f.modelEdge = UI.Panel(f.modelBg, 0.75, 0.55, 1)
     f.modelBg:SetWidth(MODEL_W)
-    f.model = CreateFrame("PlayerModel", nil, f)
-    f.model:SetAllPoints(f.modelBg)
+    f.modelBg:SetPoint("TOPRIGHT", f, "TOPLEFT", -8, 0)
+    f.modelBg:SetPoint("BOTTOMRIGHT", f, "BOTTOMLEFT", -8, 0)
+    f.model = CreateFrame("PlayerModel", nil, f.modelBg)
+    f.model:SetPoint("TOPLEFT", f.modelBg, "TOPLEFT", 8, -8)
+    f.model:SetPoint("BOTTOMRIGHT", f.modelBg, "BOTTOMRIGHT", -8, 8)
     f.model:EnableMouse(false)
     f.modelBg:Hide()
-    f.model:Hide()
-
-    local close = UI.Button(f, 18, 18, "x", CloseAlert)
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
-    f.target:SetSize(70, 20)
-    f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 10, 8)
+    f.target:SetSize(78, 24)
+    f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
     f.target:RegisterForClicks("AnyUp")
     StyleButton(f.target, L("Target"))
 
-    f.map = UI.Button(f, 48, 20, L("Map"), function()
+    f.map = UI.Button(f, 54, 24, L("Map"), function()
         if f.beast and PM() then PM():ShowBeasts({ f.beast }, true) end
     end)
-    f.map:SetPoint("LEFT", f.target, "RIGHT", 6, 0)
+    f.map:SetPoint("LEFT", f.target, "RIGHT", 8, 0)
 
-    f.arrowBtn = UI.Button(f, 66, 20, L("Arrow"), function()
+    f.arrowBtn = UI.Button(f, 70, 24, L("Arrow"), function()
         local b = f.beast
         if not b then return end
         if M.track == b then PW.Track(nil) else PW.Track(b) end
     end)
-    f.arrowBtn:SetPoint("LEFT", f.map, "RIGHT", 6, 0)
+    f.arrowBtn:SetPoint("LEFT", f.map, "RIGHT", 8, 0)
 
-    f.wishBtn = UI.Button(f, 90, 20, L("Wishlist"), function()
+    f.wishBtn = UI.Button(f, 96, 24, L("Wishlist"), function()
         local b, pd = f.beast, PD()
         if not b or not pd then return end
         local on = not pd.IsWish(b.id)
@@ -294,14 +267,14 @@ function M:Build()
         HHT.Print(string.format(L(on and "%s added to your wishlist." or "%s removed from your wishlist."), b.n))
         UpdateButtons()
     end)
-    f.wishBtn:SetPoint("LEFT", f.arrowBtn, "RIGHT", 6, 0)
+    f.wishBtn:SetPoint("LEFT", f.arrowBtn, "RIGHT", 8, 0)
 
-    f.snooze = UI.Button(f, 36, 20, "zZ", function()
+    f.snooze = UI.Button(f, 40, 24, "zZ", function()
         snoozeUntil = GetTime() + 900
         HHT.Print(L("Beast alerts paused for 15 minutes."))
         CloseAlert()
     end)
-    f.snooze:SetPoint("LEFT", f.wishBtn, "RIGHT", 6, 0)
+    f.snooze:SetPoint("LEFT", f.wishBtn, "RIGHT", 8, 0)
 
     f:Hide()
     HHT:MakeMovable(f, self, "main", L("Beast alert"))
@@ -374,7 +347,7 @@ function M:Refresh()
     HHT:ApplyGlobalLook(f)
     if self.arrowFrame then HHT:ApplyGlobalLook(self.arrowFrame) end
     LayoutArrow()
-    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then f:Hide(); f.preview = nil end
+    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then HHT.HideSecure(f); f.preview = nil end
 end
 
 function M:OnLockChanged() self:Refresh() end
@@ -424,57 +397,298 @@ local function FamilyEntry(fam)
     end
 end
 
-local function Chip(a, rank, color)
-    local s = "|T" .. tostring(PD().AbilityIcon(a)) .. ":14:14:0:0:64:64:5:59:5:59|t " .. PD().AbilityName(a)
-    if rank and rank > 0 then s = s .. " " .. rank end
-    return color and ("|cff" .. color .. s .. "|r") or s
+local function StatCell(f, i)
+    local c = f.cells[i]
+    if not c then
+        c = { icon = f.body:CreateTexture(nil, "ARTWORK"), val = UI.Text(f.body, "", 15, 1, 1, 1) }
+        c.icon:SetSize(20, 20)
+        c.icon:SetVertexColor(0.75, 0.77, 0.82)
+        f.cells[i] = c
+    end
+    return c
 end
 
--- Role and modifiers on the first line, attack speed and diet on the second.
-local function Stats(b)
-    local pd, fe = PD(), FamilyEntry(b.f)
-    local l1, l2 = {}, {}
-    if fe then
-        l1[#l1 + 1] = "|cffffd24d" .. L(fe.role) .. "|r"
-        if fe.h then
-            l1[#l1 + 1] = string.format(L("Health %s, armor %s, damage %s"), StatColored(fe.h), StatColored(fe.a), StatColored(fe.d))
+local function AbilityRow(f, i)
+    local r = f.arows[i]
+    if not r then
+        r = { icon = f.body:CreateTexture(nil, "ARTWORK"), name = UI.Text(f.body, "", 12, 0.92, 0.94, 0.97), rank = UI.Text(f.body, "", 11, 0.62, 0.64, 0.68) }
+        r.icon:SetSize(20, 20)
+        r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        f.arows[i] = r
+    end
+    return r
+end
+
+local function FoodRow(f, i)
+    local r = f.foods[i]
+    if not r then
+        r = { icon = f.body:CreateTexture(nil, "ARTWORK"), name = UI.Text(f.body, "", 12, 0.9, 0.9, 0.92) }
+        r.icon:SetSize(20, 20)
+        r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        f.foods[i] = r
+    end
+    return r
+end
+
+-- Invisible hover area with a tooltip.
+local function Hit(f, i)
+    local h = f.hits[i]
+    if not h then
+        h = CreateFrame("Frame", nil, f.body)
+        h:EnableMouse(true)
+        h:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            -- Falls back to plain text if the client returns nothing for the spell.
+            for _, id in ipairs(self.spellIds or {}) do
+                GameTooltip:ClearLines()
+                local ok = pcall(GameTooltip.SetSpellByID, GameTooltip, id)
+                local line = _G.GameTooltipTextLeft1
+                local txt = line and line:GetText()
+                if ok and GameTooltip:NumLines() > 0 and txt and txt ~= "" then
+                    if self.tipText then GameTooltip:AddLine(self.tipText, 0.4, 0.93, 0.4, true) end
+                    GameTooltip:Show()
+                    return
+                end
+            end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:ClearLines()
+            GameTooltip:AddLine(self.tipTitle, 1, 1, 1)
+            if self.tipText then GameTooltip:AddLine(self.tipText, 0.8, 0.8, 0.82, true) end
+            GameTooltip:Show()
+        end)
+        h:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        f.hits[i] = h
+    end
+    return h
+end
+
+-- One representative item per food type; its icon stands for the type.
+local DIET_ITEM = { Meat = 117, Fish = 787, Bread = 4540, Cheese = 414, Fungus = 4604, Fruit = 4536 }
+local function DietIcon(d)
+    local id = DIET_ITEM[d]
+    local fn = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+    if id and fn then
+        local ok, _, _, _, _, icon = pcall(fn, id)
+        if ok and icon then return icon end
+    end
+    return UI.ICON_DIR .. "utensils"
+end
+
+local function Head(f, i)
+    local h = f.heads[i]
+    if not h then
+        h = UI.Text(f.body, "", 10, 0.62, 0.64, 0.68)
+        f.heads[i] = h
+    end
+    return h
+end
+
+-- Soft rounded panel behind one column; it sits on its own layer below the body content.
+local function Card(f, i)
+    local c = f.cards[i]
+    if not c then
+        c = CreateFrame("Frame", nil, f.cardLayer)
+        local p = UI.PAL.inset
+        UI.Round(c, 9, p[1], p[2], p[3], 0.7, "BACKGROUND")
+        UI.RoundBorder(c, 9, 1, 1, 1, 0.07, "BORDER")
+        f.cards[i] = c
+    end
+    return c
+end
+
+local ROW_H, HEAD_H, COL_GAP, COL_ROWS = 22, 16, 8, 4
+local CARD_PAD, CARD_TOP, CARD_BOTTOM = 14, 12, 10
+
+-- Pool entries are either a region or a table of regions (icon, val, name, rank); hides them all before a new fill.
+local function HideAll(pool)
+    for _, o in ipairs(pool) do
+        if o.Hide then
+            o:Hide()
+        else
+            for _, k in ipairs({ "icon", "val", "name", "rank" }) do
+                if o[k] then o[k]:Hide() end
+            end
         end
     end
-    if pd.module.db.showSpeed and pd.Speed(b.id) then
-        l2[#l2 + 1] = string.format(L("Attack speed: %s"), pd.SpeedText(b.id))
-    end
-    local diet = b.d
-    if fe and fe.diet then
-        local t = {}
-        for _, d in ipairs(fe.diet) do t[#t + 1] = L(d) end
-        diet = table.concat(t, ", ")
-    end
-    if diet and diet ~= "" then l2[#l2 + 1] = string.format(L("Diet: %s"), diet) end
-    local a, c = table.concat(l1, " - "), table.concat(l2, " - ")
-    return a, c
 end
 
--- Abilities the beast teaches; green = a higher rank than you know that one of your pets can learn.
-local function Teaches(b)
-    local pd = PD()
+-- Columns side by side: stats (icon + number), food, what the beast teaches, what the family learns.
+-- Returns the width the content needs and place(w), which lays the columns out and returns the next free y.
+local function Body(f, b)
+    local pd, fe = PD(), FamilyEntry(b.f)
+    HideAll(f.cells); HideAll(f.arows); HideAll(f.foods); HideAll(f.heads); HideAll(f.hits)
+    local cols = {}
+
+    local defs = {}
+    if fe and fe.h then
+        defs[1] = { "heart", StatColored(fe.h), L("Health"), L("Pet health compared with the base value.") }
+        defs[2] = { "shield", StatColored(fe.a), L("Armor"), L("Pet armor compared with the base value.") }
+        defs[3] = { "sword", StatColored(fe.d), L("Damage"), L("Pet damage compared with the base value.") }
+    end
+    if pd.module.db.showSpeed and pd.Speed(b.id) then
+        defs[#defs + 1] = { "timer", pd.SpeedText(b.id), L("Attack speed"), L("Seconds between two attacks.") }
+    end
+    if #defs > 0 or fe then
+        local w = 0
+        for i, def in ipairs(defs) do
+            local c = StatCell(f, i)
+            c.icon:SetTexture(UI.ICON_DIR .. def[1])
+            c.val:SetText(def[2])
+            w = math.max(w, 26 + math.ceil(c.val:GetStringWidth()))
+        end
+        cols[#cols + 1] = {
+            head = fe and L(fe.role) or "", headColor = { 1, 0.82, 0.3 }, w = w, n = #defs,
+            put = function(x, y, At, Tip)
+                for i = 1, #defs do
+                    local c = f.cells[i]
+                    At(c.icon, x, y + (i - 1) * ROW_H + 2)
+                    c.val:ClearAllPoints()
+                    c.val:SetPoint("LEFT", c.icon, "RIGHT", 6, 0)
+                    c.val:Show()
+                    Tip(x, y + (i - 1) * ROW_H, w, defs[i][3], defs[i][4])
+                end
+            end,
+        }
+    end
+
+    local diet = {}
+    if fe and fe.diet then
+        for _, d in ipairs(fe.diet) do diet[#diet + 1] = d end
+    elseif b.d then
+        for d in string.gmatch(b.d, "[^,]+") do diet[#diet + 1] = (string.gsub(d, "^%s+", "")) end
+    end
+    local fi = 0
+    for first = 1, #diet, COL_ROWS do
+        local last = math.min(#diet, first + COL_ROWS - 1)
+        local w, base = 0, fi
+        for i = first, last do
+            fi = fi + 1
+            local r = FoodRow(f, fi)
+            r.icon:SetTexture(DietIcon(diet[i]))
+            r.name:SetText(L(diet[i]))
+            w = math.max(w, 26 + math.ceil(r.name:GetStringWidth()))
+        end
+        cols[#cols + 1] = {
+            head = first == 1 and L("FOOD") or "", w = w, n = last - first + 1,
+            put = function(x, y, At, Tip)
+                for i = 1, last - first + 1 do
+                    local r = f.foods[base + i]
+                    At(r.icon, x, y + (i - 1) * ROW_H + 2)
+                    r.name:ClearAllPoints()
+                    r.name:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
+                    r.name:Show()
+                    Tip(x, y + (i - 1) * ROW_H, w, L(diet[first + i - 1]), L("Food type your pet eats."))
+                end
+            end,
+        }
+    end
+
+    -- Abilities: the beast teaches (green = a higher rank than you know that one of your pets can learn), then the family.
     local fams = pd.MyFamilies(true)
-    local parts = {}
+    local teach, learn = {}, {}
     for _, e in ipairs(pd.BeastAbilities(b)) do
         local new = e.rank > 0 and e.rank > pd.KnownRank(e.a.key) and pd.Applies(e.a, fams)
-        parts[#parts + 1] = Chip(e.a, e.rank, new and "66ee66" or nil)
+        teach[#teach + 1] = { a = e.a, rank = e.rank, new = new }
     end
-    if #parts == 0 then return "" end
-    return string.format(L("Teaches: %s"), table.concat(parts, "  "))
-end
+    for _, a in ipairs(pd.FamilyAbilities(b.f)) do
+        if not a.all then learn[#learn + 1] = { a = a, rank = 0 } end
+    end
+    local ai = 0
+    local function AbilityCols(list, title)
+        for first = 1, #list, COL_ROWS do
+            local last = math.min(#list, first + COL_ROWS - 1)
+            local w, base = 0, ai
+            for i = first, last do
+                ai = ai + 1
+                local it, r = list[i], AbilityRow(f, ai)
+                r.icon:SetTexture(pd.AbilityIcon(it.a))
+                r.name:SetText(pd.AbilityName(it.a))
+                r.hasRank = it.rank > 0
+                if it.new then r.name:SetTextColor(0.4, 0.93, 0.4) else r.name:SetTextColor(0.92, 0.94, 0.97) end
+                local rw = 28 + math.ceil(r.name:GetStringWidth())
+                if r.hasRank then
+                    r.rank:SetText(string.format(L("Rank %d"), it.rank))
+                    if it.new then r.rank:SetTextColor(0.4, 0.93, 0.4) else r.rank:SetTextColor(0.62, 0.64, 0.68) end
+                    rw = rw + 8 + math.ceil(r.rank:GetStringWidth())
+                end
+                w = math.max(w, rw)
+            end
+            cols[#cols + 1] = {
+                head = first == 1 and title or "", w = w, n = last - first + 1,
+                put = function(x, y, At, Tip)
+                    for i = 1, last - first + 1 do
+                        local r = f.arows[base + i]
+                        local it = list[first + i - 1]
+                        local ids = it.a.ranks[1] and { it.a.ranks[1].spell } or {}
+                        Tip(x, y + (i - 1) * ROW_H, w, pd.AbilityName(it.a), it.new and L("You can learn a higher rank") or nil, ids)
+                        At(r.icon, x, y + (i - 1) * ROW_H + 2)
+                        r.name:ClearAllPoints()
+                        r.name:SetPoint("LEFT", r.icon, "RIGHT", 8, 0)
+                        r.name:Show()
+                        if r.hasRank then
+                            r.rank:ClearAllPoints()
+                            r.rank:SetPoint("LEFT", r.name, "RIGHT", 8, 0)
+                            r.rank:Show()
+                        end
+                    end
+                end,
+            }
+        end
+    end
+    AbilityCols(teach, L("TEACHES"))
+    AbilityCols(learn, L("FAMILY LEARNS"))
 
--- Abilities only this family can learn.
-local function FamilyLearns(b)
-    local parts = {}
-    for _, a in ipairs(PD().FamilyAbilities(b.f)) do
-        if not a.all then parts[#parts + 1] = Chip(a) end
+    local need, sum = -COL_GAP, 0
+    for _, col in ipairs(cols) do
+        col.cw = col.w + 2 * CARD_PAD
+        need = need + col.cw + COL_GAP
+        sum = sum + col.cw
     end
-    if #parts == 0 then return "" end
-    return string.format(L("Family learns: %s"), table.concat(parts, "  "))
+
+    for i = #cols + 1, #f.cards do f.cards[i]:Hide() end
+
+    return need, function(w)
+        local function At(obj, ox, oy)
+            obj:ClearAllPoints()
+            obj:SetPoint("TOPLEFT", f, "TOPLEFT", ox, -oy)
+            obj:Show()
+        end
+        local hits = 0
+        local function Tip(x, y, tw, title, text, spellIds)
+            hits = hits + 1
+            local h = Hit(f, hits)
+            h.tipTitle, h.tipText, h.spellIds = title, text, spellIds
+            h:ClearAllPoints()
+            h:SetPoint("TOPLEFT", f, "TOPLEFT", x - 4, -y)
+            h:SetSize(tw + 8, ROW_H)
+            h:Show()
+        end
+        local rows = 0
+        for _, col in ipairs(cols) do rows = math.max(rows, col.n) end
+        local top = BODY - 4
+        local cardH = CARD_TOP + HEAD_H + rows * ROW_H + CARD_BOTTOM
+        -- Every column gets an equal share of the spare width.
+        local extra = math.max(0, (w - 32 - (#cols - 1) * COL_GAP - sum) / #cols)
+        local x = 16
+        for i, col in ipairs(cols) do
+            local cw = col.cw + extra
+            local card = Card(f, i)
+            card:ClearAllPoints()
+            card:SetPoint("TOPLEFT", f, "TOPLEFT", x, -top)
+            card:SetSize(math.floor(cw), cardH)
+            card:Show()
+            if col.head ~= "" then
+                local h = Head(f, i)
+                h:SetText(col.head)
+                local hc = col.headColor or { 0.62, 0.64, 0.68 }
+                h:SetTextColor(hc[1], hc[2], hc[3])
+                At(h, x + CARD_PAD, top + CARD_TOP)
+            end
+            col.put(x + CARD_PAD, top + CARD_TOP + HEAD_H, At, Tip)
+            x = x + math.floor(cw) + COL_GAP
+        end
+        return top + cardH + 4
+    end
 end
 
 -- The client loads an unseen creature late, so the model is set again until it reports a file.
@@ -507,29 +721,20 @@ function M:Show(data, preview)
     })[data.kind] or "RARE BEAST"
     local c = RARE_COLOR[b.r] or db.colors.border
     f.border:SetColor(c[1], c[2], c[3], 0.9)
+    UI.SetPrimary(f.target, c[1], c[2], c[3])
     f.eyebrow:SetText(L(eyebrow))
     f.eyebrow:SetTextColor(c[1], c[2], c[3])
     f.icon:SetTexture(pd.FamilyIcon(b.f))
     f.title:SetText(data.name or b.n)
     f.sub:SetText(L(b.f) .. ", " .. L("Level") .. " " .. b.l .. " - " .. pd.ZoneName(b))
     local withModel = db.showModel and true or false
-    local textW = withModel and (W - 24 - MODEL_W - 8) or (W - 24)
-    local y = 63
-    local s1, s2 = Stats(b)
-    for _, row in ipairs({ { f.stats, s1 }, { f.stats2, s2 }, { f.teach, Teaches(b) }, { f.fam, FamilyLearns(b) } }) do
-        local fs, text = row[1], row[2]
-        fs:SetWidth(textW)
-        fs:SetText(text)
-        fs:ClearAllPoints()
-        if text == "" then
-            fs:Hide()
-        else
-            fs:Show()
-            fs:SetPoint("TOPLEFT", f, "TOPLEFT", 12, -y)
-            y = y + math.ceil(fs:GetStringHeight()) + 5
-        end
-    end
-    f.div:SetShown(y > 63)
+    f.modelEdge:SetColor(c[1], c[2], c[3], 0.9)
+    local bodyNeed, place = Body(f, b)
+    -- The width follows the widest row (or the buttons); the diet line wraps at the maximum.
+    local need = math.max(bodyNeed, 78 + 8 + 54 + 8 + 70 + 8 + 96 + 8 + 40)
+    local w = W
+    if not InCombatLockdown() then w = UI.PopupFit(f, need, 400, 600) else w = f:GetWidth() end
+    local y = place(w)
     f.modelBg:SetShown(withModel)
     f.model:SetShown(withModel)
     if withModel then
@@ -537,7 +742,7 @@ function M:Show(data, preview)
     else
         f.modelKey = nil
     end
-    if not InCombatLockdown() then f:SetHeight(math.max(H, y + 20 + 8, withModel and (63 + MODEL_H + 34) or 0)) end
+    if not InCombatLockdown() then f:SetHeight(math.max(H, y + FOOT - 4)) end
     f.beast, f.preview = b, preview
     f.hideAt = (not preview and db.duration > 0) and (GetTime() + db.duration) or nil
     if not InCombatLockdown() then

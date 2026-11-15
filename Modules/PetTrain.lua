@@ -35,22 +35,13 @@ local M = HHT:NewModule("pettrain", {
     defaults = { duration = 0, sound = true, alertFor = alertFor, colors = { border = { 0.67, 0.83, 0.45 } } },
 })
 
-local W, ROW_H, MAXROWS = 380, 26, 5
+local W, ROW_H, MAXROWS = 440, 30, 5
+local ROW_TOP = 70
 local lastSig, tries, dueAt
 local lastClick = 0
 local craftOpen, pending = false, nil
 
-local function StyleButton(b, text)
-    local bg = b:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    UI.Tint(bg, UI.PAL.button)
-    UI.Border(b, 1, 1, 1, 0.08)
-    local hl = b:CreateTexture(nil, "HIGHLIGHT")
-    hl:SetAllPoints()
-    hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.25)
-    b.label = UI.Text(b, text, 11)
-    b.label:SetPoint("CENTER")
-end
+local StyleButton = UI.StyleButton
 
 function M:Build()
     if self.frame then return end
@@ -59,34 +50,25 @@ function M:Build()
     f:SetFrameStrata("DIALOG")
     self.frame = f
     f.border = UI.Panel(f, 0.67, 0.83, 0.45)
-
-    f.eyebrow = UI.Text(f, "", 10, 0.67, 0.83, 0.45)
-    f.eyebrow:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -8)
-    f.title = UI.Text(f, "", 13, 1, 1, 1)
-    f.title:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -22)
-    f.title:SetWidth(W - 40)
-    f.title:SetJustifyH("LEFT")
-    f.title:SetWordWrap(false)
-
-    local close = UI.Button(f, 18, 18, "x", function() HHT.HideSecure(f) end)
-    close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
+    UI.PopupHead(f, W, { divY = 58, subLines = 1, onClose = function() HHT.HideSecure(f) end })
+    f.sub:Hide()
+    f.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
     f.rows = {}
     for i = 1, MAXROWS do
         local r = CreateFrame("Frame", nil, f)
-        r:SetSize(W - 20, ROW_H)
-        r:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -(44 + (i - 1) * ROW_H))
+        r:SetSize(W - 32, ROW_H)
+        r:SetPoint("TOPLEFT", f, "TOPLEFT", 16, -(ROW_TOP + (i - 1) * ROW_H))
         r.icon = r:CreateTexture(nil, "ARTWORK")
-        r.icon:SetSize(20, 20)
+        r.icon:SetSize(22, 22)
         r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
         HHT.Icon.Attach(r.icon)
-        r.text = UI.Text(r, "", 11, 1, 1, 1)
-        r.text:SetPoint("LEFT", r.icon, "RIGHT", 6, 0)
-        r.text:SetWidth(W - 190)
+        r.text = UI.Text(r, "", 12, 1, 1, 1)
+        r.text:SetPoint("LEFT", r.icon, "RIGHT", 10, 0)
         r.text:SetJustifyH("LEFT")
         r.text:SetWordWrap(false)
-        r.ignore = UI.Button(r, 56, 20, L("Ignore"), function()
+        r.ignore = UI.Button(r, 60, 24, L("Ignore"), function()
             local it = r.item
             if not it or f.preview then return end
             M.db.alertFor[it.a.key] = false
@@ -95,10 +77,11 @@ function M:Build()
         end)
         r.ignore:SetPoint("RIGHT", r, "RIGHT", 0, 0)
         r.btn = CreateFrame("Button", nil, r, "SecureActionButtonTemplate")
-        r.btn:SetSize(70, 20)
-        r.btn:SetPoint("RIGHT", r.ignore, "LEFT", -4, 0)
+        r.btn:SetSize(74, 24)
+        r.btn:SetPoint("RIGHT", r.ignore, "LEFT", -8, 0)
         r.btn:RegisterForClicks("AnyDown", "AnyUp")
         StyleButton(r.btn, L("Learn"))
+        UI.SetPrimary(r.btn, 0.67, 0.83, 0.45)
         r.btn:HookScript("PostClick", function()
             local now = GetTime()
             if now - lastClick < 0.4 then return end
@@ -143,13 +126,25 @@ function M:Fill(list, preview)
             r.icon:SetTexture(PD.AbilityIcon(it.a))
             local suffix = it.have > 0 and string.format(L("(now rank %d)"), it.have) or L("(new)")
             r.text:SetText(string.format("%s %d  |cff999999%s|r", PD.AbilityName(it.a), it.rank, suffix))
+            r.textW = r.text:GetStringWidth()
             r:Show()
         else
             r.item = nil
             r:Hide()
         end
     end
-    f:SetHeight(44 + n * ROW_H + 8)
+    -- Width follows the widest row (icon + text + two buttons) or the title, whichever is wider.
+    local w = f.title:GetStringWidth() + 32 + 40
+    for i = 1, n do w = math.max(w, 32 + 22 + 10 + f.rows[i].textW + 16 + 74 + 8 + 60) end
+    w = math.max(300, math.ceil(w))
+    f:SetWidth(w)
+    f.title:SetWidth(w - 76)
+    for i = 1, n do
+        local r = f.rows[i]
+        r:SetWidth(w - 32)
+        r.text:SetWidth(r.textW + 2)
+    end
+    f:SetHeight(ROW_TOP + n * ROW_H + 12)
 end
 
 function M:ShowList(list, preview)
@@ -361,7 +356,7 @@ function M:Refresh()
     local c = self.db.colors.border
     f.border:SetColor(c[1], c[2], c[3], 0.9)
     HHT:ApplyGlobalLook(f)
-    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then f.preview = nil; if not InCombatLockdown() then f:Hide() end end
+    if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then f.preview = nil; HHT.HideSecure(f) end
 end
 
 function M:OnLockChanged() self:Refresh() end

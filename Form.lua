@@ -23,58 +23,37 @@ function UI.NewForm(parent, onChange, id)
     sf:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
     sf:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -8, 0)
     local content = CreateFrame("Frame", nil, sf)
-    content:SetSize(390, 10)
+    content:SetSize(480, 10)
     sf:SetScrollChild(content)
     sf:EnableMouseWheel(true)
 
-    local thumb = sf:CreateTexture(nil, "OVERLAY")
-    thumb:SetWidth(3)
-    thumb:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.45)
-    thumb:Hide()
-
-    local function UpdateThumb()
-        local viewH, contentH = sf:GetHeight(), content:GetHeight()
-        if contentH <= viewH + 1 then thumb:Hide(); return end
-        local range = contentH - viewH
-        local cur = sf:GetVerticalScroll()
-        local h = max(20, viewH * viewH / contentH)
-        thumb:SetHeight(h)
-        thumb:ClearAllPoints()
-        thumb:SetPoint("TOPRIGHT", sf, "TOPRIGHT", 6, -((viewH - h) * (cur / range)))
-        thumb:Show()
-    end
-
-    sf:SetScript("OnMouseWheel", function(self, delta)
-        local range = max(0, content:GetHeight() - self:GetHeight())
-        self:SetVerticalScroll(min(range, max(0, self:GetVerticalScroll() - delta * 40)))
-        UpdateThumb()
-    end)
-    sf:SetScript("OnSizeChanged", UpdateThumb)
-
+    local UpdateThumb = UI.ScrollBar(sf, content, 4, 40)
     local form = { sf = sf, content = content, entries = {}, items = {}, onChange = onChange, id = id }
 
     -- Places every entry again; entries below a folded header are hidden.
     function form:Layout()
-        local y, folded, tailShown = 4, false, false
+        local y, folded, tailShown, first = 4, false, false, true
         for _, e in ipairs(self.entries) do
             local w = e.w
             if e.header then
-                y = y + 8
+                y = y + (first and 2 or 14)
+                first = false
                 w:ClearAllPoints()
                 w:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -y)
                 e.hit:ClearAllPoints()
                 e.hit:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -(y - 3))
                 e.hit:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -(y - 3))
-                y = y + 18
+                y = y + 19
                 e.line:ClearAllPoints()
                 e.line:SetPoint("TOPLEFT", content, "TOPLEFT", 4, -y)
                 e.line:SetPoint("TOPRIGHT", content, "TOPRIGHT", -4, -y)
-                y = y + 8
+                y = y + 11
                 folded = e.folded and true or false
-                e.mark:SetText(folded and "[+]" or "[-]")
+                e.mark:SetText(folded and "+" or "")
             elseif folded then
                 w:Hide()
             else
+                first = false
                 w:Show()
                 w:ClearAllPoints()
                 w:SetPoint("TOPLEFT", content, "TOPLEFT", e.indent, -y)
@@ -111,17 +90,15 @@ function UI.NewForm(parent, onChange, id)
 
     function form:Header(text)
         local fs = UI.Header(content, text)
-        local line = content:CreateTexture(nil, "ARTWORK")
-        line:SetHeight(1)
-        local hc = UI.PAL.hdrLine
-        line:SetColorTexture(hc[1], hc[2], hc[3], hc[4])
+        local hc = UI.PAL.head
+        local line = UI.FadeLine(content, hc[1], hc[2], hc[3], 0.7)
 
         local hit = CreateFrame("Button", nil, content)
         hit:SetHeight(20)
         local hl = hit:CreateTexture(nil, "HIGHLIGHT")
         hl:SetAllPoints()
-        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.1)
-        local mark = UI.Text(hit, "", 11, 0.6, 0.6, 0.6)
+        UI.Gradient(hl, false, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.1, 0)
+        local mark = UI.Text(hit, "", 13, 0.7, 0.7, 0.7)
         mark:SetPoint("RIGHT", hit, "RIGHT", -2, 0)
 
         local key = (id or "") .. "/" .. tostring(text)
@@ -140,7 +117,7 @@ function UI.NewForm(parent, onChange, id)
 
     function form:Note(text, r, g, b)
         local fs = UI.Text(content, text, 11, r or 0.68, g or 0.65, b or 0.58)
-        fs:SetWidth(375)
+        fs:SetWidth(460)
         fs:SetJustifyH("LEFT")
         fs:SetWordWrap(true)
         local h = max(14, fs:GetStringHeight())
@@ -152,7 +129,7 @@ function UI.NewForm(parent, onChange, id)
         local c = UI.Check(content, label,
             function() return tbl[key] end,
             function(v) tbl[key] = v and true or false; self:Changed(extra) end)
-        return self:Place(c, 20, 4, 4)
+        return self:Place(c, 20, 4, 7)
     end
 
     function form:Stepper(label, tbl, key, minv, maxv, step, extra)
@@ -160,14 +137,14 @@ function UI.NewForm(parent, onChange, id)
             function() return tbl[key] end,
             function(v) tbl[key] = Round(v, step); self:Changed(extra) end,
             minv, maxv, step)
-        return self:Place(s, 20, 4, 5)
+        return self:Place(s, 20, 4, 8)
     end
 
     function form:Cycle(label, tbl, key, choices, extra)
         local c = UI.Cycle(content, label, choices,
             function() return tbl[key] end,
             function(v) tbl[key] = v; self:Changed(extra) end)
-        return self:Place(c, 22, 4, 5)
+        return self:Place(c, 22, 4, 8)
     end
 
     -- tbl[key] = { r, g, b }
@@ -175,7 +152,7 @@ function UI.NewForm(parent, onChange, id)
         local c = UI.Color(content, label,
             function() local t = tbl[key]; return t[1], t[2], t[3] end,
             function(r, g, b) tbl[key] = { r, g, b }; self:Changed(extra) end)
-        return self:Place(c, 22, 4, 5)
+        return self:Place(c, 22, 4, 8)
     end
 
     -- Label above a single-line text field bound to tbl[key].
@@ -193,7 +170,7 @@ function UI.NewForm(parent, onChange, id)
 
     function form:Button(label, fn, w)
         local b = UI.Button(content, w or 170, 22, label, function() fn(); self:Refresh() end)
-        return self:Place(b, 22, 4, 6)
+        return self:Place(b, 22, 4, 8)
     end
 
     function form:Refresh()

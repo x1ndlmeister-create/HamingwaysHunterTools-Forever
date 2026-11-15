@@ -846,13 +846,13 @@ local function BuildView()
     p.name:SetWidth(226)
     p.name:SetJustifyH("LEFT")
     p.name:SetWordWrap(false)
-    local inset = p:CreateTexture(nil, "BORDER")
+    local inset = CreateFrame("Frame", nil, p)
     inset:SetPoint("TOPLEFT", p, "TOPLEFT", 10, -34)
     inset:SetSize(230, 300)
-    UI.Tint(inset, UI.PAL.inset)
-    local spot = p:CreateTexture(nil, "BORDER")
-    spot:SetAllPoints(inset)
-    UI.Gradient(spot, true, 1, 1, 1, 0, 0.07)
+    local pi = UI.PAL.inset
+    UI.Round(inset, 7, pi[1], pi[2], pi[3], pi[4], "BACKGROUND")
+    UI.Round(inset, 7, 1, 1, 1, 0.04, "BORDER")
+    UI.RoundBorder(inset, 7, 1, 1, 1, 0.07, "BORDER")
     local m = CreateFrame("PlayerModel", nil, p)
     m:SetPoint("TOPLEFT", p, "TOPLEFT", 10, -34)
     m:SetSize(230, 300)
@@ -1321,6 +1321,24 @@ TABS.guide = {
     end,
 }
 
+-- Column headers shown as icons (the name appears as a tooltip).
+local HDR_ICON = { Health = "heart", Armor = "shield", Damage = "sword", Speed = "timer", Diet = "utensils" }
+
+local function SetHeader(h, col, arrow)
+    local icon = HDR_ICON[col[1]]
+    h.hdrName = L(col[1])
+    if icon then
+        h.glyph:SetTexture(UI.ICON_DIR .. icon)
+        h.glyph:Show()
+        h.text:SetPoint("LEFT", h, "LEFT", 18, 0)
+        h.text:SetText(arrow or "")
+    else
+        h.glyph:Hide()
+        h.text:SetPoint("LEFT", h, "LEFT", 0, 0)
+        h.text:SetText(L(col[1]) .. (arrow or ""))
+    end
+end
+
 local function FilterActive()
     return filter.text ~= nil and filter.text ~= "" or filter.family or filter.ability or filter.myLevel or filter.newRanks or filter.rare
         or filter.wish or filter.unseen
@@ -1389,9 +1407,9 @@ function PD.Paint()
     for i, h in ipairs(win.heads) do
         local c = tab.cols[i]
         if c then
-            local arrow = ""
+            local arrow
             if c[4] and win.tab == "beasts" and M.db.sort == c[4] then arrow = M.db.sortDesc and " v" or " ^" end
-            h.text:SetText(L(c[1]) .. arrow)
+            SetHeader(h, c, arrow)
         end
     end
     local sel = win.sel and byId[win.sel]
@@ -1432,6 +1450,7 @@ local function SetTab(name)
             h:SetPoint("TOPLEFT", win, "TOPLEFT", 12 + c[2], -118)
             h:SetSize(c[3], 16)
             h.sortKey = (name == "beasts") and c[4] or nil
+            SetHeader(h, c)
         else
             h:Hide()
         end
@@ -1572,6 +1591,18 @@ local function Build()
         local h = CreateFrame("Button", nil, win)
         h.text = UI.Header(h, "")
         h.text:SetPoint("LEFT", h, "LEFT", 0, 0)
+        h.glyph = h:CreateTexture(nil, "ARTWORK")
+        h.glyph:SetSize(14, 14)
+        h.glyph:SetPoint("LEFT", h, "LEFT", 0, 0)
+        h.glyph:SetVertexColor(UI.PAL.head[1], UI.PAL.head[2], UI.PAL.head[3])
+        h.glyph:Hide()
+        h:SetScript("OnEnter", function(self)
+            if not self.glyph:IsShown() then return end
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(self.hdrName, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        h:SetScript("OnLeave", function() GameTooltip:Hide() end)
         h:SetScript("OnClick", function(self) if self.sortKey then ChangeSort(self.sortKey) end end)
         win.heads[i] = h
     end
@@ -1581,18 +1612,10 @@ local function Build()
         row:SetSize(W - 24 - 14, ROW_H)
         row:SetPoint("TOPLEFT", win, "TOPLEFT", 12, -136 - (i - 1) * ROW_H)
         row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        local hl = row:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetAllPoints()
-        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.15)
-        row.sel = row:CreateTexture(nil, "BACKGROUND")
-        row.sel:SetAllPoints()
-        row.sel:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.28)
-        row.sel:Hide()
-        if i % 2 == 0 then
-            local stripe = row:CreateTexture(nil, "BACKGROUND", nil, -1)
-            stripe:SetAllPoints()
-            stripe:SetColorTexture(1, 1, 1, 0.03)
-        end
+        UI.Round(row, 5, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.15, "HIGHLIGHT")
+        row.sel = UI.Round(row, 5, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.28, "BACKGROUND")
+        row.sel:SetShown(false)
+        if i % 2 == 0 then UI.Round(row, 5, 1, 1, 1, 0.03, "BACKGROUND", -1) end
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(20, 20)
         row.icon:SetPoint("LEFT", row, "LEFT", 4, 0)
@@ -1634,12 +1657,10 @@ local function Build()
     local sb = CreateFrame("Button", nil, win)
     sb:SetSize(10, ROWS * ROW_H)
     sb:SetPoint("TOPLEFT", win, "TOPLEFT", W - 22, -136)
-    local track = sb:CreateTexture(nil, "BACKGROUND")
-    track:SetAllPoints()
-    track:SetColorTexture(1, 1, 1, 0.06)
-    local thumb = sb:CreateTexture(nil, "ARTWORK")
+    UI.Round(sb, 5, 1, 1, 1, 0.06, "BACKGROUND")
+    local thumb = CreateFrame("Frame", nil, sb)
     thumb:SetWidth(10)
-    thumb:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.55)
+    UI.Round(thumb, 5, UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.6, "ARTWORK")
     local THUMB_MIN = 24
     sb:EnableMouseWheel(true)
     sb:SetScript("OnMouseWheel", Wheel)
