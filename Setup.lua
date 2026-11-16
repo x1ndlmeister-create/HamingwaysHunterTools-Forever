@@ -164,6 +164,12 @@ local STEPS = {
                   { "stepper", "height", "Bar height", 8, 40, 1 },
                   { "check", "border", "Show border" },
                   { "check", "hideNoPet", "Hide when no pet" },
+                  { "check", "showHappiness", "Show happiness" },
+                  { "check", "showFocus", "Show focus bar" },
+                  { "check", "showLevel", "Show level" },
+                  { "check", "showXp", "Show experience bar" },
+                  { "check", "showLoyalty", "Show loyalty bar" },
+                  { "check", "showAbilities", "Show pet abilities" },
                   { "bar", "barTexture" } } },
                { key = "feeder", opts = Plus(Icons(20, 100),
                   { "cycle", "mode", "Show when", { { "always", "Always (with pet)" }, { "hungry", "Only when not happy" } } }) } },
@@ -728,7 +734,7 @@ function S:Show(i, quiet)
         self.visited[i] = true
         for _, e in ipairs(step.mods or {}) do
             local m = HHT.modules[e.key]
-            if m and not m.wip and not m.db.enabled then Switch(m, true) end
+            if m and not m.wip and not m.db.enabled and (m.enabledByDefault ~= false or (self.snap.mods[m.key] and self.snap.mods[m.key].enabled)) then Switch(m, true) end
         end
     end
 

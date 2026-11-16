@@ -166,7 +166,7 @@ local function PackReplacement(db)
     end
 end
 
--- The secure button sits in a plain holder: its spell can only change out of combat, so in combat the holder hides when the icon no longer matches.
+-- The secure button sits in a plain holder: its spell can only change out of combat, so the holder is only updated between fights.
 local function ClickButton(ic)
     if ic.hhtBtn then return ic.hhtHolder, ic.hhtBtn end
     if InCombatLockdown() then return end
@@ -223,6 +223,8 @@ function M:ApplyClick(ic, e)
         end
         b.want, b.spell, b.tip, b.dismiss = want, e.spell, e.tip, e.dismiss
     end
+    -- The holder carries a secure button, so it can only be shown or hidden out of combat.
+    if InCombatLockdown() then return end
     h:SetShown(self.db.clickCast and not HHT:IsUnlocked(self) and want ~= nil and b.want == want)
 end
 
@@ -528,6 +530,9 @@ function M:Tick()
     local f = self.frame
     if not f then return end
     local db = self.db
+    local combat = InCombatLockdown()
+    -- Icons with a click button cannot be resized, moved or shown in combat; that layout work is repeated after the fight.
+    if self.relayout and not combat then self.relayout = nil; self.sig = nil end
     local list = self:Collect()
 
     local sig = {}
@@ -546,13 +551,14 @@ function M:Tick()
     self.sig = signature
 
     local s, sp = db.size, db.spacing
-    f:SetSize(s, s)
+    if combat and f:IsProtected() then self.relayout = true else f:SetSize(s, s) end
     local used = 0
     local prevKeys, nowKeys = self.prevKeys, {}
     for i, e in ipairs(list) do
         local ic = self.icons[i]
         if not ic then ic = Icon.New(f); self.icons[i] = ic end
-        ic:Style(s, db.shape, db.borderSize, db.borderAlpha, true)
+        local locked = combat and ic:IsProtected()
+        if locked then self.relayout = true else ic:Style(s, db.shape, db.borderSize, db.borderAlpha, true) end
         ic:SetIcon(e.icon)
         ic:SetBorderColor(HHT.Col(db, e.warn and "warn" or "ok"))
         ic:ClearCooldown()
@@ -563,16 +569,18 @@ function M:Tick()
         ic:SetBlink(e.warn and db.blink and not e.lowCheck)
         ApplyKey(ic, db, e)
         self:ApplyClick(ic, e)
-        local per = math.max(1, db.perRow or 8)
-        local along, across = ((i - 1) % per) * (s + sp), math.floor((i - 1) / per) * (s + sp)
-        ic:ClearAllPoints()
-        if db.grow == "right" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", along, -across)
-        elseif db.grow == "left" then ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -along, -across)
-        elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", across, -along)
-        else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", across, along) end
+        if not locked then
+            local per = math.max(1, db.perRow or 8)
+            local along, across = ((i - 1) % per) * (s + sp), math.floor((i - 1) / per) * (s + sp)
+            ic:ClearAllPoints()
+            if db.grow == "right" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", along, -across)
+            elseif db.grow == "left" then ic:SetPoint("TOPRIGHT", f, "TOPRIGHT", -along, -across)
+            elseif db.grow == "down" then ic:SetPoint("TOPLEFT", f, "TOPLEFT", across, -along)
+            else ic:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", across, along) end
+        end
         ic:SetAlpha(1)
         ApplyLow(ic, e, db)
-        ic:Show()
+        if not locked then ic:Show() end
         nowKeys[e.key] = true
         if prevKeys and not prevKeys[e.key] and not e.lowCheck then ic:Flash() end
         used = i
@@ -582,7 +590,7 @@ function M:Tick()
         local ic = self.icons[i]
         ic:SetBlink(false)
         -- A frame with a secure click button cannot be hidden in combat, so fade it instead.
-        if InCombatLockdown() then ic:SetAlpha(0) else ic:Hide() end
+        if combat then ic:SetAlpha(0) else ic:Hide() end
     end
 
     local warns = 0

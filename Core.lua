@@ -242,6 +242,11 @@ function HHT:ApplyPosition(frame)
         local d = m.positions and m.positions[info.key] or { "CENTER", "CENTER", 0, 0 }
         pos = d
     end
+    -- Frames holding secure buttons cannot be moved in combat; the position is applied again later.
+    if InCombatLockdown() and frame:IsProtected() then
+        self.lookPending = true
+        return
+    end
     frame:ClearAllPoints()
     frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
 end
@@ -299,7 +304,11 @@ function HHT:ApplyGlobalLook(frame)
     local ms = info and info.module.db.scale or 1
     local ma = info and info.module.db.alpha or 1
     local hidden = frame.hhtFaded or (info and info.module.db.onlyCombat and not self:IsUnlocked(info.module) and not self.InCombat())
-    frame:SetScale((g.scale or 1) * ms)
+    local scale = (g.scale or 1) * ms
+    -- Scaling a frame with secure buttons is blocked in combat; it is applied once combat ends.
+    if not (InCombatLockdown() and frame:IsProtected()) and frame:GetScale() ~= scale then
+        frame:SetScale(scale)
+    end
     frame:SetAlpha(hidden and 0 or (g.alpha or 1) * ma)
 end
 
@@ -645,14 +654,64 @@ function HHT:Start()
         f:SetScript("OnEvent", function(_, event)
             if event == "PLAYER_REGEN_DISABLED" then
                 HHT:LockForCombat()
-            elseif event == "PLAYER_REGEN_ENABLED" and HHT.lockPending then
-                HHT.lockPending = nil
-                HHT:ApplyLock()
+            elseif event == "PLAYER_REGEN_ENABLED" then
+                if HHT.lockPending then
+                    HHT.lockPending = nil
+                    HHT:ApplyLock()
+                end
+                if HHT.lookPending then
+                    HHT.lookPending = nil
+                    HHT:ApplyAllPositions()
+                end
             end
             HHT:ApplyAllLooks()
         end)
     end
     self:ApplyAllLooks()
+    self:WatchBlocked()
+end
+
+-- Blocked interface actions caused by this addon are counted silently; /hht blocked lists them.
+-- /hht trace follows calls on protected frames in combat back to the line in this addon (until the next reload).
+function HHT:TraceProtectedCalls()
+    if self.traceOn then return end
+    self.traceOn = true
+    local ok, index = pcall(function() return getmetatable(CreateFrame("Frame")).__index end)
+    if not ok or type(index) ~= "table" then return end
+    local seen = {}
+    for _, name in ipairs({ "SetShown", "Show", "Hide", "SetPoint", "ClearAllPoints", "SetSize", "SetWidth", "SetHeight", "SetScale", "SetParent" }) do
+        if index[name] then
+            pcall(hooksecurefunc, index, name, function(f)
+                if not InCombatLockdown() then return end
+                local ok2, prot = pcall(f.IsProtected, f)
+                if not (ok2 and prot) then return end
+                local lines = {}
+                for line in tostring(debugstack(2, 12, 0)):gmatch("[^\n]+") do
+                    if line:find(ADDON, 1, true) then lines[#lines + 1] = line end
+                    if #lines >= 3 then break end
+                end
+                if #lines == 0 then return end
+                local key = name .. lines[1]
+                if seen[key] then return end
+                seen[key] = true
+                HHT.Print("Protected call " .. name .. " in combat: " .. table.concat(lines, " <- "))
+            end)
+        end
+    end
+end
+
+function HHT:WatchBlocked()
+    if self.blockedFrame then return end
+    local f = CreateFrame("Frame")
+    self.blockedFrame = f
+    self.blocked = {}
+    f:RegisterEvent("ADDON_ACTION_BLOCKED")
+    f:RegisterEvent("ADDON_ACTION_FORBIDDEN")
+    f:SetScript("OnEvent", function(_, _, addon, func)
+        if addon ~= ADDON then return end
+        local key = tostring(func)
+        HHT.blocked[key] = (HHT.blocked[key] or 0) + 1
+    end)
 end
 
 local boot = CreateFrame("Frame")
@@ -809,6 +868,16 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if cm and cm.Debug then cm:Debug() end
     elseif msg == "key" then
         HHT.KeyTest()
+    elseif msg == "blocked" then
+        local n = 0
+        for func, count in pairs(HHT.blocked or {}) do
+            n = n + 1
+            HHT.Print("Blocked action: " .. func .. " x" .. count)
+        end
+        if n == 0 then HHT.Print("No blocked actions.") end
+    elseif msg == "trace" then
+        HHT:TraceProtectedCalls()
+        HHT.Print("Tracing protected calls in combat until the next reload.")
     elseif msg == "reset" then
         for _, m in pairs(HHT.modules) do m.db.pos = nil end
         HHT:ApplyAllPositions()

@@ -189,7 +189,7 @@ end
 
 function PM.Install()
     if hooked then return true end
-    if not WorldMapFrame and UIParentLoadAddOn then pcall(UIParentLoadAddOn, "Blizzard_WorldMap") end
+    -- Loading Blizzard_WorldMap from here would taint the world map; it is only used once the game has loaded it.
     local wm = WorldMapFrame
     if not wm then return false end
     hooked = true

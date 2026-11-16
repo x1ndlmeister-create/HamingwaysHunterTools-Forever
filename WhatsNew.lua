@@ -15,6 +15,19 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.4.1",
+        en = {
+            "Fixed 'Interface action failed because of an AddOn' errors: the warnings, cooldowns and other icons with click buttons no longer resize, move or hide in combat (this is done right after the fight), and the pet map no longer loads the world map itself.",
+            "Quick install: the pet page now lets you choose which bars are shown (happiness, focus, level, experience, loyalty, abilities), and the Tranq rotation stays off until you switch it on.",
+            "/hht blocked lists blocked actions of this addon, /hht trace finds the line that caused one.",
+        },
+        de = {
+            "'Interface-Aktion fehlgeschlagen wegen eines AddOns'-Fehler behoben: Warnungen, Abklingzeiten und andere Icons mit Klickfläche ändern im Kampf nicht mehr Größe oder Position und werden nicht mehr ausgeblendet (das passiert direkt nach dem Kampf). Die Tier-Karte lädt die Weltkarte nicht mehr selbst.",
+            "Schnell-Einrichtung: Die Tier-Seite lässt dich wählen, welche Balken angezeigt werden (Zufriedenheit, Fokus, Level, Erfahrung, Loyalität, Fähigkeiten), und die Tranq-Rotation bleibt aus, bis du sie einschaltest.",
+            "/hht blocked listet blockierte Aktionen dieses Addons, /hht trace findet die Zeile, die eine ausgelöst hat.",
+        },
+    },
+    {
         v = "1.4.0",
         en = {
             "Quick install: Hamingway the Hambringer guides you through every tool, one page at a time (on or off, position, size, look). It opens for new characters and once for existing ones. /hht setup starts it again any time, and skipping it changes nothing.",
