@@ -3,15 +3,15 @@ local ADDON, HHT = ...
 local L, UI, S, Icon = HHT.L, HHT.UI, HHT.Spells, HHT.Icon
 
 HHT:AddGerman({
-    ["Aspect and tracking"] = "Aspekt und Aufspueren",
-    ["Buttons and keybinds for aspects and tracking, with toggle and Shift, Ctrl and Alt variants."] = "Knoepfe und Tasten fuer Aspekte und Aufspueren, mit Umschalten und Shift-, Strg- und Alt-Varianten.",
+    ["Aspect and tracking"] = "Aspekt und Aufspüren",
+    ["Buttons and keybinds for aspects and tracking, with toggle and Shift, Ctrl and Alt variants."] = "Knöpfe und Tasten für Aspekte und Aufspüren, mit Umschalten und Shift-, Strg- und Alt-Varianten.",
     ["Aspect"] = "Aspekt",
-    ["Tracking"] = "Aufspueren",
-    ["Turn tracking off"] = "Aufspueren ausschalten",
+    ["Tracking"] = "Aufspüren",
+    ["Turn tracking off"] = "Aufspüren ausschalten",
     ["Key: %s"] = "Taste: %s",
     ["could not be bound"] = "konnte nicht belegt werden",
     ["not set"] = "nicht gesetzt",
-    ["Press a key (Esc cancels)"] = "Taste druecken (Esc bricht ab)",
+    ["Press a key (Esc cancels)"] = "Taste drücken (Esc bricht ab)",
     ["Clear key"] = "Taste entfernen",
     ["Main spell"] = "Hauptzauber",
     ["Toggles with"] = "Wechselt mit",
@@ -23,9 +23,9 @@ HHT:AddGerman({
     ["Alt: toggles with"] = "Alt: wechselt mit",
     ["None"] = "Keiner",
     ["Left-click or key: use"] = "Linksklick oder Taste: wirken",
-    ["Right-click: choose the main spell"] = "Rechtsklick: Hauptzauber waehlen",
-    ["Changes apply after combat."] = "Aenderungen gelten nach dem Kampf.",
-    ["Choose the spell you press the key for. With a second spell the key switches between the two. Shift, Ctrl and Alt use their own spells on the same key."] = "Waehle den Zauber fuer die Taste. Mit einem zweiten Zauber wechselt die Taste zwischen beiden. Shift, Strg und Alt wirken eigene Zauber auf derselben Taste.",
+    ["Right-click: choose the main spell"] = "Rechtsklick: Hauptzauber wählen",
+    ["Changes apply after combat."] = "Änderungen gelten nach dem Kampf.",
+    ["Choose the spell you press the key for. With a second spell the key switches between the two. Shift, Ctrl and Alt use their own spells on the same key."] = "Wähle den Zauber für die Taste. Mit einem zweiten Zauber wechselt die Taste zwischen beiden. Shift, Strg und Alt wirken eigene Zauber auf derselben Taste.",
     ["The key replaces its normal function while it is set."] = "Die Taste ersetzt ihre normale Funktion, solange sie gesetzt ist.",
 })
 

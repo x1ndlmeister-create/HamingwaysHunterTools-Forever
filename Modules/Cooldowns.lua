@@ -4,10 +4,10 @@ local L, UI, S, Icon = HHT.L, HHT.UI, HHT.Spells, HHT.Icon
 
 HHT:AddGerman({
     ["Cooldowns"] = "Abklingzeiten",
-    ["Cooldown icons for your hunter spells."] = "Abklingzeit-Symbole fuer deine Jaeger-Zauber.",
+    ["Cooldown icons for your hunter spells."] = "Abklingzeit-Symbole für deine Jäger-Zauber.",
     ["Show cooldown numbers"] = "Abklingzeit-Zahlen zeigen",
     ["Grey out icons on cooldown"] = "Symbole bei Abklingzeit ausgrauen",
-    ["Show if usable (red = out of range, blue = no resource)"] = "Nutzbarkeit zeigen (rot = ausser Reichweite, blau = keine Ressource)",
+    ["Show if usable (red = out of range, blue = no resource)"] = "Nutzbarkeit zeigen (rot = außer Reichweite, blau = keine Ressource)",
     ["Show spell names"] = "Zaubernamen zeigen",
     ["Icons shown"] = "Angezeigte Symbole",
     ["All spells"] = "Alle Zauber",
@@ -16,17 +16,17 @@ HHT:AddGerman({
     ["Ready border"] = "Rahmen bereit",
     ["Cooldown border"] = "Rahmen Abklingzeit",
     ["Tracked spells"] = "Verfolgte Zauber",
-    ["Add spell"] = "Zauber hinzufuegen",
+    ["Add spell"] = "Zauber hinzufügen",
     ["Restore default list"] = "Standardliste wiederherstellen",
     ["Unknown spells are hidden automatically."] = "Unbekannte Zauber werden automatisch ausgeblendet.",
     ["Border alpha"] = "Rahmen-Deckkraft",
     ["Layout"] = "Anordnung",
     ["One bar"] = "Eine Leiste",
     ["Individual icons"] = "Einzelne Symbole",
-    ["Show spell tooltip on mouseover"] = "Zauber-Tooltip bei Mausueberfahrt zeigen",
-    ["One bar: icons line up from the first icon and move together. Individual icons: each icon moves on its own. Both: click (also in combat) or give a key in the spell list below. Icons hidden by the filters cannot be clicked."] = "Eine Leiste: Die Symbole reihen sich ab dem ersten Symbol auf und werden zusammen verschoben. Einzelne Symbole: Jedes Symbol laesst sich einzeln verschieben. In beiden Layouts sind sie anklickbar (auch im Kampf) und koennen in der Zauberliste unten eine Taste bekommen. Durch die Filter ausgeblendete Symbole sind nicht klickbar.",
-    ["Reset icon positions"] = "Symbol-Positionen zuruecksetzen",
-    ["Key per spell: click the key field, then press a key. Right-click clears it. The key replaces its normal function."] = "Taste pro Zauber: Tastenfeld anklicken, dann Taste druecken. Rechtsklick loescht sie. Die Taste ersetzt ihre normale Funktion.",
+    ["Show spell tooltip on mouseover"] = "Zauber-Tooltip bei Mausüberfahrt zeigen",
+    ["One bar: icons line up from the first icon and move together. Individual icons: each icon moves on its own. Both: click (also in combat) or give a key in the spell list below. Icons hidden by the filters cannot be clicked."] = "Eine Leiste: Die Symbole reihen sich ab dem ersten Symbol auf und werden zusammen verschoben. Einzelne Symbole: Jedes Symbol lässt sich einzeln verschieben. In beiden Layouts sind sie anklickbar (auch im Kampf) und können in der Zauberliste unten eine Taste bekommen. Durch die Filter ausgeblendete Symbole sind nicht klickbar.",
+    ["Reset icon positions"] = "Symbol-Positionen zurücksetzen",
+    ["Key per spell: click the key field, then press a key. Right-click clears it. The key replaces its normal function."] = "Taste pro Zauber: Tastenfeld anklicken, dann Taste drücken. Rechtsklick löscht sie. Die Taste ersetzt ihre normale Funktion.",
 })
 
 local M = HHT:NewModule("cooldowns", {

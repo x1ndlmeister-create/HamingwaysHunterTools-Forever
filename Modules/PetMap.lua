@@ -553,5 +553,5 @@ end
 
 HHT:AddGerman({
     ["Click: set waypoint"] = "Klick: Wegpunkt setzen",
-    ["Waypoints are not available on this client."] = "Wegpunkte sind auf diesem Client nicht verfuegbar.",
+    ["Waypoints are not available on this client."] = "Wegpunkte sind auf diesem Client nicht verfügbar.",
 })

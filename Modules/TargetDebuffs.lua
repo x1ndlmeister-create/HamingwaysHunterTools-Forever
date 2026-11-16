@@ -13,18 +13,18 @@ HHT:AddGerman({
     ["Only my debuffs"] = "Nur meine Debuffs",
     ["All debuffs"] = "Alle Debuffs",
     ["Border color"] = "Randfarbe",
-    ["Blink the red placeholder when a tracked debuff is missing"] = "Roten Platzhalter blinken lassen, wenn ein ueberwachter Debuff fehlt",
-    ["Tracked debuffs"] = "Ueberwachte Debuffs",
+    ["Blink the red placeholder when a tracked debuff is missing"] = "Roten Platzhalter blinken lassen, wenn ein überwachter Debuff fehlt",
+    ["Tracked debuffs"] = "Überwachte Debuffs",
     ["Ticked debuffs get a fixed slot and a red placeholder while they are missing. The button sets on which targets the placeholder shows. Debuffs that are not ticked still appear in the normal row when active."] =
         "Angehakte Debuffs bekommen einen festen Platz und einen roten Platzhalter, solange sie fehlen. Der Knopf legt fest, bei welchen Zielen der Platzhalter erscheint. Nicht angehakte Debuffs erscheinen weiter in der normalen Reihe, wenn sie aktiv sind.",
     ["All targets"] = "Alle Ziele",
     ["Elites and bosses"] = "Elite und Bosse",
     ["Bosses only"] = "Nur Bosse",
-    ["Spell ID(s), several ranks separated by comma"] = "Zauber-ID(s), mehrere Raenge mit Komma getrennt",
-    ["Add"] = "Hinzufuegen",
+    ["Spell ID(s), several ranks separated by comma"] = "Zauber-ID(s), mehrere Ränge mit Komma getrennt",
+    ["Add"] = "Hinzufügen",
     ["Spell ID"] = "Zauber-ID",
     ["The game fills these icons itself. A red dimmed icon means the debuff is not on the target (missed, immune or expired). Size and border changes apply out of combat."] =
-        "Das Spiel befuellt diese Symbole selbst. Ein rotes, abgedunkeltes Symbol heisst: der Debuff ist nicht auf dem Ziel (verfehlt, immun oder ausgelaufen). Aenderungen an Groesse und Rand wirken ausserhalb des Kampfes.",
+        "Das Spiel befüllt diese Symbole selbst. Ein rotes, abgedunkeltes Symbol heißt: der Debuff ist nicht auf dem Ziel (verfehlt, immun oder ausgelaufen). Änderungen an Größe und Rand wirken außerhalb des Kampfes.",
     ["This client has no aura container, Target Debuffs cannot work here."] = "Dieser Client hat keinen Aura-Container, Ziel-Debuffs funktionieren hier nicht.",
 })
 
@@ -214,8 +214,8 @@ end
 -- ---------------------------------------------------------------------------
 local Cat = S.Catalog
 local BUILTIN = {
-    { key = "serpentSting", cast = Cat.serpentSting.ids, track = true },
-    { key = "hunterMark", cast = Cat.hunterMark.ids, track = true, targets = "elite" },
+    { key = "serpentSting", cast = Cat.serpentSting.ids, track = true, dummy = "Interface\\Icons\\Ability_Hunter_Quickshot" },
+    { key = "hunterMark", cast = Cat.hunterMark.ids, track = true, targets = "elite", dummy = "Interface\\Icons\\Ability_Hunter_SniperShot" },
     { key = "scorpidSting", cast = { 14277, 14276, 14275, 3043 } },
     { key = "viperSting", cast = { 27018, 14280, 14279, 3034 } },
     { key = "wyvernSting", cast = { 27068, 24133, 24132, 19386 }, aura = { 27069, 24135, 24134, 24131 } },
@@ -282,7 +282,7 @@ function M:BuildEntries()
             cfg = { track = track, targets = d.targets or "all" }
             db.entries[d.key] = cfg
         end
-        list[#list + 1] = { key = d.key, cast = d.cast, ids = d.ids, cfg = cfg }
+        list[#list + 1] = { key = d.key, cast = d.cast, ids = d.ids, cfg = cfg, dummy = d.dummy }
     end
     for i, c in ipairs(db.custom) do
         list[#list + 1] = { key = "custom" .. i, custom = i, cast = c.ids, ids = IdSet(c.ids), cfg = c }
@@ -291,19 +291,21 @@ function M:BuildEntries()
     db.showSting, db.showMark, db.markTargets = nil, nil, nil
 end
 
--- Name and icon of an entry from the first id the client knows.
+-- Name and icon of an entry from the first id the client knows; an unknown Serpent Sting or Mark gets a stand-in icon.
 local function Info(e)
-    if e.name and e.icon then return e end
+    if e.name and e.icon and not e.standIn then return e end
     for _, id in ipairs(e.cast) do
         local name = S.Name(id)
         if name then
             e.name = name
             e.icon = S.Texture(id) or S.FALLBACK_ICON
+            e.standIn = nil
             return e
         end
     end
     e.name = e.custom and (L("Spell ID") .. " " .. tostring(e.cast[1])) or e.key
-    e.icon = S.FALLBACK_ICON
+    e.icon = e.dummy or S.FALLBACK_ICON
+    e.standIn = e.dummy and true or nil
     return e
 end
 
@@ -348,11 +350,12 @@ function M:Build()
     if not self.bar.engine then HHT.Print(L("This client has no aura container, Target Debuffs cannot work here.")) end
 end
 
--- Tracked, known entries in list order (at most MAXTRACK).
+-- Tracked, known entries in list order (at most MAXTRACK). While frames are unlocked, Serpent Sting and Hunter's Mark show as examples even if not learned yet.
 function M:Active()
     local out = {}
+    local unlocked = HHT:IsUnlocked(self)
     for _, e in ipairs(self.entries) do
-        if e.cfg.track and Known(e) and #out < MAXTRACK then out[#out + 1] = e end
+        if e.cfg.track and (Known(e) or (unlocked and e.dummy)) and #out < MAXTRACK then out[#out + 1] = e end
     end
     return out
 end

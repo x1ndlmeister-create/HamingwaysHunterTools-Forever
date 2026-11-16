@@ -7,7 +7,7 @@ HHT:AddGerman({
     ["What's new"] = "Was ist neu",
     ["Version %s"] = "Version %s",
     ["Show this window after updates"] = "Dieses Fenster nach Updates zeigen",
-    ["Close"] = "Schliessen",
+    ["Close"] = "Schließen",
     ["No notes for this version."] = "Keine Hinweise zu dieser Version.",
     ["Show what's new after an update"] = "Nach einem Update zeigen, was neu ist",
 })
@@ -15,12 +15,33 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.4.0",
+        en = {
+            "Quick install: Hamingway the Hambringer guides you through every tool, one page at a time (on or off, position, size, look). It opens for new characters and once for existing ones. /hht setup starts it again any time, and skipping it changes nothing.",
+            "Profiles: save your settings under a name, load, rename, copy and delete them, and export or import them as text. Imported text becomes a profile called 'Imported profile #1', '#2' and so on. Profiles are shared by all your characters.",
+            "The quick install offers to take over the settings of another character or a profile on its first page.",
+            "Swing timer: a mark and an optional colour for the last 0.5 s before the Auto Shot, so you can move until the bar reaches the grey line without delaying the shot.",
+            "Swing timer and cast bar: 'Show when' (always, in combat, with a target) replaces 'Show only in combat'.",
+            "Hamingway the Hambringer now helps on every settings page. The quick install also has a button to open the pet database.",
+            "Minimap button: left or right click opens the settings, Shift + left click the pet database, Shift + right click locks or unlocks all frames.",
+        },
+        de = {
+            "Schnell-Einrichtung: Hamingway der Hambringer führt dich Seite für Seite durch jedes Werkzeug (an oder aus, Position, Größe, Aussehen). Sie öffnet sich bei neuen Charakteren und einmal bei bestehenden. /hht setup startet sie jederzeit neu, und Überspringen ändert nichts.",
+            "Profile: Speichere deine Einstellungen unter einem Namen, lade, benenne um, kopiere und lösche sie und exportiere oder importiere sie als Text. Importierter Text wird zu einem Profil namens 'Importiertes Profil #1', '#2' und so weiter. Profile gelten für alle deine Charaktere.",
+            "Die Schnell-Einrichtung bietet auf der ersten Seite an, die Einstellungen eines anderen Charakters oder ein Profil zu übernehmen.",
+            "Swing-Timer: Eine Markierung und optional eine Färbung für die letzten 0,5 s vor dem Auto-Shot, damit du dich bewegen kannst, bis die Leiste die graue Markierung erreicht, ohne den Schuss zu verzögern.",
+            "Swing-Timer und Zauberleiste: 'Anzeigen wenn' (immer, im Kampf, mit Ziel) ersetzt 'Nur im Kampf anzeigen'.",
+            "Hamingway der Hambringer hilft jetzt auf jeder Einstellungsseite. Die Schnell-Einrichtung hat außerdem einen Button, der die Tier-Datenbank öffnet.",
+            "Minimap-Button: Links- oder Rechtsklick öffnet die Einstellungen, Shift + Linksklick die Tier-Datenbank, Shift + Rechtsklick sperrt oder entsperrt alle Fenster.",
+        },
+    },
+    {
         v = "1.3.1",
         en = {
             "Pet database: removed ability ranks above level 60 (Bite 9, Claw 9, Gore 9, Cower 7, Screech 5, Scorpid Poison 5). They do not exist on WoW Forever, so the highest rank shown is now the real one.",
         },
         de = {
-            "Tier-Datenbank: Faehigkeitsraenge ueber Level 60 entfernt (Biss 9, Klaue 9, Aufspiessen 9, Ducken 7, Kreischen 5, Skorpidgift 5). Sie existieren auf WoW Forever nicht, der hoechste angezeigte Rang ist jetzt der echte.",
+            "Tier-Datenbank: Fähigkeitsränge über Level 60 entfernt (Biss 9, Klaue 9, Aufspießen 9, Ducken 7, Kreischen 5, Skorpidgift 5). Sie existieren auf WoW Forever nicht, der höchste angezeigte Rang ist jetzt der echte.",
         },
     },
     {
@@ -35,10 +56,10 @@ local NOTES = {
         },
         de = {
             "Neuer Look: Abgerundete Fenster und Popups mit Themes, Banner-Kopfzeile, Tabs und neuem Icon-Set (Lucide). Popups passen ihre Breite an den Inhalt an.",
-            "Tier-Popup (Pet watch): Neu gebaut mit Karten fuer Werte, Futter, was das Tier lehrt und was die Familie lernt. Futterarten haben Icons, Werte und Faehigkeiten haben Tooltips (Faehigkeiten zeigen den Zauber-Tooltip, gruen wenn du einen hoeheren Rang lernen kannst).",
-            "Abklingzeiten: Neue Layouts 'Einzelne Icons' und 'Eine Leiste'. Icons sind klickbar und zeigen Taste, Tooltip und eine Faerbung, wenn die Faehigkeit nicht nutzbar ist.",
-            "Der Verschieben-Modus sperrt sich automatisch, wenn ein Kampf beginnt, damit Frames mit klickbaren Buttons nicht haengen bleiben.",
-            "Tasten mit Umlauten (zum Beispiel Ue) lassen sich jetzt fuer Klicks belegen. Rechtsklick auf einen Tasten-Button loescht die Belegung.",
+            "Tier-Popup (Pet watch): Neu gebaut mit Karten für Werte, Futter, was das Tier lehrt und was die Familie lernt. Futterarten haben Icons, Werte und Fähigkeiten haben Tooltips (Fähigkeiten zeigen den Zauber-Tooltip, grün wenn du einen höheren Rang lernen kannst).",
+            "Abklingzeiten: Neue Layouts 'Einzelne Icons' und 'Eine Leiste'. Icons sind klickbar und zeigen Taste, Tooltip und eine Färbung, wenn die Fähigkeit nicht nutzbar ist.",
+            "Der Verschieben-Modus sperrt sich automatisch, wenn ein Kampf beginnt, damit Frames mit klickbaren Buttons nicht hängen bleiben.",
+            "Tasten mit Umlauten (zum Beispiel Ü) lassen sich jetzt für Klicks belegen. Rechtsklick auf einen Tasten-Button löscht die Belegung.",
             "Begleiter-Futter: Die Hunger-Warnung erscheint jetzt auch, wenn der Begleiter nur zufrieden (gelb) ist, nicht erst bei unzufrieden. In den Optionen des Futter-Moduls abschaltbar.",
         },
     },
@@ -49,8 +70,8 @@ local NOTES = {
             "Pet ability alerts: the zone list now also appears after logging in or reloading, not only when you enter a new zone.",
         },
         de = {
-            "Begleiter-Status: Ein gelbes Ausrufezeichen am Pet-Portrait zeigt, wenn Tiere in deiner aktuellen Zone deinem Begleiter einen hoeheren Faehigkeitsrang beibringen. Klick oeffnet oder schliesst die Zonenliste (im Kampf ausgegraut und nicht klickbar). In den Optionen des Begleiter-Status abschaltbar.",
-            "Begleiter-Faehigkeiten-Hinweis: Die Zonenliste erscheint jetzt auch nach dem Einloggen oder /reload, nicht nur beim Betreten einer neuen Zone.",
+            "Begleiter-Status: Ein gelbes Ausrufezeichen am Pet-Portrait zeigt, wenn Tiere in deiner aktuellen Zone deinem Begleiter einen höheren Fähigkeitsrang beibringen. Klick öffnet oder schließt die Zonenliste (im Kampf ausgegraut und nicht klickbar). In den Optionen des Begleiter-Status abschaltbar.",
+            "Begleiter-Fähigkeiten-Hinweis: Die Zonenliste erscheint jetzt auch nach dem Einloggen oder /reload, nicht nur beim Betreten einer neuen Zone.",
         },
     },
     {
@@ -59,7 +80,7 @@ local NOTES = {
             "Pet training hint: Growl is now included, so you are told when your pet can learn a higher Growl rank.",
         },
         de = {
-            "Pet-Training-Hinweis: Knurren (Growl) wird jetzt ebenfalls beruecksichtigt, du wirst benachrichtigt, wenn dein Tier einen hoeheren Knurren-Rang lernen kann.",
+            "Pet-Training-Hinweis: Knurren (Growl) wird jetzt ebenfalls berücksichtigt, du wirst benachrichtigt, wenn dein Tier einen höheren Knurren-Rang lernen kann.",
         },
     },
     {
@@ -77,7 +98,7 @@ local NOTES = {
             "Warnings: fixed a Lua error when hovering the 'pet low health' icon. The icon no longer catches mouse clicks while it is faded out, so you no longer cast Mend Pet by accident.",
         },
         de = {
-            "Warnungen: Lua-Fehler beim Ueberfahren des Icons 'Tier niedrige Gesundheit' behoben. Das ausgeblendete Icon faengt keine Mausklicks mehr ab, damit du nicht versehentlich Tier heilen wirkst.",
+            "Warnungen: Lua-Fehler beim Überfahren des Icons 'Tier niedrige Gesundheit' behoben. Das ausgeblendete Icon fängt keine Mausklicks mehr ab, damit du nicht versehentlich Tier heilen wirkst.",
         },
     },
     {
@@ -87,7 +108,7 @@ local NOTES = {
             "/hht debug shows what the pet health warning can read.",
         },
         de = {
-            "Warnungen: Die Warnung 'Tier niedrige Gesundheit' funktioniert wieder. Das Spiel verbirgt die Gesundheit des Tiers vor Addons, deshalb blendet jetzt das Spiel selbst das Icon ein, sobald das Tier unter deine Schwelle faellt, im und ausserhalb des Kampfs.",
+            "Warnungen: Die Warnung 'Tier niedrige Gesundheit' funktioniert wieder. Das Spiel verbirgt die Gesundheit des Tiers vor Addons, deshalb blendet jetzt das Spiel selbst das Icon ein, sobald das Tier unter deine Schwelle fällt, im und außerhalb des Kampfs.",
             "/hht debug zeigt, was die Tier-Gesundheitswarnung lesen kann.",
         },
     },
@@ -97,7 +118,7 @@ local NOTES = {
             "Ammo vendors: positions and wares checked against the latest Questie data for Forever. Fixes vendors that were off the mark (for example in Redridge Mountains), vendors that sell only arrows or only bullets, and adds two missing vendors in Loch Modan and Ashenvale.",
         },
         de = {
-            "Munitionshaendler: Positionen und Waren mit den aktuellen Questie-Daten fuer Forever abgeglichen. Behebt falsch eingetragene Haendler (zum Beispiel im Rotkammgebirge), Haendler die nur Pfeile oder nur Kugeln verkaufen, und ergaenzt zwei fehlende Haendler in Loch Modan und Ashenvale.",
+            "Munitionshändler: Positionen und Waren mit den aktuellen Questie-Daten für Forever abgeglichen. Behebt falsch eingetragene Händler (zum Beispiel im Rotkammgebirge), Händler die nur Pfeile oder nur Kugeln verkaufen, und ergänzt zwei fehlende Händler in Loch Modan und Ashenvale.",
         },
     },
     {
@@ -109,10 +130,10 @@ local NOTES = {
             "/hht ammo debug prints what the ammo and quiver detection sees.",
         },
         de = {
-            "Munitions-Aufwertungen: Bessere Koecher und Munitionsbeutel werden nicht mehr vorgeschlagen, wenn du schon einen besseren traegst oder dabeihast, getragene Koecher werden jetzt richtig erkannt. Auch Munition, die du schon dabeihast, blendet schlechtere Vorschlaege aus.",
-            "Munitions-Aufwertungen: Beim Ueberfahren eines Vorschlags erscheint der Gegenstands-Tooltip samt Bezugsquelle.",
+            "Munitions-Aufwertungen: Bessere Köcher und Munitionsbeutel werden nicht mehr vorgeschlagen, wenn du schon einen besseren trägst oder dabeihast, getragene Köcher werden jetzt richtig erkannt. Auch Munition, die du schon dabeihast, blendet schlechtere Vorschläge aus.",
+            "Munitions-Aufwertungen: Beim Überfahren eines Vorschlags erscheint der Gegenstands-Tooltip samt Bezugsquelle.",
             "Munitionsliste: Schaden der Miniature Cannon Balls und Quelle der Explosive Arrow korrigiert.",
-            "/hht ammo debug zeigt, was die Munitions- und Koecher-Erkennung sieht.",
+            "/hht ammo debug zeigt, was die Munitions- und Köcher-Erkennung sieht.",
         },
     },
     {
@@ -127,19 +148,19 @@ local NOTES = {
             "This window: after an update it shows what is new. /hht news opens it any time.",
         },
         de = {
-            "Neues Modul Aspekt und Aufspueren: je ein Knopf und eine Taste, Wechsel zwischen zwei Zaubern, Shift-, Strg- und Alt-Varianten. Ein kleines X am Aufspueren-Symbol schaltet es aus.",
-            "Munition: ein gruener Pfeil erscheint, wenn bessere Munition fuer deine Stufe in den Taschen liegt. Klick zeigt die Aufwertungen und legt sie an. Er schlaegt auch bessere Koecher (Pfeile) und Munitionsbeutel (Kugeln) vor, Munition von Ingenieuren laesst sich zuschalten.",
-            "Tier fuettern: Fuettern geht jetzt auch per eigener Taste. Neue Warnungen, wenn der Begleiter unzufrieden wird (Ton optional) und wenn das Futter knapp wird. Buff-Futter wird nicht mehr automatisch gewaehlt. Bei aktivem Begleiter-Futter zeigt das Warnungen-Modul auch hungrigen Begleiter und knappes Futter als Symbol.",
-            "Warnungen: Begleiter verletzt (Schwelle einstellbar), verletzter Begleiter ausser Heilreichweite und Knurren auf Autocast. Ein Klick auf die Knurren-Warnung schaltet den Autocast aus, Rechtsklick blendet sie bis zum Neuladen aus.",
-            "Warnungen: Aspekt des Rudels in Dungeon oder Schlachtzug wird gemeldet (auf Wunsch ueberall). Ein Klick wechselt zu deinem bevorzugten Aspekt.",
-            "Aufspueren: Kraeuter, Erz, Fische und Schaetze finden lassen sich jetzt auf dem Aufspueren-Knopf nutzen.",
-            "Dieses Fenster: nach einem Update zeigt es, was neu ist. /hht news oeffnet es jederzeit.",
+            "Neues Modul Aspekt und Aufspüren: je ein Knopf und eine Taste, Wechsel zwischen zwei Zaubern, Shift-, Strg- und Alt-Varianten. Ein kleines X am Aufspüren-Symbol schaltet es aus.",
+            "Munition: ein grüner Pfeil erscheint, wenn bessere Munition für deine Stufe in den Taschen liegt. Klick zeigt die Aufwertungen und legt sie an. Er schlägt auch bessere Köcher (Pfeile) und Munitionsbeutel (Kugeln) vor, Munition von Ingenieuren lässt sich zuschalten.",
+            "Tier füttern: Füttern geht jetzt auch per eigener Taste. Neue Warnungen, wenn der Begleiter unzufrieden wird (Ton optional) und wenn das Futter knapp wird. Buff-Futter wird nicht mehr automatisch gewählt. Bei aktivem Begleiter-Futter zeigt das Warnungen-Modul auch hungrigen Begleiter und knappes Futter als Symbol.",
+            "Warnungen: Begleiter verletzt (Schwelle einstellbar), verletzter Begleiter außer Heilreichweite und Knurren auf Autocast. Ein Klick auf die Knurren-Warnung schaltet den Autocast aus, Rechtsklick blendet sie bis zum Neuladen aus.",
+            "Warnungen: Aspekt des Rudels in Dungeon oder Schlachtzug wird gemeldet (auf Wunsch überall). Ein Klick wechselt zu deinem bevorzugten Aspekt.",
+            "Aufspüren: Kräuter, Erz, Fische und Schätze finden lassen sich jetzt auf dem Aufspüren-Knopf nutzen.",
+            "Dieses Fenster: nach einem Update zeigt es, was neu ist. /hht news öffnet es jederzeit.",
         },
     },
     {
         v = "1.1.1",
         en = { "Pet training hint now also works for Great Stamina and Natural Armor." },
-        de = { "Der Begleiter-Training-Hinweis greift jetzt auch bei Grosse Ausdauer und Natuerliche Ruestung." },
+        de = { "Der Begleiter-Training-Hinweis greift jetzt auch bei Große Ausdauer und Natürliche Rüstung." },
     },
     {
         v = "1.1.0",
@@ -150,14 +171,15 @@ local NOTES = {
         },
         de = {
             "Tierratgeber: neuer Ratgeber-Reiter in der Tierdatenbank und ein einmaliger Hinweis auf Stufe 10.",
-            "Zonen-Liste: beim Betreten einer Zone werden alle Tiere gelistet, die einem deiner Begleiter einen hoeheren Rang beibringen.",
-            "Hinweise zu seltenen und Wunschlisten-Tieren neu gestaltet, mit Familienrolle, Nahrung, lehrbaren Faehigkeiten und 3D-Modell.",
+            "Zonen-Liste: beim Betreten einer Zone werden alle Tiere gelistet, die einem deiner Begleiter einen höheren Rang beibringen.",
+            "Hinweise zu seltenen und Wunschlisten-Tieren neu gestaltet, mit Familienrolle, Nahrung, lehrbaren Fähigkeiten und 3D-Modell.",
         },
     },
 }
 
 local WN = {}
 HHT.WhatsNew = WN
+local D = HHT.Dwarf
 
 local function parse(v)
     if type(v) ~= "string" then return nil end
@@ -177,8 +199,24 @@ end
 -- ---------------------------------------------------------------------------
 -- Window
 -- ---------------------------------------------------------------------------
-local WIDTH, CONTENT_W, MAX_BODY = 470, 442 - 20, 360
+local WIDTH, CONTENT_W, MAX_BODY = 470, 442 - 20, 340
 local win
+
+-- What the dwarf says on top of the window.
+local SAY = {
+    latest = {
+        en = "Fresh from the forge, hunter! Here be what changed in version %s.",
+        de = "Frisch aus der Schmiede, Jäger! Das hat sich in Version %s geändert.",
+    },
+    since = {
+        en = "Ye missed a few forgings, hunter! Here be everything since version %s.",
+        de = "Du hast ein paar Schmiedegänge verpasst, Jäger! Das ist alles seit Version %s.",
+    },
+    all = {
+        en = "Ye want the whole ledger? Aye, here be every change since me first hammer swing.",
+        de = "Du willst das ganze Hauptbuch? Na gut, hier ist jede Änderung seit meinem ersten Hammerschlag.",
+    },
+}
 
 local function Window()
     if win then return win end
@@ -187,6 +225,9 @@ local function Window()
     win:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
     win:Hide()
     if UISpecialFrames then table.insert(UISpecialFrames, "HHTWhatsNew") end
+
+    win.dwarf = HHT.Dwarf.New(win, WIDTH - 28)
+    win.dwarf:SetPoint("TOPLEFT", win, "TOPLEFT", 14, -40)
 
     local sf = CreateFrame("ScrollFrame", nil, win)
     sf:SetPoint("TOPLEFT", win, "TOPLEFT", 14, -40)
@@ -252,10 +293,14 @@ local function Fill(entries)
         end
     end
     for i = n + 1, #win.rows do win.rows[i]:Hide() end
+    local top = 40 + win.dwarf:GetHeight() + 10
+    win.scroll:ClearAllPoints()
+    win.scroll:SetPoint("TOPLEFT", win, "TOPLEFT", 14, -top)
+    win.scroll:SetPoint("TOPRIGHT", win, "TOPRIGHT", -14, -top)
     win.content:SetHeight(y + 4)
     local body = math.min(y + 4, MAX_BODY)
     win.scroll:SetHeight(body)
-    win:SetHeight(40 + body + 12 + 44)
+    win:SetHeight(top + body + 12 + 44)
     win.scroll:SetVerticalScroll(0)
     win.updateBar()
 end
@@ -263,11 +308,39 @@ end
 -- entries: NOTES entries to show (newest first) or "all".
 function WN.Open(entries)
     local w = Window()
-    if entries == "all" then entries = NOTES end
+    local line
+    if entries == "all" then
+        entries = NOTES
+        line = D.Pick(SAY.all)
+    elseif entries and #entries > 1 then
+        line = D.Pick(SAY.since, entries[#entries].v)
+    end
     if not entries or #entries == 0 then entries = { NOTES[1] } end
+    line = line or D.Pick(SAY.latest, entries[1].v)
+    w:Show()
+    w.dwarf:Say(line)
     Fill(entries)
     w.chk:Refresh()
-    w:Show()
+    WN.Dock()
+end
+
+-- Sits beside the quick install while that is open, so both can be read together.
+function WN.Dock()
+    if not (win and win:IsShown()) then return end
+    local setup = _G.HHTSetup
+    if setup and setup:IsShown() then
+        win:ClearAllPoints()
+        if (UIParent:GetRight() or 0) - (setup:GetRight() or 0) >= WIDTH + 8 then
+            win:SetPoint("TOPLEFT", setup, "TOPRIGHT", 8, 0)
+        else
+            win:SetPoint("TOPRIGHT", setup, "TOPLEFT", -8, 0)
+        end
+        win.docked = true
+    elseif win.docked then
+        win.docked = nil
+        win:ClearAllPoints()
+        win:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+    end
 end
 
 -- Notes of versions newer than `old` up to the installed version (only the installed one when old is unknown).

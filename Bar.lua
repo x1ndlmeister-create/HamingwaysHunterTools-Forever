@@ -24,14 +24,14 @@ HHT:AddGerman({
     ["Flat"] = "Flach",
     ["Smooth"] = "Weich",
     ["Glass"] = "Glas",
-    ["3D effect strength"] = "3D-Effekt Staerke",
+    ["3D effect strength"] = "3D-Effekt Stärke",
     ["Smooth bar movement"] = "Weiche Balkenbewegung",
     ["Center"] = "Mitte",
     ["Label position"] = "Position der Beschriftung",
     ["Time position"] = "Position der Restzeit",
     ["Flash when full"] = "Aufblinken bei 100 %",
-    ["Flash glow strength"] = "Staerke des Flash-Leuchtens",
-    ["Flash glow size"] = "Groesse des Flash-Leuchtens",
+    ["Flash glow strength"] = "Stärke des Flash-Leuchtens",
+    ["Flash glow size"] = "Größe des Flash-Leuchtens",
 })
 
 function Bar.TextureChoices()

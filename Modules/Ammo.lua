@@ -4,11 +4,11 @@ local L, UI, S, Icon = HHT.L, HHT.UI, HHT.Spells, HHT.Icon
 
 HHT:AddGerman({
     ["Ammo"] = "Munition",
-    ["Arrow and bullet counter with low ammo warning and dungeon reminder."] = "Pfeil- und Kugelzaehler mit Warnung bei wenig Munition und Dungeon-Erinnerung.",
+    ["Arrow and bullet counter with low ammo warning and dungeon reminder."] = "Pfeil- und Kugelzähler mit Warnung bei wenig Munition und Dungeon-Erinnerung.",
     ["Show"] = "Anzeige",
     ["Visibility"] = "Sichtbarkeit",
     ["Only the ammo your weapon uses"] = "Nur Munition der Waffe",
-    ["All ammo you carry"] = "Alle mitgefuehrte Munition",
+    ["All ammo you carry"] = "Alle mitgeführte Munition",
     ["Count"] = "Anzahl",
     ["Equipped ammo only"] = "Nur angelegte Munition",
     ["All ammo of the type"] = "Alle Munition der Art",
@@ -25,18 +25,18 @@ HHT:AddGerman({
     ["Count position"] = "Position der Anzahl",
     ["Below the icon"] = "Unter dem Icon",
     ["In the icon"] = "Im Icon",
-    ["Click an ammo icon to choose and equip other ammo."] = "Klick auf ein Munitionssymbol: andere Munition waehlen und anlegen.",
+    ["Click an ammo icon to choose and equip other ammo."] = "Klick auf ein Munitionssymbol: andere Munition wählen und anlegen.",
     ["Equipped"] = "Angelegt",
     ["No ammo of this type"] = "Keine Munition dieser Art",
     ["Ammo equipped: %s"] = "Munition angelegt: %s",
-    ["Could not equip: %s"] = "Anlegen nicht moeglich: %s",
-    ["Show an upgrade symbol when better ammo is available"] = "Aufwertungs-Symbol zeigen, wenn bessere Munition verfuegbar ist",
+    ["Could not equip: %s"] = "Anlegen nicht möglich: %s",
+    ["Show an upgrade symbol when better ammo is available"] = "Aufwertungs-Symbol zeigen, wenn bessere Munition verfügbar ist",
     ["Include ammo crafted by Engineers"] = "Von Ingenieuren hergestellte Munition einbeziehen",
-    ["Also suggest better quivers and ammo pouches"] = "Auch bessere Koecher und Munitionsbeutel vorschlagen",
-    ["Better ammo or bags for your level"] = "Bessere Munition oder Taschen fuer deine Stufe",
+    ["Also suggest better quivers and ammo pouches"] = "Auch bessere Köcher und Munitionsbeutel vorschlagen",
+    ["Better ammo or bags for your level"] = "Bessere Munition oder Taschen für deine Stufe",
     ["In your bags"] = "In deinen Taschen",
     ["Source"] = "Quelle",
-    ["Click the green arrow next to an ammo icon to see better ammo you can use."] = "Klick auf den gruenen Pfeil neben einem Munitionssymbol zeigt bessere Munition, die du nutzen kannst.",
+    ["Click the green arrow next to an ammo icon to see better ammo you can use."] = "Klick auf den grünen Pfeil neben einem Munitionssymbol zeigt bessere Munition, die du nutzen kannst.",
 })
 
 local M = HHT:NewModule("ammo", {

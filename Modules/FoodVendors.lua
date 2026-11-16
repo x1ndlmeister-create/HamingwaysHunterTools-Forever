@@ -3,17 +3,17 @@ local ADDON, HHT = ...
 local L = HHT.L
 
 HHT:AddGerman({
-    ["Food vendors"] = "Futterhaendler",
-    ["Shows vendors that sell food for your current pet on the world map and learns missing ones."] = "Zeigt Haendler, die Futter fuer deinen aktuellen Begleiter verkaufen, auf der Weltkarte und lernt fehlende dazu.",
-    ["Food vendor"] = "Futterhaendler",
+    ["Food vendors"] = "Futterhändler",
+    ["Shows vendors that sell food for your current pet on the world map and learns missing ones."] = "Zeigt Händler, die Futter für deinen aktuellen Begleiter verkaufen, auf der Weltkarte und lernt fehlende dazu.",
+    ["Food vendor"] = "Futterhändler",
     ["Show all diets (ignore my pet)"] = "Alle Nahrungsarten zeigen (Begleiter ignorieren)",
-    ["Food vendors on map"] = "Futterhaendler auf der Karte",
-    ["Waypoint to nearest food vendor"] = "Wegpunkt zum naechsten Futterhaendler",
-    ["Forget learned food vendors"] = "Gelernte Futterhaendler vergessen",
-    ["Built-in list: %d food vendors. Learned by visiting: %d."] = "Eingebaute Liste: %d Futterhaendler. Durch Besuch gelernt: %d.",
-    ["Food vendors are learned when you open their merchant window. Visit one to add it."] = "Fehlt ein Haendler in der Liste, wird er gelernt, sobald du sein Haendlerfenster oeffnest und er Futter verkauft.",
-    ["Food vendor learned: %s"] = "Futterhaendler gelernt: %s",
-    ["No food vendors known here."] = "Keine Futterhaendler bekannt.",
+    ["Food vendors on map"] = "Futterhändler auf der Karte",
+    ["Waypoint to nearest food vendor"] = "Wegpunkt zum nächsten Futterhändler",
+    ["Forget learned food vendors"] = "Gelernte Futterhändler vergessen",
+    ["Built-in list: %d food vendors. Learned by visiting: %d."] = "Eingebaute Liste: %d Futterhändler. Durch Besuch gelernt: %d.",
+    ["Food vendors are learned when you open their merchant window. Visit one to add it."] = "Fehlt ein Händler in der Liste, wird er gelernt, sobald du sein Händlerfenster öffnest und er Futter verkauft.",
+    ["Food vendor learned: %s"] = "Futterhändler gelernt: %s",
+    ["No food vendors known here."] = "Keine Futterhändler bekannt.",
     ["Sells"] = "Verkauft",
 })
 

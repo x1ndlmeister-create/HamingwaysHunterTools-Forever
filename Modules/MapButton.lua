@@ -4,9 +4,9 @@ local L, UI = HHT.L, HHT.UI
 
 HHT:AddGerman({
     ["Map button"] = "Kartenknopf",
-    ["A button at the top left of the world map with switches for ammo vendors, stable masters and more."] = "Ein Knopf links oben an der Weltkarte mit Schaltern fuer Munitionshaendler, Stallmeister und mehr.",
-    ["Hunter map"] = "Jaeger-Karte",
-    ["Click to show or hide hunter things on the map."] = "Klick: Jaeger-Dinge auf der Karte ein- oder ausblenden.",
+    ["A button at the top left of the world map with switches for ammo vendors, stable masters and more."] = "Ein Knopf links oben an der Weltkarte mit Schaltern für Munitionshändler, Stallmeister und mehr.",
+    ["Hunter map"] = "Jäger-Karte",
+    ["Click to show or hide hunter things on the map."] = "Klick: Jäger-Dinge auf der Karte ein- oder ausblenden.",
 })
 
 local M = HHT:NewModule("mapbutton", {

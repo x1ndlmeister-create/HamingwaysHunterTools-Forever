@@ -9,7 +9,7 @@ HHT:AddGerman({
     ["Segments"] = "Segmente",
     ["Text only"] = "Nur Text",
     ["Badge"] = "Symbol",
-    ["Size"] = "Groesse",
+    ["Size"] = "Größe",
     ["Show text"] = "Text zeigen",
     ["Pulse in the dead zone"] = "Pulsieren im toten Winkel",
     ["Sound when entering the dead zone"] = "Ton beim Eintritt in den toten Winkel",
@@ -23,7 +23,7 @@ HHT:AddGerman({
     ["Middle color (up to 25 yd)"] = "Farbe mittel (bis 25 m)",
     ["Far color (up to 35 yd)"] = "Farbe weit (bis 35 m)",
     ["Max range color"] = "Farbe maximale Reichweite",
-    ["Out of range color"] = "Farbe ausser Reichweite",
+    ["Out of range color"] = "Farbe außer Reichweite",
 })
 
 local M = HHT:NewModule("distance", {

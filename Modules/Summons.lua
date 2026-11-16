@@ -3,10 +3,10 @@ local ADDON, HHT = ...
 local L, UI, Icon = HHT.L, HHT.UI, HHT.Icon
 
 HHT:AddGerman({
-    ["Summons"] = "Beschwoerungen",
-    ["Summon Hawk"] = "Habicht beschwoeren",
+    ["Summons"] = "Beschwörungen",
+    ["Summon Hawk"] = "Habicht beschwören",
     ["Active summons such as Summon Hawk with their remaining time. The default UI shows them under the player frame; they are not buffs."] =
-        "Aktive Beschwoerungen wie Habicht beschwoeren mit ihrer Restzeit. Das Standard-UI zeigt sie unter dem Spielerrahmen, sie sind keine Buffs.",
+        "Aktive Beschwörungen wie Habicht beschwören mit ihrer Restzeit. Das Standard-UI zeigt sie unter dem Spielerrahmen, sie sind keine Buffs.",
     ["Show names"] = "Namen zeigen",
     ["Border colour"] = "Rahmenfarbe",
     ["Show remaining time numbers"] = "Restzeit-Zahlen zeigen",
@@ -15,7 +15,7 @@ HHT:AddGerman({
 local M = HHT:NewModule("summons", {
     name = "Summons",
     desc = "Active summons such as Summon Hawk with their remaining time. The default UI shows them under the player frame; they are not buffs.",
-    positions = { main = { "CENTER", "CENTER", -200, -140 } },
+    positions = { main = { "CENTER", "CENTER", -200, -205 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 4, perRow = 4,
         grow = "right", visibility = "always", numbers = true, names = false,

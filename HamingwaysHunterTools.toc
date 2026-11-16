@@ -1,12 +1,13 @@
 ## Interface: 16001
 ## Title: |cffabd473Hamingway's HunterTools|r
 ## Notes: All-in-one hunter toolkit for WoW Forever: swing timer, cooldowns, warnings and more.
-## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Schlag-Timer, Abklingzeiten, Warnungen und mehr.
+## Notes-deDE: Jaeger-Werkzeugkasten fuer WoW Forever: Swing-Timer, Abklingzeiten, Warnungen und mehr.
 ## Author: Hamingway
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.3.1
+## Version: 1.4.0
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
+## SavedVariables: HamingwaysHunterToolsShared
 
 Widgets.lua
 Form.lua
@@ -56,6 +57,8 @@ Modules\PetGuide.lua
 Modules\MapButton.lua
 Profile.lua
 VersionCheck.lua
+Dwarf.lua
 WhatsNew.lua
+Setup.lua
 Showcase.lua
 Config.lua

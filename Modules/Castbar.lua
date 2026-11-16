@@ -20,7 +20,7 @@ local M = HHT:NewModule("castbar", {
     positions = { main = { "CENTER", "CENTER", 0, -128 } },
     defaults = {
         showIcon = true, showLabel = true, showTime = true, showSpark = true, border = true,
-        hideDefault = false, barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
+        hideDefault = false, visibility = "always", barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
         width = 260, height = 22, bgAlpha = 0.85,
         colors = {
             cast = { 0.67, 0.83, 0.45 },
@@ -212,7 +212,7 @@ function M:Tick()
         icon = HHT.Spells.Resolve("@autoShot").icon
     end
 
-    if not progress then
+    if not progress or not HHT:ShouldShow(db.visibility, self) then
         if f:IsShown() then f:Hide() end
         return
     end
@@ -247,6 +247,7 @@ function M:BuildOptions(form)
     Bar.AddOptions(form, db)
     Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
+    form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Check(L("Hide the default cast bar"), db, "hideDefault")
     form:Header(L("Colors"))
     form:Color(L("Cast"), db.colors, "cast")

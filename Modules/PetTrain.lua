@@ -4,25 +4,25 @@ local L, UI = HHT.L, HHT.UI
 
 HHT:AddGerman({
     ["Pet training hint"] = "Begleiter-Training-Hinweis",
-    ["Popup when your pet can learn ability ranks you already know, with a button to train each one."] = "Hinweis, wenn dein Begleiter Faehigkeitsraenge lernen kann, die du schon kennst, mit Knopf zum Trainieren.",
+    ["Popup when your pet can learn ability ranks you already know, with a button to train each one."] = "Hinweis, wenn dein Begleiter Fähigkeitsränge lernen kann, die du schon kennst, mit Knopf zum Trainieren.",
     ["PET TRAINING"] = "BEGLEITER-TRAINING",
-    ["%s can learn new abilities"] = "%s kann neue Faehigkeiten lernen",
+    ["%s can learn new abilities"] = "%s kann neue Fähigkeiten lernen",
     ["Your pet"] = "Dein Begleiter",
     ["Learn"] = "Lernen",
     ["(now rank %d)"] = "(jetzt Rang %d)",
     ["(new)"] = "(neu)",
     ["%s is not offered in Beast Training right now."] = "%s wird in der Tierausbildung gerade nicht angeboten.",
-    ["Your pet needs level %d for %s."] = "Dein Begleiter braucht Stufe %d fuer %s.",
-    ["Not enough training points for %s (%d needed)."] = "Nicht genug Trainingspunkte fuer %s (%d noetig).",
+    ["Your pet needs level %d for %s."] = "Dein Begleiter braucht Stufe %d für %s.",
+    ["Not enough training points for %s (%d needed)."] = "Nicht genug Trainingspunkte für %s (%d nötig).",
     ["Training %s failed."] = "Training von %s fehlgeschlagen.",
     ["Show for (seconds, 0 = until closed)"] = "Anzeigedauer (Sekunden, 0 = bis geschlossen)",
     ["Play a sound"] = "Ton abspielen",
     ["Show test hint"] = "Test-Hinweis zeigen",
     ["Hint border"] = "Rahmen Hinweis",
-    ["Abilities switched off in the pet ability alerts are skipped here too."] = "Faehigkeiten, die bei den Faehigkeiten-Hinweisen aus sind, werden hier ebenfalls uebersprungen.",
+    ["Abilities switched off in the pet ability alerts are skipped here too."] = "Fähigkeiten, die bei den Fähigkeiten-Hinweisen aus sind, werden hier ebenfalls übersprungen.",
     ["Ignore"] = "Ignorieren",
-    ["Abilities that trigger a hint"] = "Faehigkeiten, die einen Hinweis ausloesen",
-    ["%s no longer triggers a training hint. Re-enable it in the options."] = "%s loest keinen Training-Hinweis mehr aus. Du kannst es in den Optionen wieder aktivieren.",
+    ["Abilities that trigger a hint"] = "Fähigkeiten, die einen Hinweis auslösen",
+    ["%s no longer triggers a training hint. Re-enable it in the options."] = "%s löst keinen Training-Hinweis mehr aus. Du kannst es in den Optionen wieder aktivieren.",
 })
 
 local alertFor = {}

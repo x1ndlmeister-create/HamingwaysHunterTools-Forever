@@ -3,22 +3,22 @@ local ADDON, HHT = ...
 local L = HHT.L
 
 HHT:AddGerman({
-    ["Ammo vendors"] = "Munitionshaendler",
-    ["Shows ammo vendors on the world map and sets a waypoint to the nearest one."] = "Zeigt Munitionshaendler auf der Weltkarte und setzt einen Wegpunkt zum naechsten.",
-    ["Ammo vendors on map"] = "Munitionshaendler auf Karte",
-    ["Waypoint to nearest vendor"] = "Wegpunkt zum naechsten Haendler",
+    ["Ammo vendors"] = "Munitionshändler",
+    ["Shows ammo vendors on the world map and sets a waypoint to the nearest one."] = "Zeigt Munitionshändler auf der Weltkarte und setzt einen Wegpunkt zum nächsten.",
+    ["Ammo vendors on map"] = "Munitionshändler auf Karte",
+    ["Waypoint to nearest vendor"] = "Wegpunkt zum nächsten Händler",
     ["Sells"] = "Verkauft",
     ["Arrows"] = "Pfeile",
     ["Bullets"] = "Kugeln",
     ["Arrows and bullets"] = "Pfeile und Kugeln",
-    ["Show vendors for"] = "Haendler zeigen fuer",
+    ["Show vendors for"] = "Händler zeigen für",
     ["Ammo your weapon uses"] = "Munition deiner Waffe",
     ["Only my faction"] = "Nur meine Fraktion",
-    ["Pins appear on the world map. Click a pin to set a waypoint."] = "Die Punkte erscheinen auf der Weltkarte. Klick auf einen Punkt setzt einen Wegpunkt. Ein- und ausschalten geht auch ueber den Knopf oben links an der Karte.",
+    ["Pins appear on the world map. Click a pin to set a waypoint."] = "Die Punkte erscheinen auf der Weltkarte. Klick auf einen Punkt setzt einen Wegpunkt. Ein- und ausschalten geht auch über den Knopf oben links an der Karte.",
     ["Show on the world map"] = "Auf der Weltkarte zeigen",
     ["Also show on the minimap"] = "Auch auf der Minimap zeigen",
-    ["No ammo vendors known here."] = "Hier sind keine Munitionshaendler bekannt.",
-    ["Nearest ammo vendor: %s"] = "Naechster Munitionshaendler: %s",
+    ["No ammo vendors known here."] = "Hier sind keine Munitionshändler bekannt.",
+    ["Nearest ammo vendor: %s"] = "Nächster Munitionshändler: %s",
 })
 
 local M = HHT:NewModule("ammovendors", {

@@ -4,13 +4,13 @@ local L = HHT.L
 
 HHT:AddGerman({
     ["Trainers"] = "Lehrer",
-    ["Shows hunter trainers and pet trainers on the world map from a built-in list."] = "Zeigt Jaegerlehrer und Tierausbilder aus einer eingebauten Liste auf der Weltkarte.",
-    ["Built-in list: %d trainers (hunter and pet)."] = "Eingebaute Liste: %d Lehrer (Jaeger und Tierausbilder).",
-    ["Hunter trainer"] = "Jaegerlehrer",
+    ["Shows hunter trainers and pet trainers on the world map from a built-in list."] = "Zeigt Jägerlehrer und Tierausbilder aus einer eingebauten Liste auf der Weltkarte.",
+    ["Built-in list: %d trainers (hunter and pet)."] = "Eingebaute Liste: %d Lehrer (Jäger und Tierausbilder).",
+    ["Hunter trainer"] = "Jägerlehrer",
     ["Pet trainer"] = "Tierausbilder",
     ["No trainers known here."] = "Keine Lehrer bekannt.",
     ["Trainers on map"] = "Lehrer auf der Karte",
-    ["Waypoint to nearest trainer"] = "Wegpunkt zum naechsten Lehrer",
+    ["Waypoint to nearest trainer"] = "Wegpunkt zum nächsten Lehrer",
 })
 
 local M = HHT:NewModule("trainers", {

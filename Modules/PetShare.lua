@@ -4,13 +4,13 @@ local L, UI = HHT.L, HHT.UI
 
 HHT:AddGerman({
     ["Export / import beast data"] = "Tierdaten exportieren / importieren",
-    ["Export copies the measured attack speeds into the box. Press Ctrl+C and send it on. Import adds the data from the text in the box."] = "Exportieren schreibt die gemessenen Angriffstempi ins Feld. Mit Strg+C kopieren und weitergeben. Importieren fuegt die Daten aus dem Feld hinzu.",
-    ["Imported data only fills gaps. Values you have yourself are kept."] = "Importierte Daten fuellen nur Luecken. Eigene Werte bleiben erhalten.",
-    ["Also seen, tamed and wishlist"] = "Auch gesehen, gezaehmt und Wunschliste",
+    ["Export copies the measured attack speeds into the box. Press Ctrl+C and send it on. Import adds the data from the text in the box."] = "Exportieren schreibt die gemessenen Angriffstempi ins Feld. Mit Strg+C kopieren und weitergeben. Importieren fügt die Daten aus dem Feld hinzu.",
+    ["Imported data only fills gaps. Values you have yourself are kept."] = "Importierte Daten füllen nur Lücken. Eigene Werte bleiben erhalten.",
+    ["Also seen, tamed and wishlist"] = "Auch gesehen, gezähmt und Wunschliste",
     ["Nothing to export yet."] = "Noch nichts zum Exportieren.",
-    ["Exported %d speeds, %d seen, %d tamed, %d wishlist. Press Ctrl+C to copy."] = "%d Tempi, %d gesehen, %d gezaehmt, %d Wunschliste exportiert. Mit Strg+C kopieren.",
-    ["Imported %d speeds, %d seen, %d tamed, %d wishlist (%d ignored)."] = "%d Tempi, %d gesehen, %d gezaehmt, %d Wunschliste importiert (%d ignoriert).",
-    ["This text is not a valid beast data export."] = "Dieser Text ist kein gueltiger Tierdaten-Export.",
+    ["Exported %d speeds, %d seen, %d tamed, %d wishlist. Press Ctrl+C to copy."] = "%d Tempi, %d gesehen, %d gezähmt, %d Wunschliste exportiert. Mit Strg+C kopieren.",
+    ["Imported %d speeds, %d seen, %d tamed, %d wishlist (%d ignored)."] = "%d Tempi, %d gesehen, %d gezähmt, %d Wunschliste importiert (%d ignoriert).",
+    ["This text is not a valid beast data export."] = "Dieser Text ist kein gültiger Tierdaten-Export.",
 })
 
 local SS = {}

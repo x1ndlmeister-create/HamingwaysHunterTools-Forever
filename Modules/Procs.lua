@@ -4,19 +4,19 @@ local L, S, UI = HHT.L, HHT.Spells, HHT.UI
 
 HHT:AddGerman({
     ["Proc Overlay"] = "Proc-Anzeige",
-    ["Big art around your character while a proc or buff is active, also in combat."] = "Grosse Grafik um deinen Charakter, solange ein Proc oder Buff aktiv ist, auch im Kampf.",
-    ["Art size"] = "Groesse der Grafik",
+    ["Big art around your character while a proc or buff is active, also in combat."] = "Große Grafik um deinen Charakter, solange ein Proc oder Buff aktiv ist, auch im Kampf.",
+    ["Art size"] = "Größe der Grafik",
     ["Play a sound when it appears"] = "Ton abspielen, wenn sie erscheint",
-    ["Tracked procs"] = "Ueberwachte Procs",
+    ["Tracked procs"] = "Überwachte Procs",
     ["Aura spell ID (the buff, not the talent)"] = "Aura-Zauber-ID (der Buff, nicht das Talent)",
-    ["Add"] = "Hinzufuegen",
+    ["Add"] = "Hinzufügen",
     ["Spell ID"] = "Zauber-ID",
     ["Browse graphics"] = "Grafiken ansehen",
     ["Proc graphics"] = "Proc-Grafiken",
-    ["Choose graphic"] = "Grafik waehlen",
+    ["Choose graphic"] = "Grafik wählen",
     ["Page"] = "Seite",
     ["Show remaining time as fading art"] = "Restzeit als verblassende Grafik zeigen",
-    ["Reverse the fading (art fills up instead of draining)"] = "Verblassen umkehren (Grafik fuellt sich statt zu leeren)",
+    ["Reverse the fading (art fills up instead of draining)"] = "Verblassen umkehren (Grafik füllt sich statt zu leeren)",
     ["Preview"] = "Vorschau",
     ["Fades from"] = "Verblasst von",
     ["Top"] = "Oben",
@@ -27,12 +27,12 @@ HHT:AddGerman({
     ["Offset Y"] = "Versatz Y",
     ["Scan for new procs"] = "Nach neuen Procs suchen",
     ["While on, short buffs you gain out of combat are added to the list switched off. Switch the ones you want on."] =
-        "Solange aktiv, werden kurze Buffs, die du ausserhalb des Kampfes bekommst, ausgeschaltet zur Liste hinzugefuegt. Schalte die gewuenschten ein.",
+        "Solange aktiv, werden kurze Buffs, die du außerhalb des Kampfes bekommst, ausgeschaltet zur Liste hinzugefügt. Schalte die gewünschten ein.",
     ["On"] = "An",
     ["Off"] = "Aus",
     ["New proc detected: %s (id %d), switched off in the list."] = "Neuer Proc erkannt: %s (ID %d), in der Liste ausgeschaltet.",
     ["Use /hht auras while the proc is active to read its ID. The game draws the art itself, so nothing can be hidden or checked by the addon in combat."] =
-        "Mit /hht auras waehrend der Proc aktiv ist liest du seine ID aus. Das Spiel zeichnet die Grafik selbst, das Addon kann im Kampf nichts pruefen oder verstecken.",
+        "Mit /hht auras während der Proc aktiv ist liest du seine ID aus. Das Spiel zeichnet die Grafik selbst, das Addon kann im Kampf nichts prüfen oder verstecken.",
 })
 
 local floor = math.floor
@@ -302,9 +302,11 @@ function M:Layout()
     end
     self:ApplyArts()
     local unlocked = HHT:IsUnlocked(self)
+    local solo = unlocked and self.previewSolo
     for i = 1, MAXP do
         local e, t = db.entries[i], self.pvs[i]
-        if (e and not e.off and (e.preview or unlocked)) or (i == 1 and unlocked) then
+        local shown = e and not e.off and (e.preview or unlocked) and (not solo or i == 1)
+        if shown or (i == 1 and unlocked) then
             LayoutArt(t, f, ArtOf(e), db.size * ((e and e.scale) or 1), e and e.x, e and e.y)
             t:SetAlpha(e and e.preview and 0.9 or 0.5)
             t:Show()

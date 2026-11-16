@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <title>Hamingway's HunterTools - The hunter's Swiss army knife</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="25 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters. Version 1.3.0.">
+<meta name="description" content="25 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters. Version 1.4.0.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Hamingway's HunterTools - The hunter's Swiss army knife">
-<meta property="og:description" content="25 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters. Version 1.3.0.">
+<meta property="og:description" content="25 modules, 18 macros, EN + DE: swing timer, cast bar, warnings, ammo, pet tools and map pins for WoW Forever hunters. Version 1.4.0.">
 <meta property="og:image" content="https://x1ndlmeister-create.github.io/HamingwaysHunterTools-Forever/images/hero.png">
 <meta property="og:url" content="https://x1ndlmeister-create.github.io/HamingwaysHunterTools-Forever/">
 <link rel="icon" type="image/png" href="images/logo.png">
@@ -45,6 +45,20 @@
   .cta:hover { filter:brightness(1.12); }
   .coffee { display:inline-block; margin:22px 0 0 10px; padding:10px 24px; border-radius:6px; background:#ffdd00; color:#161106; font-weight:700; text-decoration:none; box-shadow:0 4px 18px rgba(255,221,0,.25); }
   .coffee:hover { filter:brightness(1.08); }
+
+  /* Hamingway the Hambringer: portrait with a speech bubble */
+  .dwarf { display:flex; align-items:flex-start; gap:18px; max-width:720px; margin:30px auto 0; text-align:left; }
+  .dwarf img.pic { width:96px; height:96px; flex:none; border-radius:0; box-shadow:none; }
+  .dwarf .bub { position:relative; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 18px; }
+  .dwarf .bub::before { content:""; position:absolute; left:-7px; top:30px; width:12px; height:12px; background:var(--panel); border-left:1px solid var(--line); border-bottom:1px solid var(--line); transform:rotate(45deg); }
+  .dwarf .bub b { display:block; color:var(--green); font-size:.85em; margin-bottom:3px; }
+  .dwarf .bub p { margin:0; color:#d8d8d8; }
+  .dwarf .bub a { color:var(--gold); }
+  .dwarf.big { max-width:860px; }
+  .chips { list-style:none; display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 2px; padding:0; }
+  .chips li { padding:3px 11px; border-radius:999px; background:var(--panel2); border:1px solid var(--line); color:var(--text); font-size:.86em; }
+  .chips li.more { border-color:var(--bronze); color:var(--gold); font-weight:600; }
+  @media (max-width:520px) { .dwarf { flex-direction:column; align-items:center; } .dwarf .bub::before { display:none; } }
 
   /* stats */
   .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; max-width:1100px; margin:34px auto 0; padding:0 16px; }
@@ -110,6 +124,8 @@
   .newitem:hover { transform:translateY(-3px); border-color:var(--bronze); }
   .newitem h4 { margin:0 0 3px; color:var(--green); font-size:1em; }
   .newitem p { margin:0; font-size:.88em; color:#cfcfcf; line-height:1.4; }
+  .newshots { display:flex; flex-wrap:wrap; justify-content:center; gap:18px; margin:0 0 18px; }
+  .newshots img { display:block; max-width:100%; height:auto; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.6), 0 0 0 1px var(--line); }
   .new .more { display:inline-block; margin-top:16px; color:var(--bronze); font-weight:700; text-decoration:none; }
   .new .more:hover { color:var(--gold); }
   .feat.noshot { grid-template-columns:1fr; }
@@ -127,7 +143,7 @@
   @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
   .hero { background-size:130% 130%, 130% 130%; animation:glowdrift 14s ease-in-out infinite; }
   .hero > *:not(.stats) { animation:rise .7s ease both; }
-  .hero h1 { animation-delay:.08s; } .hero .tag { animation-delay:.16s; } .hero .sub { animation-delay:.24s; } .hero .dl { animation-delay:.32s; }
+  .hero h1 { animation-delay:.08s; } .hero .tag { animation-delay:.16s; } .hero .dwarf { animation-delay:.24s; } .hero .dl { animation-delay:.32s; }
   .tile { transition:transform .2s, border-color .2s, background .2s; }
   .tile:hover { transform:translateY(-3px); background:var(--panel2); }
   .shot img { transition:transform .35s ease, box-shadow .35s ease; }
@@ -163,15 +179,36 @@
 <header class="hero">
   <div class="herowrap">
     <img src="images/hero.png" alt="Hamingway's HunterTools">
-    <div class="badge">VERSION 1.3.1 &middot; WOW FOREVER</div>
+    <div class="badge">VERSION 1.4.0 &middot; WOW FOREVER</div>
   </div>
   <h1>Hamingway's <b>HunterTools</b></h1>
   <p class="tag" data-de="Das Schweizer Taschenmesser des Jägers">The hunter's Swiss army knife</p>
-  <p class="sub" data-de="Schlag-Timer, Warnungen, Munition, Tiere, Makros und Karte in einem Addon für WoW Forever. Jedes Modul lässt sich einzeln ausschalten, nur im Kampf oder nur mit Ziel anzeigen und frei anpassen. Kein Bildschirm-Chaos.">Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. Every module can be switched off on its own, shown only in combat or with a target, and adjusted freely. No screen clutter.</p>
+    <div class="dwarf big">
+      <img class="pic" src="images/dwarf.png" alt="Hamingway the Hambringer">
+      <div class="bub"><b>Hamingway the Hambringer</b>
+        <p data-de="Willkommen, Jäger! Mein Name ist Hamingway. Meine Knie machen nicht mehr mit, also übergebe ich dir mein Werkzeug: alles, was ein Jäger braucht, in einem Addon für WoW Forever. Schalte aus, was du nicht brauchst, zeige es nur im Kampf oder nur mit Ziel an und passe alles frei an. Dein Bildschirm bleibt aufgeräumt!">Well met, hunter! Name's Hamingway. Me knees be achin', so I'm handin' ye me tools: everything a hunter needs in one addon for WoW Forever. Switch off what ye don't need, show it only in combat or with a target, and adjust it all freely. No screen clutter!</p>
+        <ul class="chips">
+          <li data-de="Swing-Timer">Swing timer</li>
+          <li data-de="Zauberleiste">Cast bar</li>
+          <li data-de="Abklingzeiten">Cooldowns</li>
+          <li data-de="Warnungen">Warnings</li>
+          <li data-de="Aspekt- und Aufspür-Tasten">Aspect and tracking keys</li>
+          <li data-de="Debuffs und Procs">Debuffs and procs</li>
+          <li data-de="Bedrohung und Entfernung">Threat and distance</li>
+          <li data-de="Begleiter und Fütterung">Pet and feeding</li>
+          <li data-de="Munition und Köcher">Ammo and quivers</li>
+          <li data-de="Tierdatenbank">Beast database</li>
+          <li data-de="Tier-Hinweise">Pet popups</li>
+          <li data-de="Karte und Minimap">Map and minimap</li>
+          <li data-de="18 Makros">18 macros</li>
+          <li class="more" data-de="und viele mehr">and many more</li>
+        </ul>
+      </div>
+    </div>
   <div class="dl">
     <a class="cta" href="https://www.curseforge.com/wow/addons/hamingways-hunter-tools" target="_blank" rel="noopener" data-de="Download auf CurseForge">Download on CurseForge</a>
     <a class="btn" href="https://github.com/x1ndlmeister-create/HamingwaysHunterTools-Forever" target="_blank" rel="noopener">GitHub</a>
-    <a class="btn" href="#new" data-de="Neu in 1.3.0">New in 1.3.0</a>
+    <a class="btn" href="#new" data-de="Neu in 1.4.0">New in 1.4.0</a>
     <a class="coffee" href="https://buymeacoffee.com/x1ndlmeister" target="_blank" rel="noopener" data-de="Spendier mir einen Kaffee">Buy me a coffee</a>
   </div>
   <div class="stats">
@@ -184,17 +221,21 @@
 
 <main>
 
-<!-- NEW IN 1.3.0 -->
+<!-- NEW IN 1.4.0 -->
 <section class="new reveal" id="new">
-  <h2><span data-de="Neu in" >New in</span> <span>1.3.0</span></h2>
-  <p class="lead" data-de="Neu: ein komplett überarbeiteter Look, ein neues Tier-Popup und klickbare Abklingzeit-Symbole." >A completely reworked look, a new beast popup and clickable cooldown icons.</p>
+  <h2><span data-de="Neu in" >New in</span> <span>1.4.0</span></h2>
+  <p class="lead" data-de="Neu: eine Schnell-Einrichtung mit Hamingway dem Hambringer, Profile mit Export und Import und eine Farbmarkierung für den Auto-Shot." >A quick install with Hamingway the Hambringer, profiles with export and import, and a colour mark for the Auto Shot.</p>
+  <div class="newshots">
+    <img src="images/install_welcome.png" alt="Quick install: welcome page with the option to take over settings from another character">
+    <img src="images/install_step.png" alt="Quick install: the swing timer page with Hamingway's advice">
+  </div>
   <div class="newgrid">
-    <div class="newitem"><h4 data-de="Neuer Look">New look</h4><p data-de="Abgerundete Fenster und Popups mit Themes, Banner-Kopfzeile, Reitern und neuem Symbolsatz. Popups passen ihre Breite an den Inhalt an.">Rounded windows and popups with themes, a banner header, tabs and a new icon set. Popups adapt their width to their content.</p></div>
-    <div class="newitem"><h4 data-de="Tier-Popup mit Karten">Beast popup with cards</h4><p data-de="Werte, Futter, was das Tier lehrt und was die Familie lernt, in Karten. Futter-Symbole und Tooltips mit dem Zauber-Tooltip der Fähigkeiten.">Stats, food, what the beast teaches and what the family learns, in cards. Food icons and tooltips, with the spell tooltip on abilities.</p></div>
-    <div class="newitem"><h4 data-de="Abklingzeiten klickbar">Clickable cooldowns</h4><p data-de="Neue Layouts „Einzelne Symbole“ und „Eine Leiste“: Klick wirkt den Zauber, dazu eigene Tasten, damit deine Aktionsleiste sauber bleibt.">New layouts “Individual icons” and “One bar”: click casts the spell, plus your own keys to keep the action bar clean.</p></div>
-    <div class="newitem"><h4 data-de="Umlaut-Tasten">Umlaut keys</h4><p data-de="Tasten mit Umlauten wie Ü lassen sich jetzt belegen. Rechtsklick auf einen Tasten-Knopf löscht die Belegung.">Keys with umlauts such as Ü can now be bound. Right-click a key button to clear it.</p></div>
-    <div class="newitem"><h4 data-de="Sperre im Kampf">Combat lock</h4><p data-de="Der Verschieben-Modus sperrt sich beim Kampfbeginn selbst, damit klickbare Frames nicht hängen bleiben.">Move mode locks itself when combat starts, so clickable frames cannot get stuck.</p></div>
-    <div class="newitem"><h4 data-de="Hunger-Warnung früher">Earlier hunger warning</h4><p data-de="Die Warnung kommt jetzt auch, wenn das Tier nur zufrieden (gelb) ist. Abschaltbar.">The warning now also appears when the pet is only content (yellow). Can be switched off.</p></div>
+    <div class="newitem"><h4 data-de="Schnell-Einrichtung">Quick install</h4><p data-de="Hamingway führt dich Seite für Seite durch jedes Werkzeug: an oder aus, Position, Größe und Aussehen. Du siehst jedes Werkzeug live erscheinen. Überspringen ändert nichts, und /hht setup startet sie jederzeit neu.">Hamingway guides you through every tool, one page at a time: on or off, position, size and look. You watch each tool appear live. Skipping changes nothing, and /hht setup starts it again any time.</p></div>
+    <div class="newitem"><h4 data-de="Einstellungen übernehmen">Take over settings</h4><p data-de="Schon Einstellungen auf einem anderen Charakter? Die erste Seite bietet an, sie zu übernehmen, auch aus einem Profil.">Already set up another character? The first page offers to take those settings over, or a profile.</p></div>
+    <div class="newitem"><h4 data-de="Profile">Profiles</h4><p data-de="Einstellungen unter einem Namen speichern, laden, umbenennen, kopieren und löschen. Export und Import als Text, importierte Profile heißen „Importiertes Profil #1“ und so weiter.">Save your settings under a name, load, rename, copy and delete them. Export and import as text; imported ones are called “Imported profile #1” and so on.</p></div>
+    <div class="newitem"><h4 data-de="Auto-Shot: 0,5 s">Auto Shot: 0.5 s</h4><p data-de="Der Schuss geht erst 0,5 s nach dem Stehenbleiben raus. Die Leiste färbt sich optional in den letzten 0,5 s, so siehst du, wie lange du dich noch bewegen kannst.">The shot only fires 0.5 s after you stand still. The bar can change colour for the last 0.5 s, so you see how long you can still move.</p></div>
+    <div class="newitem"><h4 data-de="Anzeigen wenn">Show when</h4><p data-de="Swing-Timer und Zauberleiste zeigen sich immer, im Kampf oder mit Ziel, wie die anderen Module.">Swing timer and cast bar show always, in combat or with a target, like the other modules.</p></div>
+    <div class="newitem"><h4 data-de="Minimap-Button">Minimap button</h4><p data-de="Links- oder Rechtsklick: Einstellungen. Shift + Linksklick: Tier-Datenbank. Shift + Rechtsklick: alle Fenster sperren oder entsperren.">Left or right click: settings. Shift + left click: pet database. Shift + right click: lock or unlock all frames.</p></div>
   </div>
   <a class="more" href="https://github.com/x1ndlmeister-create/HamingwaysHunterTools-Forever/releases" target="_blank" rel="noopener" data-de="Alle Änderungen ansehen &rarr;">See all changes &rarr;</a>
 </section>
@@ -208,7 +249,7 @@
   <span><i style="background:#c183ff"></i><span data-de="Karte">Map</span></span>
 </div>
 <div class="tiles">
-  <div class="tile cmb"><h4 data-de="Schlag-Timer">Swing timer</h4><p data-de="Balken für Automatischen Schuss und Nahkampf mit Reichweitenanzeige.">Auto Shot and melee bars with range state.</p></div>
+  <div class="tile cmb"><h4 data-de="Swing-Timer">Swing timer</h4><p data-de="Balken für Automatischen Schuss und Nahkampf mit Reichweitenanzeige.">Auto Shot and melee bars with range state.</p></div>
   <div class="tile cmb"><h4 data-de="Distanz">Distance</h4><p data-de="Zieldistanz in Stufen, Nahkampf und tote Zone.">Target distance in bands, melee and dead zone.</p></div>
   <div class="tile cmb"><h4 data-de="Zauberleiste">Cast bar</h4><p data-de="Eigene Zauberleiste mit Symbol, Name und Zeit.">Player cast bar with icon, name and time.</p></div>
   <div class="tile cmb"><h4 data-de="Bedrohung">Threat</h4><p data-de="Bedrohungsanzeige und Aggro-Warnung.">Threat meter and aggro warning.</p></div>
@@ -242,10 +283,10 @@
 <section class="feat">
   <div class="shot glow"><img src="images/swing_distance.gif" alt="Swing timer and distance"></div>
   <div class="txt">
-    <div class="kick" data-de="Schlag-Timer und Distanz">Swing timer and distance</div>
+    <div class="kick" data-de="Swing-Timer und Distanz">Swing timer and distance</div>
     <h3 data-de="Immer wissen, wann der nächste Schuss kommt">Always know when the next shot lands</h3>
     <ul class="f">
-      <li class="sep" data-de="Schlag-Timer">Swing timer</li>
+      <li class="sep" data-de="Swing-Timer">Swing timer</li>
       <li data-de="Balken für Automatischen Schuss und Waffenhand, mit Bezeichnung und Restzeit">Auto Shot and main hand bars with label and remaining time</li>
       <li data-de="Reichweitentext: Nahkampf, Fernkampf, Tote Zone, Zu weit, jeweils mit eigener Farbe">Range state text: Melee, Ranged, Dead zone, Too far, each with its own colour</li>
       <li data-de="Fernkampfbalken wird in der toten Zone rot">Ranged bar turns red in the dead zone</li>
@@ -579,7 +620,7 @@
   <div class="shot glow"><img src="images/settings.png" alt="Settings"></div>
   <div class="txt">
     <div class="kick" data-de="Einstellungen">Settings</div>
-    <h3 data-de="Kein Bildschirm-Chaos: du entscheidest, was du siehst">No screen clutter: you decide what you see</h3>
+    <h3 data-de="Ein aufgeräumter Bildschirm: du entscheidest, was du siehst">No screen clutter: you decide what you see</h3>
     <div class="cols">
       <ul class="f">
         <li data-de="Jedes Modul hat einen eigenen Schalter und eine eigene Seite">Every module has its own switch and its own page</li>
@@ -610,6 +651,10 @@
 
 <!-- INSTALL -->
 <h2 class="sec" id="install" data-de="Installation">Install</h2>
+<div class="dwarf" style="margin:0 0 6px">
+  <img class="pic" src="images/dwarf.png" alt="Hamingway the Hambringer">
+  <div class="bub"><b>Hamingway the Hambringer</b><p data-de="Drei Schritte, und die Werkstatt gehört dir. Im Spiel stelle ich dir dann jedes Werkzeug auf seiner eigenen Einstellungsseite vor.">Three steps, and the workshop be yers. In the game I'll introduce every tool on its own settings page.</p></div>
+</div>
 <div class="two">
   <div class="box">
     <h3 data-de="In drei Schritten">In three steps</h3>
@@ -624,6 +669,7 @@
     <ul class="f">
       <li><code>/hht</code> <span data-de="Einstellungen öffnen">open the settings</span></li>
       <li><code>/hht unlock</code> / <code>/hht lock</code> <span data-de="Rahmen entsperren oder sperren">unlock or lock the frames</span></li>
+      <li><code>/hht setup</code> <span data-de="Schnell-Einrichtung starten">start the quick install</span></li>
       <li><code>/hht news</code> <span data-de="Fenster mit den Neuerungen der Version öffnen">open the window with what is new in this version</span></li>
       <li><code>/hht reset</code> <span data-de="Positionen zurücksetzen">reset the positions</span></li>
       <li><code>/hht petinfo</code> <span data-de="Tierfähigkeiten des aktiven Tiers ausgeben">print the active pet's abilities</span></li>
@@ -674,7 +720,10 @@
 </main>
 
 <footer>
-  <p data-de="Gefällt dir das Addon? Über einen Kaffee freue ich mich:">Like the addon? A coffee is always welcome: <a href="https://buymeacoffee.com/x1ndlmeister" target="_blank" rel="noopener">buymeacoffee.com/x1ndlmeister</a></p>
+  <div class="dwarf" style="margin:0 auto 22px">
+    <img class="pic" src="images/dwarf.png" alt="Hamingway the Hambringer">
+    <div class="bub"><b>Hamingway the Hambringer</b><p data-de="Meine Knie sind durch, ich setze mich am Kamin zur Ruhe. Ein heißer Kaffee wäre genau das Richtige für einen alten Zwerg! Und ich verspreche: Er geht nicht für Bier drauf. Na ja... nicht alles. ">Me knees be done, so I'm retirin' by the fire. A hot coffee would suit this old dwarf fine! And I promise, it won't go on ale. Well... not all of it. </p><p style="margin-top:8px"><a href="https://buymeacoffee.com/x1ndlmeister" target="_blank" rel="noopener">buymeacoffee.com/x1ndlmeister</a></p></div>
+  </div>
   <p data-de="Die Bilder zeigen das Addon im Spiel.">The pictures show the addon in game.</p>
   <p data-de="Symbole von Lucide (ISC-Lizenz), lucide.dev.">Icons by Lucide (ISC license), lucide.dev.</p>
   <p data-de="Lizenz GPL-3.0-or-later. Tier- und Munitionshändler-Daten von Huntmaster (MIT), Tierlisten ergänzt aus OneForAll (GPL-3) mit Spawns von Questie. Stallmeister-, Futterhändler- und Lehrer-Positionen teils von Questie, Familienwerte von wow-petopia.com (über OneForAll). Siehe Data\NOTICE.txt.">Licensed under GPL-3.0-or-later. Pet and ammo vendor data from Huntmaster (MIT), beast lists extended from OneForAll (GPL-3) with spawns from Questie. Stable master, food vendor and trainer positions partly from Questie, pet family stats from wow-petopia.com (via OneForAll). See Data\NOTICE.txt.</p>

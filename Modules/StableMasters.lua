@@ -7,7 +7,7 @@ HHT:AddGerman({
     ["Shows stable masters on the world map from a built-in list and learns missing ones."] = "Zeigt Stallmeister aus einer eingebauten Liste auf der Weltkarte und lernt fehlende dazu.",
     ["Show on the world map"] = "Auf der Weltkarte zeigen",
     ["Also show on the minimap"] = "Auch auf der Minimap zeigen",
-    ["Stable masters are learned when you open their stable window. Visit one to add it."] = "Fehlt ein Stallmeister in der Liste, wird er gelernt, sobald du sein Stallfenster oeffnest.",
+    ["Stable masters are learned when you open their stable window. Visit one to add it."] = "Fehlt ein Stallmeister in der Liste, wird er gelernt, sobald du sein Stallfenster öffnest.",
     ["Built-in list: %d stable masters. Learned by visiting: %d."] = "Eingebaute Liste: %d Stallmeister. Durch Besuch gelernt: %d.",
     ["Forget learned stable masters"] = "Gelernte Stallmeister vergessen",
     ["Stable master learned: %s"] = "Stallmeister gelernt: %s",
@@ -15,7 +15,7 @@ HHT:AddGerman({
     ["Only my faction"] = "Nur meine Fraktion",
     ["No stable masters known here."] = "Keine Stallmeister bekannt.",
     ["Stable masters on map"] = "Stallmeister auf der Karte",
-    ["Waypoint to nearest stable master"] = "Wegpunkt zum naechsten Stallmeister",
+    ["Waypoint to nearest stable master"] = "Wegpunkt zum nächsten Stallmeister",
 })
 
 local M = HHT:NewModule("stablemasters", {

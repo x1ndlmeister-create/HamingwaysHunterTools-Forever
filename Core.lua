@@ -613,6 +613,8 @@ function HHT:InitDB()
     local db = HamingwaysHunterToolsDB
     db.general = db.general or {}
     Fill(db.general, GENERAL_DEFAULTS)
+    -- Remembers whether the character already existed before the quick install (decides if its settings are worth sharing).
+    if db.general.origin == nil then db.general.origin = self.firstRun and "new" or "old" end
     if self.UI and self.UI.ApplyTheme then self.UI.ApplyTheme(db.general.theme) end
     db.mods = db.mods or {}
     self.db = db
@@ -620,6 +622,8 @@ function HHT:InitDB()
         local d = db.mods[m.key]
         if not d then d = {}; db.mods[m.key] = d end
         Fill(d, ModuleDefaults(m))
+        -- "Show only in combat" became a choice of the visibility option for the modules that have one.
+        if d.onlyCombat and d.visibility ~= nil then d.visibility = "combat"; d.onlyCombat = false end
         if m.wip then d.enabled = false end
         m.db = d
     end)
@@ -765,6 +769,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         if tm and tm.enabled then tm:SetWindow(tm.db.show == false) end
     elseif msg == "news" then
         if HHT.WhatsNew then HHT.WhatsNew.Open("all") end
+    elseif msg == "setup" then
+        if HHT.Setup then HHT.Setup.Open() end
     elseif msg == "lock" then
         HHT:SetLocked(true)
     elseif msg == "unlock" then

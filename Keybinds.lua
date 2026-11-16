@@ -5,7 +5,7 @@ local L, UI = HHT.L, HHT.UI
 HHT:AddGerman({
     ["Keybinds"] = "Tastenbelegung",
     ["Show keybinds on the icons"] = "Tastenbelegung auf den Symbolen zeigen",
-    ["Keybind text size"] = "Schriftgroesse Tastenbelegung",
+    ["Keybind text size"] = "Schriftgröße Tastenbelegung",
     ["Keybind position"] = "Position Tastenbelegung",
     ["Keybind color"] = "Farbe Tastenbelegung",
     ["Top left"] = "Oben links",

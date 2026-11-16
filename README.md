@@ -2,9 +2,17 @@
 
 ![Hamingway's HunterTools](images/hero.png)
 
+<img src="images/dwarf.png" alt="Hamingway the Hambringer" width="96" align="left">
+
+> **Hamingway the Hambringer:** "Well met, hunter! Me knees be achin', so I'm handin' ye me tools. Take what ye need, leave the rest on the shelf!"
+>
+> *Hamingway, der Zwerg: „Willkommen, Jäger! Meine Knie machen nicht mehr mit, also übergebe ich dir mein Werkzeug. Nimm, was du brauchst, und lass den Rest im Regal!“*
+
+<br clear="left">
+
 **The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 25 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
 
-**Version 1.2.0:** aspect and tracking buttons, pet warnings with a click (feed, Mend Pet, Revive Pet), smarter feeding, Aspect of the Pack warning, ammo, quiver and ammo pouch upgrades, and a What's New window. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+**Version 1.4.0:** a quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
 
 A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
@@ -256,14 +264,14 @@ Learned automatically:
 
 | Gruppe | Module |
 | --- | --- |
-| Kampf | Schlag-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Aspekt und Aufspüren, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
+| Kampf | Swing-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Aspekt und Aufspüren, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Tranq-Rotation |
 | Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber |
 | Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
 
 ### Kampf
 
-**Schlag-Timer**
+**Swing-Timer**
 - Balken für Automatischen Schuss und Waffenhand, mit Bezeichnung und Restzeit
 - Reichweitentext: Nahkampf, Fernkampf, Tote Zone, Zu weit, jeweils mit eigener Farbe
 - Fernkampfbalken wird in der toten Zone rot
@@ -477,6 +485,14 @@ Automatisch gelernt:
 | `/hht shot` | Screenshot scenes with sample data (`/hht shot off` ends them) |
 
 ## Credits
+
+<img src="images/dwarf.png" alt="Hamingway the Hambringer" width="72" align="left">
+
+> **Hamingway:** "Me knees be done, so I'm retirin' by the fire. A hot coffee would suit this old dwarf fine! And I promise, it won't go on ale. Well... not all of it."
+>
+> *„Meine Knie sind durch, ich setze mich am Kamin zur Ruhe. Ein heißer Kaffee wäre genau das Richtige für einen alten Zwerg! Und ich verspreche: Er geht nicht für Bier drauf. Na ja... nicht alles.“*
+
+<br clear="left">
 
 Like the addon? Buy me a coffee: https://buymeacoffee.com/x1ndlmeister
 

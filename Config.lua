@@ -67,7 +67,9 @@ function HHT.CommonOptions(m, form)
     form:Check(L("Unlock this module (move with mouse)"), m, "moveUnlock", function() HHT:ApplyLock() end)
     form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05)
     form:Stepper(L("Opacity"), m.db, "alpha", 0.1, 1, 0.05)
-    form:Check(L("Show only in combat"), m.db, "onlyCombat", function() HHT:ApplyAllLooks() end)
+    if m.db.visibility == nil then
+        form:Check(L("Show only in combat"), m.db, "onlyCombat", function() HHT:ApplyAllLooks() end)
+    end
     form:Cycle(L("Text style"), m.db, "textStyle", {
         { "outline", L("Outline") }, { "thick", L("Thick outline") }, { "plain", L("Plain") } })
     form:Button(L("Reset position"), function()
@@ -110,6 +112,7 @@ function C:BuildGeneral(form)
         function() HHT:RefreshAll(); HHT.Icon.RefreshFinish() end)
     form:Check(L("Animations"), g, "animations")
     form:Check(L("Live preview"), g, "preview", function() C:Select(C.current or "general") end)
+    form:Button(L("Start quick install"), function() if HHT.Setup then HHT.Setup.Open() end end, 200)
 
     form:Header(L("Behavior"))
     local unlock = UI.Check(form.content, L("Unlock frames (move with mouse)"),
@@ -154,7 +157,7 @@ function C:BuildSupport(form)
         HHT.Print(L("Positions reset."))
     end, 220)
     form:Button(L("Reload UI"), function() ReloadUI() end, 220)
-    form:Button(L("Export / import settings"), function() if HHT.Profile then HHT.Profile.Open() end end, 220)
+    form:Button(L("Profiles, export and import"), function() if HHT.Profile then HHT.Profile.Open() end end, 220)
 
     form:Header(L("Support"))
     form:Note(L("Like the addon? Buy me a coffee. Click the field, press Ctrl+C and paste the link into your browser."))
@@ -181,35 +184,54 @@ function C:BuildPage(key)
     local sp, m = SPECIAL[key], HHT.modules[key]
     local P = UI.PAL
 
-    local tile = CreateFrame("Frame", nil, parent)
-    tile:SetSize(40, 40)
-    tile:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -4)
-    UI.Round(tile, 10, P.head[1], P.head[2], P.head[3], 0.16, "BACKGROUND")
-    UI.RoundBorder(tile, 10, P.head[1], P.head[2], P.head[3], 0.4)
-    local icon = tile:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(26, 26)
-    icon:SetPoint("CENTER", tile, "CENTER", 0, 0)
-    Glyph(icon, ICONS[key])
-    icon:SetVertexColor(P.head[1], P.head[2], P.head[3])
-    local title = UI.Text(parent, PageName(key), 18, 1, 1, 1)
-    title:SetPoint("TOPLEFT", parent, "TOPLEFT", 54, -4)
-    local desc = UI.Text(parent, sp and L(sp.desc) or L(m.desc), 11, 0.68, 0.65, 0.58)
-    desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-    desc:SetWidth(m and not m.wip and 300 or 450)
-    desc:SetJustifyH("LEFT")
-    desc:SetWordWrap(true)
-    local headH = math.max(50, 32 + desc:GetStringHeight() + 8)
-
-    local switch
-    if m and not m.wip then
-        switch = UI.Switch(parent, function() return m.db.enabled end, function(v)
-            m.db.enabled = v and true or false
-            HHT:SetEnabled(m, m.db.enabled)
-            C:UpdateSidebar()
-        end)
-        switch:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -10)
-        local sl = UI.Text(parent, L("Module enabled"), 12, 0.85, 0.85, 0.85)
-        sl:SetPoint("RIGHT", switch, "LEFT", -8, 0)
+    local D = HHT.Dwarf
+    local line = (key == "support" or (m and not m.wip)) and D and D.LINES[key]
+    local headH, switch
+    if line then
+        -- The dwarf introduces the page instead of a title; a module's on/off switch sits beside him.
+        local dw = D.New(parent, m and 408 or 532 - 8, nil, 72)
+        dw:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -2)
+        dw:Say(D.Pick(line))
+        headH = math.ceil(dw:GetHeight()) + 6
+        if m then
+            switch = UI.Switch(parent, function() return m.db.enabled end, function(v)
+                m.db.enabled = v and true or false
+                HHT:SetEnabled(m, m.db.enabled)
+                C:UpdateSidebar()
+            end)
+            switch:SetPoint("CENTER", parent, "TOPRIGHT", -66, -(headH / 2) - 9)
+            local sl = UI.Text(parent, L("Module enabled"), 12, 0.85, 0.85, 0.85)
+            sl:SetPoint("BOTTOM", switch, "TOP", 0, 5)
+        end
+    else
+        local tile = CreateFrame("Frame", nil, parent)
+        tile:SetSize(40, 40)
+        tile:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -4)
+        UI.Round(tile, 10, P.head[1], P.head[2], P.head[3], 0.16, "BACKGROUND")
+        UI.RoundBorder(tile, 10, P.head[1], P.head[2], P.head[3], 0.4)
+        local icon = tile:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(26, 26)
+        icon:SetPoint("CENTER", tile, "CENTER", 0, 0)
+        Glyph(icon, ICONS[key])
+        icon:SetVertexColor(P.head[1], P.head[2], P.head[3])
+        local title = UI.Text(parent, PageName(key), 18, 1, 1, 1)
+        title:SetPoint("TOPLEFT", parent, "TOPLEFT", 54, -4)
+        local desc = UI.Text(parent, sp and L(sp.desc) or L(m.desc), 11, 0.68, 0.65, 0.58)
+        desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+        desc:SetWidth(m and not m.wip and 300 or 450)
+        desc:SetJustifyH("LEFT")
+        desc:SetWordWrap(true)
+        headH = math.max(50, 32 + desc:GetStringHeight() + 8)
+        if m and not m.wip then
+            switch = UI.Switch(parent, function() return m.db.enabled end, function(v)
+                m.db.enabled = v and true or false
+                HHT:SetEnabled(m, m.db.enabled)
+                C:UpdateSidebar()
+            end)
+            switch:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -16, -10)
+            local sl = UI.Text(parent, L("Module enabled"), 12, 0.85, 0.85, 0.85)
+            sl:SetPoint("RIGHT", switch, "LEFT", -8, 0)
+        end
     end
     local rule = UI.FadeLine(parent, P.head[1], P.head[2], P.head[3], 0.5)
     rule:SetPoint("TOPLEFT", parent, "TOPLEFT", 4, -headH)
@@ -577,6 +599,33 @@ function C:UpdateMinimap()
     btn:SetPoint("CENTER", Minimap, "CENTER", math.cos(rad) * r, math.sin(rad) * r)
 end
 
+-- Pulses a glow ring around the minimap button (used by the quick install to point at it).
+function C:FlashMinimap(on)
+    local b = self.minimap
+    if not b then return end
+    if not b.glow then
+        local glow = b:CreateTexture(nil, "OVERLAY")
+        glow:SetPoint("CENTER")
+        glow:SetSize(52, 52)
+        glow:SetTexture("Interface\\AddOns\\" .. ADDON .. "\\Media\\RoundMask")
+        glow:SetBlendMode("ADD")
+        glow:SetVertexColor(0.67, 0.83, 0.45)
+        glow:Hide()
+        b.glow = glow
+    end
+    if on and b:IsShown() then
+        local t = 0
+        b.glow:Show()
+        b:SetScript("OnUpdate", function(self, dt)
+            t = t + dt
+            self.glow:SetAlpha(0.25 + 0.55 * (0.5 + 0.5 * math.sin(t * 5)))
+        end)
+    else
+        b.glow:Hide()
+        b:SetScript("OnUpdate", nil)
+    end
+end
+
 function C:BuildMinimap()
     if self.minimap or not Minimap then return end
     local b = CreateFrame("Button", "HamingwaysHunterToolsMinimap", Minimap)
@@ -594,11 +643,13 @@ function C:BuildMinimap()
     hl:SetBlendMode("ADD")
     hl:SetVertexColor(1, 1, 1, 0.25)
     b:SetScript("OnClick", function(_, button)
-        if button == "RightButton" then
-            HHT:SetLocked(not HHT.db.general.locked)
-            C:Refresh()
-        elseif IsShiftKeyDown() and HHT.PetDex then
-            HHT.PetDex:Toggle()
+        if IsShiftKeyDown() then
+            if button == "RightButton" then
+                HHT:SetLocked(not HHT.db.general.locked)
+                C:Refresh()
+            elseif HHT.PetDex then
+                HHT.PetDex:Toggle()
+            end
         else
             C:Toggle()
         end
@@ -616,8 +667,9 @@ function C:BuildMinimap()
     b:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetText("Hamingway's HunterTools", 0.67, 0.83, 0.45)
-        GameTooltip:AddLine(L("Left click: settings. Right click: lock/unlock frames."), 0.9, 0.9, 0.9, true)
+        GameTooltip:AddLine(L("Left or right click: settings."), 0.9, 0.9, 0.9, true)
         GameTooltip:AddLine(L("Shift + left click: pet database."), 0.9, 0.9, 0.9, true)
+        GameTooltip:AddLine(L("Shift + right click: lock/unlock all frames."), 0.9, 0.9, 0.9, true)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)

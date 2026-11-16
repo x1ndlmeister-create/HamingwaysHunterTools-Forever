@@ -3,7 +3,7 @@ local ADDON, HHT = ...
 local L, UI, Range = HHT.L, HHT.UI, HHT.Range
 
 HHT:AddGerman({
-    ["Swing timer"] = "Schlag-Timer",
+    ["Swing timer"] = "Swing-Timer",
     ["Auto Shot and melee swing bars with range state."] = "Auto-Shot- und Nahkampf-Balken mit Reichweitenanzeige.",
     ["Show ranged bar"] = "Fernkampf-Balken zeigen",
     ["Show melee bar"] = "Nahkampf-Balken zeigen",
@@ -14,7 +14,7 @@ HHT:AddGerman({
     ["Ranged bar turns red in the dead zone"] = "Fernkampf-Balken rot in der Totzone",
     ["Show border"] = "Rahmen zeigen",
     ["Bar width"] = "Balkenbreite",
-    ["Bar height"] = "Balkenhoehe",
+    ["Bar height"] = "Balkenhöhe",
     ["Background opacity"] = "Hintergrund-Deckkraft",
     ["Bar mode"] = "Balkenmodus",
     ["Ranged bar"] = "Fernkampf-Balken",
@@ -34,6 +34,10 @@ HHT:AddGerman({
     ["Auto Shot"] = "Auto-Shot",
     ["Main hand"] = "Haupthand",
     ["Mark 0.5 s before the shot"] = "Markierung 0,5 s vor dem Schuss",
+    ["Color the bar for the last 0.5 s"] = "Leiste in den letzten 0,5 s einfärben",
+    ["Last 0.5 s of the shot"] = "Letzte 0,5 s vor dem Schuss",
+    ["Auto Shot only fires 0.5 s after you stand still. You can move until the bar reaches the grey line without delaying the shot."] =
+        "Der Auto-Shot geht erst 0,5 s nach dem Stehenbleiben raus. Du kannst dich bewegen, bis die Leiste die graue Markierung erreicht, ohne den Schuss zu verzögern.",
 })
 
 local M = HHT:NewModule("swing", {
@@ -44,11 +48,12 @@ local M = HHT:NewModule("swing", {
         showRanged = true, showMelee = true, showRange = true,
         showTime = true, showLabel = true, showSpark = true, colorByRange = true,
         border = true, barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
-        showMark = true,
+        showMark = true, colorMark = true,
         width = 220, height = 16, spacing = 3, bgAlpha = 0.85,
         visibility = "combattarget", fillMode = "fill",
         colors = {
             ranged = { 0.67, 0.83, 0.45 },
+            shot = { 0.95, 0.80, 0.20 },
             melee = { 0.88, 0.58, 0.24 },
             dead = { 0.90, 0.20, 0.20 },
             bg = { 0.05, 0.04, 0.03 },
@@ -209,9 +214,11 @@ local function UpdateRow(self, row, t, now, demoPhase)
     else
         row.spark:Hide()
     end
+    return remain, duration
 end
 
 local function UpdateMark(self, row, t, unlocked)
+    local mark = row.mark
     local mark = row.mark
     local duration = t.duration or (unlocked and 2.2) or nil
     if not (self.db.showMark and duration and duration > 0.5) then mark:Hide(); return end
@@ -260,18 +267,15 @@ function M:Tick(dt)
             f.range:SetText("")
         end
     end
-    if db.colorByRange then
-        if state == "dead" then
-            f.ranged.bar:SetStatusBarColor(HHT.Col(db, "dead"))
-        else
-            f.ranged.bar:SetStatusBarColor(HHT.Col(db, "ranged"))
-        end
-    end
-
     local now = GetTime()
     if db.showRanged then
-        UpdateRow(self, f.ranged, self.timers.ranged, now, unlocked and 0 or nil)
+        local remain, dur = UpdateRow(self, f.ranged, self.timers.ranged, now, unlocked and 0 or nil)
         UpdateMark(self, f.ranged, self.timers.ranged, unlocked)
+        if db.colorByRange or db.colorMark then
+            local key = (db.colorByRange and state == "dead") and "dead" or "ranged"
+            if db.colorMark and key == "ranged" and remain and dur and dur > 0.5 and remain <= 0.5 then key = "shot" end
+            f.ranged.bar:SetStatusBarColor(HHT.Col(db, key))
+        end
     end
     if db.showMelee then UpdateRow(self, f.melee, self.timers.melee, now, unlocked and 1.1 or nil) end
 end
@@ -286,6 +290,8 @@ function M:BuildOptions(form)
     form:Check(L("Show bar labels"), db, "showLabel")
     form:Check(L("Show spark"), db, "showSpark")
     form:Check(L("Mark 0.5 s before the shot"), db, "showMark")
+    form:Check(L("Color the bar for the last 0.5 s"), db, "colorMark")
+    form:Note(L("Auto Shot only fires 0.5 s after you stand still. You can move until the bar reaches the grey line without delaying the shot."), 0.67, 0.83, 0.45)
     form:Check(L("Show border"), db, "border")
     form:Check(L("Ranged bar turns red in the dead zone"), db, "colorByRange")
     form:Stepper(L("Bar width"), db, "width", 80, 600, 10)
@@ -299,6 +305,7 @@ function M:BuildOptions(form)
     form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Header(L("Colors"))
     form:Color(L("Ranged bar"), db.colors, "ranged")
+    form:Color(L("Last 0.5 s of the shot"), db.colors, "shot")
     form:Color(L("Melee bar"), db.colors, "melee")
     form:Color(L("Dead zone"), db.colors, "dead")
     form:Color(L("Range: melee"), db.colors, "rMelee")
