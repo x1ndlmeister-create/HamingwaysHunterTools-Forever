@@ -232,7 +232,7 @@ local TRAINER_DEFS = {
 local teachSpell = {}
 PD.trainerAbilities = {}
 for _, def in ipairs(TRAINER_DEFS) do
-    local a = { key = def.key, name = def.name, families = {}, famSet = {}, byRank = {}, ranks = {}, all = true, trainer = true, passive = def.key ~= "growl" }
+    local a = { key = def.key, name = def.name, families = {}, famSet = {}, byRank = {}, ranks = {}, all = true, trainer = true }
     for i, spell in ipairs(def.spells) do
         local r = { rank = i, spell = spell, level = (def.levels or TRAINER_LEVELS)[i], npcs = {} }
         a.ranks[i], a.byRank[i] = r, r
@@ -513,25 +513,6 @@ end
 
 PD.SpellName, PD.NameKeys, PD.RankFrom = SpellName, NameKeys, RankFrom
 
--- A pet holds at most 4 active abilities (Growl, Bite, Claw, Dash, Prowl ...); passives such as Great Stamina do not count.
-PD.MAX_ACTIVE = 4
-
-function PD.ActiveCount(ranks)
-    local n = 0
-    for key, rank in pairs(ranks) do
-        if rank > 0 then
-            if byKey[key] or key == "growl" then n = n + 1 end
-        end
-    end
-    return n
-end
-
--- False when the ability would be a new active one and the pet already has all its slots filled.
-function PD.PetHasRoom(a, ranks)
-    if a.passive or (ranks[a.key] or 0) > 0 then return true end
-    return PD.ActiveCount(ranks) < PD.MAX_ACTIVE
-end
-
 function PD.PetBookCount() return #PetBook() end
 
 -- True while the open craft window is the Beast Training window.
@@ -741,7 +722,7 @@ function PD.PetGap(b, ignored)
     local best
     for _, e in ipairs(PD.BeastAbilities(b)) do
         local pet = ranks[e.a.key] or 0
-        if e.rank > 0 and e.rank > pet and e.rank > PD.KnownRank(e.a.key) and PD.PetHasRoom(e.a, ranks) and (e.a.all or e.a.famSet[info.family]) and not (ignored and ignored[e.a.key]) then
+        if e.rank > 0 and e.rank > pet and e.rank > PD.KnownRank(e.a.key) and (e.a.all or e.a.famSet[info.family]) and not (ignored and ignored[e.a.key]) then
             if not best or e.rank > best.rank then
                 best = { a = e.a, rank = e.rank, known = pet, petGap = true, fits = { L(info.family) .. " (" .. (info.name or L("your pet")) .. ")" } }
             end

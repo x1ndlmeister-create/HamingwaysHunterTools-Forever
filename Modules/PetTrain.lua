@@ -176,7 +176,7 @@ function M:Missing()
                 local d = a.byRank[r]
                 if d and (d.level or 0) <= info.level then want = r; break end
             end
-            if want and want > have and PD.PetHasRoom(a, book) then list[#list + 1] = { a = a, rank = want, have = have } end
+            if want and want > have then list[#list + 1] = { a = a, rank = want, have = have } end
         end
     end
     return list
