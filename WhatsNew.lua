@@ -15,6 +15,15 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.4.4",
+        en = {
+            "Pet training hint and pet upgrades: a pet holds at most 4 active abilities (Growl, Bite, Claw, Dash, Prowl ...). New active abilities are no longer offered while all 4 slots are taken; new ranks of abilities the pet already has still are.",
+        },
+        de = {
+            "Ausbildungs-Hinweis und Begleiter-Upgrades: Ein Begleiter hat höchstens 4 aktive Fähigkeiten (Knurren, Biss, Klaue, Spurt, Schleichen ...). Neue aktive Fähigkeiten werden nicht mehr angeboten, solange alle 4 Plätze belegt sind; neue Ränge bereits vorhandener Fähigkeiten weiterhin.",
+        },
+    },
+    {
         v = "1.4.3",
         en = {
             "Rare pet arrow: click it to target the beast. A macro 'HHT Beast' is created and updated for you (it is not placed on any bar), and the chat tells you when it was updated. Clicking a spawn point on the world map now also sets the arrow.",
