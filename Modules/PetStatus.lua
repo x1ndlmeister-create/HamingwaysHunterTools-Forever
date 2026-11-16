@@ -46,6 +46,10 @@ HHT:AddGerman({
     ["Show upgrade arrow"] = "Upgrade-Pfeil zeigen",
     ["Pet upgrades in this zone: %d"] = "Begleiter-Upgrades in dieser Zone: %d",
     ["Click to show the list."] = "Klick zeigt die Liste.",
+    ["Hide the default pet frame"] = "Standard-Begleiterfenster ausblenden",
+    ["Attach to the default pet frame"] = "Unter das Standard-Begleiterfenster setzen (behält dessen Porträt, Leben, Fokus, Zufriedenheit)",
+    ["Attach offset X"] = "Anheften Abstand X",
+    ["Attach offset Y"] = "Anheften Abstand Y",
 })
 
 local M = HHT:NewModule("pet", {
@@ -59,6 +63,7 @@ local M = HHT:NewModule("pet", {
         showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10, barSpacing = 2,
         showAbilities = true, showFocus = true, showFocusLabel = true, showFocusValue = true, abilitySize = 18, abilityNumbers = true, abilityBorder = true, showAutocast = true,
         showFrenzy = true, frenzySize = 26, showUpgrades = true,
+        hideDefault = true, attachDefault = false, attachX = 0, attachY = 0,
         colors = {
             health = { 0.67, 0.83, 0.45 },
             xp = { 0.58, 0.40, 0.85 },
@@ -120,8 +125,9 @@ function M:Build()
     end
     -- Frenzy (pet buff) via the client aura container, so it also works in combat.
     f.buffs = HHT.AuraBar.New(f, function()
-        local r, g, b = HHT.Col(self.db, "edge")
-        return { size = self.db.frenzySize, spacing = 0, shape = self.db.shape, borderSize = 1, borderAlpha = 1, color = { r, g, b } }
+        local v = self.view or self.db
+        local r, g, b = HHT.Col(v, "edge")
+        return { size = v.frenzySize, spacing = 0, shape = v.shape, borderSize = 1, borderAlpha = 1, color = { r, g, b } }
     end)
     f.frenzyDemo = Icon.New(f)
     f.frenzyDemo:Hide()
@@ -149,6 +155,13 @@ function M:Build()
     end)
     f.up:HookScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     f.up:Hide()
+    -- level badge drawn over the Blizzard portrait while docked
+    f.badge = Icon.New(f)
+    f.badge:Style(20, "round", 1, 1, false)
+    f.badge:SetIcon("Interface\\Buttons\\WHITE8X8")
+    f.badge.tex:SetVertexColor(0.05, 0.04, 0.03)
+    f.badge:SetBorderColor(0.78, 0.60, 0.20)
+    f.badge:Hide()
     HHT:MakeMovable(f, self, "main", L("Pet status"))
     self:Layout()
 end
@@ -156,16 +169,81 @@ end
 function M:OnEnable()
     self:Build()
     self:Layout()
+    self:SetDefaultFrame(self.db.hideDefault and not (self.db.attachDefault and _G.PetFrame))
     self.exists = nil
 end
 
 function M:OnDisable()
     if self.frame then self.frame:Hide() end
+    self:SetDefaultFrame(false)
 end
 
 function M:Refresh()
     self:Layout()
+    self:SetDefaultFrame(self.db.hideDefault and not (self.db.attachDefault and _G.PetFrame))
     self.exists = nil
+end
+
+-- Blizzard shows the pet frame again through its unit watch, so the hidden state is enforced on every alpha or show call.
+function M:SetDefaultFrame(hidden)
+    local b = _G.PetFrame
+    if not b then return end
+    M.defaultHidden = hidden and true or false
+    b:SetAlpha(hidden and 0 or 1)
+    if M.defaultHooked then return end
+    M.defaultHooked = true
+    local busy = false
+    local function Enforce(f)
+        if not M.defaultHidden or busy then return end
+        busy = true
+        f:SetAlpha(0)
+        busy = false
+    end
+    for _, fn in ipairs({ "SetAlpha", "SetAlphaFromBoolean", "Show", "SetShown" }) do
+        if b[fn] then pcall(hooksecurefunc, b, fn, Enforce) end
+    end
+    pcall(b.HookScript, b, "OnShow", Enforce)
+end
+
+local DOCK_INSET = 6
+local DOCK_GAP = -2
+
+-- Docked to the default pet frame, Blizzard keeps portrait, health, focus and happiness; only the extra rows are ours.
+function M:BuildView()
+    local db = self.db
+    self.view = nil
+    if not (db.attachDefault and _G.PetFrame) then return db end
+    local hb = _G.PetFrameHealthBar
+    local w = hb and HHT.SafeNumber(hb:GetWidth())
+    local v = setmetatable({
+        docked = true, showFocus = false, showHappiness = false, height = 1, iconSize = 1,
+        width = (w and w > 20 and w or db.width) - DOCK_INSET,
+    }, { __index = db })
+    self.view = v
+    return v
+end
+
+-- Docks the frame under the default pet frame; it then follows that frame instead of its own saved position.
+function M:ApplyAnchor()
+    local f = self.frame
+    local pf = _G.PetFrame
+    local db = self.db
+    local want = db.attachDefault and pf and true or false
+    local was = f.hhtFollow and true or false
+    if want then
+        f.hhtFollow = true
+        f:ClearAllPoints()
+        -- aligned with the bars of the Blizzard frame, so the rows line up under its focus bar
+        local anchor = _G.PetFrameManaBar or _G.PetFrameHealthBar or pf
+        f:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", DOCK_INSET + (db.attachX or 0), DOCK_GAP + (db.attachY or 0))
+    end
+    if want ~= was then
+        if not want then
+            f.hhtFollow = nil
+            HHT:ApplyPosition(f)
+        end
+        HHT:ApplyLock()
+    end
 end
 
 function M:OnLockChanged()
@@ -176,13 +254,37 @@ end
 function M:Layout()
     local f = self.frame
     if not f then return end
-    local db = self.db
+    local db = self:BuildView()
+    local docked = db.docked and true or false
     local s = db.iconSize
-    f.portrait:Style(s, db.shape, 2, 1, false)
+    local xoff = docked and 0 or s + 6
+    f.portrait:SetShown(not docked)
+    f.bar:SetShown(not docked)
+    -- docked: level and upgrade arrow are drawn over the Blizzard portrait
+    local pp = _G.PetPortrait or (_G.PetFrame and _G.PetFrame.portrait) or f.portrait
+    local cnt = f.portrait.count
+    f.badge:ClearAllPoints()
+    f.up:ClearAllPoints()
+    cnt:ClearAllPoints()
+    if docked then
+        f.badge:SetPoint("CENTER", pp, "BOTTOMLEFT", 5, 5)
+        f.up:SetPoint("TOPLEFT", pp, "TOPLEFT", -8, 8)
+        cnt:SetParent(f.badge)
+        cnt:SetPoint("CENTER", f.badge, "CENTER", 0, 0)
+        cnt:SetFont(cnt:GetFont(), 10, "OUTLINE")
+    else
+        f.badge:Hide()
+        f.up:SetPoint("TOPLEFT", f.portrait, "TOPLEFT", -8, 8)
+        cnt:SetParent(f.portrait.over)
+        cnt:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMRIGHT", -1, 2)
+    end
+    if not docked then
+        f.portrait:Style(s, db.shape, 2, 1, false)
+        f.portrait:SetBorderColor(HHT.Col(db, "edge"))
+    end
     f.portrait:ClearAllPoints()
-    f.portrait:SetBorderColor(HHT.Col(db, "edge"))
     local pdx = HHT.modules.petdex
-    local click = not HHT:IsUnlocked(self) and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick and true or false
+    local click = not docked and not HHT:IsUnlocked(self) and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick and true or false
     f.portrait:EnableMouse(click)
     if not f.portrait.petdexHooked then
         f.portrait.petdexHooked = true
@@ -200,7 +302,7 @@ function M:Layout()
     local fh = math.max(s, totalH)
     f.portrait:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(fh - s) / 2)
     f.bar:ClearAllPoints()
-    f.bar:SetPoint("TOPLEFT", f, "TOPLEFT", s + 6, -(fh - totalH) / 2)
+    f.bar:SetPoint("TOPLEFT", f, "TOPLEFT", xoff, -(fh - totalH) / 2)
     local prev = f.bar
     local xpOnly = not db.showXp
     local subXp = setmetatable({ height = db.subHeight, showLabel = db.showTraining, showTime = true,
@@ -238,7 +340,7 @@ function M:Layout()
     f.happy:ClearAllPoints()
     f.happy:SetPoint("LEFT", f.bar, "RIGHT", 4, 0)
     f.happy:SetShown(db.showHappiness)
-    local w = s + 6 + db.width + (db.showHappiness and (db.height + 10) or 0)
+    local w = docked and db.width or (s + 6 + db.width + (db.showHappiness and (db.height + 10) or 0))
     local fullH = fh
     f.abil:ClearAllPoints()
     f.abil:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -gap)
@@ -256,7 +358,11 @@ function M:Layout()
             local c = f.buffs.conts["hht_frenzy"]
             if c then
                 c:ClearAllPoints()
-                c:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
+                if docked then
+                    c:SetPoint("RIGHT", pp, "LEFT", -4, 0)
+                else
+                    c:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
+                end
             end
             f.buffs:StyleAll()
         else
@@ -264,11 +370,16 @@ function M:Layout()
         end
     end
     f:SetSize(w, fullH)
+    self:ApplyAnchor()
     local d = f.frenzyDemo
     d:Style(db.frenzySize, db.shape, 1, 1, false)
     d:SetBorderColor(HHT.Col(db, "edge"))
     d:ClearAllPoints()
-    d:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
+    if docked then
+        d:SetPoint("RIGHT", pp, "LEFT", -4, 0)
+    else
+        d:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMLEFT", -4, (s - db.frenzySize) / 2)
+    end
     HHT:ApplyGlobalLook(f)
 end
 
@@ -338,17 +449,18 @@ end
 function M:Tick()
     local f = self.frame
     if not f then return end
-    local db = self.db
+    local db = self.view or self.db
     local unlocked = HHT:IsUnlocked(self)
     local bar = f.bar
     self:UpdateUpgrade(unlocked)
+    if M.defaultHidden and _G.PetFrame and _G.PetFrame:GetAlpha() ~= 0 then _G.PetFrame:SetAlpha(0) end
 
     local ok, ex = pcall(UnitExists, "pet")
     local exists = ok and not HHT.IsSecret(ex) and ex and true or false
 
     -- Frenzy comes from the real pet buff, so the preview shows a stand-in icon.
     local demo = f.frenzyDemo
-    local showDemo = unlocked and not exists and db.showFrenzy and true or false
+    local showDemo = unlocked and db.showFrenzy and true or false
     if demo:IsShown() ~= showDemo then
         if showDemo then
             local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(19615))
@@ -367,6 +479,7 @@ function M:Tick()
         if not (pl and pl > 0) then pl = 60 end
         bar.label:SetText(L("Pet"))
         f.portrait.count:SetText(db.showLevel and tostring(pl) or "")
+        f.badge:SetShown(db.docked and db.showLevel and true or false)
         bar.time:SetText("70%")
         f.portrait:SetIcon(HHT.Spells.Resolve("@callPet").icon)
         f.happy.tex:SetTexCoord(unpack(HAPPY_COORDS[3]))
@@ -386,6 +499,7 @@ function M:Tick()
         bar.label:SetText(L("No pet"))
         bar.time:SetText("")
         f.portrait.count:SetText("")
+        f.badge:Hide()
         f.happy:Hide()
         f.xp:Hide()
         f.loy:Hide()
@@ -420,6 +534,7 @@ function M:Tick()
     else
         f.portrait.count:SetText("")
     end
+    f.badge:SetShown(db.docked and db.showLevel and true or false)
 
     if dead then
         bar.bar:SetMinMaxValues(0, 1)
@@ -477,7 +592,7 @@ end
 
 -- Pet bar spells with cooldown swipe and autocast state; commands (attack, follow...) are skipped.
 function M:Abilities(preview)
-    local f, db = self.frame, self.db
+    local f, db = self.frame, self.view or self.db
     if not db.showAbilities then return end
     local icons = f.icons
     local j = 0
@@ -526,7 +641,7 @@ local LOYALTY_COLORS = {
 
 -- Experience, training points and loyalty rows; each one hides itself when its API gives nothing.
 function M:Extras(preview)
-    local f, db = self.frame, self.db
+    local f, db = self.frame, self.view or self.db
     if db.showFocus then
         f.focus.label:SetText(L("Focus"))
         if preview then
@@ -667,7 +782,10 @@ function M:BuildOptions(form)
     Bar.AddSmooth(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Hide when no pet"), db, "hideNoPet")
-    form:Header(L("Colors"))
+    form:Check(L("Hide the default pet frame"), db, "hideDefault")
+    form:Check(L("Attach to the default pet frame"), db, "attachDefault")
+    form:Stepper(L("Attach offset X"), db, "attachX", -400, 400, 1)
+    form:Stepper(L("Attach offset Y"), db, "attachY", -400, 400, 1)
     form:Color(L("Health color"), db.colors, "health")
     form:Color(L("Experience color"), db.colors, "xp")
     form:Color(L("Focus color"), db.colors, "focus")

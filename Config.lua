@@ -86,6 +86,67 @@ end
 -- ---------------------------------------------------------------------------
 -- Pages
 -- ---------------------------------------------------------------------------
+-- Small popup next to the unlock switch: which modules take part when all frames are unlocked (all by default).
+function C:OpenMoveSet(anchor)
+    local g = HHT.db.general
+    local mods, seen = {}, {}
+    for _, f in ipairs(HHT.movables) do
+        local m = f.hht and f.hht.module
+        if m and m.enabled and not seen[m.key] then
+            seen[m.key] = true
+            mods[#mods + 1] = m
+        end
+    end
+    local w = self.moveSet
+    if not w then
+        w = UI.Window("HamingwaysHunterToolsMoveSet", 300, 120, L("Movable modules"))
+        w:SetFrameStrata("FULLSCREEN_DIALOG")
+        if UISpecialFrames then table.insert(UISpecialFrames, "HamingwaysHunterToolsMoveSet") end
+        w.checks = {}
+        local function All(on)
+            g.moveSkip = {}
+            if not on then
+                for _, m in ipairs(w.mods) do g.moveSkip[m.key] = true end
+            end
+            HHT:ApplyLock()
+            for _, c in pairs(w.checks) do c:Refresh() end
+        end
+        w.all = UI.Button(w, 80, 22, L("All"), function() All(true) end)
+        w.none = UI.Button(w, 80, 22, L("None"), function() All(false) end)
+        self.moveSet = w
+    end
+    w.mods = mods
+    for _, c in pairs(w.checks) do c:Hide() end
+    local y = -40
+    for _, m in ipairs(mods) do
+        local c = w.checks[m.key]
+        if not c then
+            c = UI.Check(w, L(m.name),
+                function() return HHT:InMoveSet(m) end,
+                function(v)
+                    g.moveSkip = g.moveSkip or {}
+                    g.moveSkip[m.key] = (not v) or nil
+                    HHT:ApplyLock()
+                end)
+            w.checks[m.key] = c
+        end
+        c:ClearAllPoints()
+        c:SetPoint("TOPLEFT", w, "TOPLEFT", 16, y)
+        c:Refresh()
+        c:Show()
+        y = y - 24
+    end
+    w.all:ClearAllPoints()
+    w.all:SetPoint("TOPLEFT", w, "TOPLEFT", 16, y - 6)
+    w.none:ClearAllPoints()
+    w.none:SetPoint("LEFT", w.all, "RIGHT", 6, 0)
+    w:SetHeight(-y + 40)
+    w:ClearAllPoints()
+    w:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -8)
+    w:Show()
+    w:Raise()
+end
+
 function C:BuildGeneral(form)
     local g = HHT.db.general
     form:Header(L("Appearance"))
@@ -119,6 +180,18 @@ function C:BuildGeneral(form)
         function() return g.locked == false end,
         function(v) HHT:SetLocked(not v) end)
     form:Place(unlock, 20, 4, 4)
+    local gear = UI.Button(form.content, 24, 20, "", function() C:OpenMoveSet(unlock) end)
+    gear:SetPoint("LEFT", unlock, "RIGHT", 8, 0)
+    local gicon = gear:CreateTexture(nil, "ARTWORK")
+    gicon:SetSize(14, 14)
+    gicon:SetPoint("CENTER")
+    gicon:SetTexture(UI.ICON_DIR .. "settings")
+    gear:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L("Choose which modules can be moved"))
+        GameTooltip:Show()
+    end)
+    gear:HookScript("OnLeave", function() GameTooltip:Hide() end)
     form:Check(L("Snap frames to each other while moving (Shift = off)"), g, "snap")
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)

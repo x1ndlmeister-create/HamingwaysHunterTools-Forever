@@ -20,7 +20,7 @@ local M = HHT:NewModule("castbar", {
     positions = { main = { "CENTER", "CENTER", 0, -128 } },
     defaults = {
         showIcon = true, showLabel = true, showTime = true, showSpark = true, border = true,
-        hideDefault = false, visibility = "always", barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
+        hideDefault = true, visibility = "always", barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
         width = 260, height = 22, bgAlpha = 0.85,
         colors = {
             cast = { 0.67, 0.83, 0.45 },
@@ -79,9 +79,40 @@ function M:Build()
     self:Layout()
 end
 
+-- Blizzard raises the bar's alpha again whenever a cast starts, so the hidden state is enforced by hooks.
 function M:SetDefaultBar(hidden)
     local b = _G.PlayerCastingBarFrame
-    if b and b.SetAlpha then b:SetAlpha(hidden and 0 or 1) end
+    if not b then return end
+    M.defaultHidden = hidden and true or false
+    if hidden then b:SetAlpha(0) else b:SetAlpha(1) end
+    -- detaching the unit stops the bar from reacting to cast events at all (interrupt and failed states included)
+    if b.SetUnit then
+        if hidden then pcall(b.SetUnit, b, nil) else pcall(b.SetUnit, b, "player", true, false) end
+    end
+    if M.defaultHooked then return end
+    M.defaultHooked = true
+    local busy = false
+    if b.SetUnit then
+        pcall(hooksecurefunc, b, "SetUnit", function(f, unit)
+            if M.defaultHidden and unit and not busy then
+                busy = true
+                pcall(f.SetUnit, f, nil)
+                busy = false
+            end
+        end)
+    end
+    local function Enforce(f)
+        if not M.defaultHidden or busy then return end
+        busy = true
+        f:SetAlpha(0)
+        busy = false
+    end
+    -- the alpha passed in can be a secret value, so it is never compared; every call is simply overridden
+    for _, fn in ipairs({ "SetAlpha", "SetAlphaFromBoolean", "Show", "SetShown" }) do
+        if b[fn] then pcall(hooksecurefunc, b, fn, Enforce) end
+    end
+    pcall(b.HookScript, b, "OnShow", Enforce)
+    pcall(b.HookScript, b, "OnUpdate", Enforce)
 end
 
 function M:OnEnable()

@@ -18,6 +18,8 @@ HHT:AddGerman({
     ["Show remaining time as fading art"] = "Restzeit als verblassende Grafik zeigen",
     ["Reverse the fading (art fills up instead of draining)"] = "Verblassen umkehren (Grafik füllt sich statt zu leeren)",
     ["Preview"] = "Vorschau",
+    ["Show as icon"] = "Als Symbol anzeigen",
+    ["Unlock the frames to drag the icons to where you want them."] = "Entsperre die Fenster, um die Symbole an die gewünschte Stelle zu ziehen.",
     ["Fades from"] = "Verblasst von",
     ["Top"] = "Oben",
     ["Bottom"] = "Unten",
@@ -78,7 +80,7 @@ local M = HHT:NewModule("procs", {
     desc = "Big art around your character while a proc or buff is active, also in combat.",
     positions = { main = { "CENTER", "CENTER", 0, 0 } },
     defaults = {
-        size = 200, sound = true, drain = true, rising = false, scan = false,
+        size = 200, sound = true, drain = true, rising = false, scan = false, iconSize = 48, shape = "round",
         entries = { { ids = { 6150 }, art = ArtIndex(MEDIA .. "Procs\\ArrowStage1") } }, -- Quick Shots
     },
 })
@@ -98,15 +100,37 @@ end
 -- Hunter pet buff Frenzy (Frenzy Effect), added once so deleting it sticks.
 function M:AddFrenzy()
     local db = self.db
-    if db.frenzyAdded then return end
-    db.frenzyAdded = true
-    if #db.entries < MAXP then
-        db.entries[#db.entries + 1] = { ids = { 19615 }, art = ArtIndex(MEDIA .. "Procs\\Berserk"), unit = "pet" }
+    if not db.frenzyAdded then
+        db.frenzyAdded = true
+        if #db.entries < MAXP then
+            db.entries[#db.entries + 1] = { ids = { 19615 }, art = ArtIndex(MEDIA .. "Procs\\Berserk"), unit = "pet", from = "right", y = 140 }
+        end
+        db.frenzyPlaced = true
+    elseif not db.frenzyPlaced then
+        -- earlier versions put Frenzy untouched in the middle; move it above and let it fade from the right, once
+        db.frenzyPlaced = true
+        for _, e in ipairs(db.entries) do
+            if e.unit == "pet" and e.ids[1] == 19615 and e.from == nil and e.x == nil and e.y == nil then
+                e.from, e.y = "right", 140
+            end
+        end
     end
 end
 
 local function ArtOf(e)
     return ARTS[e and e.art or 1] or ARTS[1]
+end
+
+local function IconSize(db, e)
+    return (db.iconSize or 48) * ((e and e.scale) or 1)
+end
+
+local function IconOf(e)
+    for _, id in ipairs(e.ids) do
+        local t = S.Texture(id)
+        if t then return t end
+    end
+    return 134400
 end
 
 function M:OnInit()
@@ -181,11 +205,28 @@ function M:InitArt(button, key)
     bar:SetFrameLevel(holder:GetFrameLevel() + 1)
     local ok, err = pcall(button.SetDurationBar, button, bar)
     if not ok then M.barErr = tostring(err) end
-    local ico = button:CreateTexture(nil, "OVERLAY")
+    -- icon mode: the client fills this with the aura icon; it stays invisible while the art is used
+    local border = button:CreateTexture(nil, "BACKGROUND")
+    border:SetColorTexture(0, 0, 0, 1)
+    border:Hide()
+    local ico = button:CreateTexture(nil, "ARTWORK")
     ico:SetSize(1, 1)
     ico:SetPoint("CENTER")
     ico:SetAlpha(0)
+    ico:SetTexCoord(0.07, 0.93, 0.07, 0.93)
     button:SetIcon(ico)
+    local cd = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    cd:SetAllPoints(ico)
+    cd:SetDrawEdge(false)
+    cd:SetReverse(true)
+    cd:SetAlpha(0)
+    pcall(button.SetDurationCooldown, button, cd)
+    local tf = CreateFrame("Frame", nil, button)
+    tf:SetAllPoints(ico)
+    tf:SetFrameLevel(button:GetFrameLevel() + 3)
+    local count = tf:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+    count:SetPoint("BOTTOMRIGHT", -1, 2)
+    pcall(button.SetApplicationCount, button, count, {})
 
     local function Pulse(frame)
         local ag = frame:CreateAnimationGroup()
@@ -208,7 +249,7 @@ function M:InitArt(button, key)
     end)
 
     self.arts[idx] = self.arts[idx] or {}
-    local r = { art = art, bar = bar, button = button, idx = idx }
+    local r = { art = art, bar = bar, button = button, idx = idx, tex = ico, border = border, cd = cd }
     self:SetDirection(r)
     table.insert(self.arts[idx], r)
     self:StyleArt(r, ArtOf(self.db.entries[idx]))
@@ -243,13 +284,28 @@ function M:StyleArt(r, a)
     bar:SetOrientation((from == "top" or from == "bottom") and "VERTICAL" or "HORIZONTAL")
     bar:SetReverseFill(from == "bottom" or from == "left")
     self:SetDirection(r)
-    if db.drain then
+    local icon = e.icon and true or false
+    if icon then
+        r.art:SetAlpha(0)
+        bar:Hide()
+    elseif db.drain then
         r.art:SetAlpha(0.3)
         bar:Show()
     else
         r.art:SetAlpha(1)
         bar:Hide()
     end
+    local isz = IconSize(db, e)
+    r.tex:ClearAllPoints()
+    r.tex:SetPoint("CENTER", r.button, "CENTER", x, y)
+    r.tex:SetSize(isz, isz)
+    r.tex:SetAlpha(icon and 1 or 0)
+    r.cd:SetAlpha(icon and 1 or 0)
+    r.border:ClearAllPoints()
+    r.border:SetPoint("TOPLEFT", r.tex, "TOPLEFT", -1, 1)
+    r.border:SetPoint("BOTTOMRIGHT", r.tex, "BOTTOMRIGHT", 1, -1)
+    r.border:SetShown(icon)
+    HHT.AuraBar.SetRound(r, icon and db.shape == "round")
 end
 
 function M:ApplyArts()
@@ -275,6 +331,23 @@ function M:Build()
         t:Hide()
         self.pvs[i] = t
     end
+    self.drags = {}
+    for i = 1, MAXP do
+        local d = CreateFrame("Frame", nil, f)
+        d:SetFrameLevel(f:GetFrameLevel() + 10)
+        d.tex = d:CreateTexture(nil, "ARTWORK")
+        d.tex:SetAllPoints()
+        d.tex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        UI.Border(d, 0.67, 0.83, 0.45, 0.9)
+        d:RegisterForDrag("LeftButton")
+        d:SetScript("OnDragStart", function(self) M:BeginIconDrag(self, i) end)
+        d:SetScript("OnDragStop", function(self)
+            self:SetScript("OnUpdate", nil)
+            if M.procList then pcall(M.procList.Refresh) end
+        end)
+        d:Hide()
+        self.drags[i] = d
+    end
     local sb = CreateFrame("StatusBar", nil, f)
     sb:SetMinMaxValues(0, 1)
     sb:SetFrameLevel(f:GetFrameLevel() + 1)
@@ -283,6 +356,41 @@ function M:Build()
     HHT:MakeMovable(f, self, "main", L("Proc Overlay"))
     self.bar = HHT.AuraBar.New(f, function() return { size = self.db.size, spacing = 0 } end)
     self.bar.initFn = function(_, button, key) M:InitArt(button, key) end
+end
+
+-- Placeholder of an icon-mode proc: shown while unlocked or previewed, and draggable while the frames can be moved.
+function M:LayoutDrag(i, e, shown)
+    local d = self.drags[i]
+    if not (e and e.icon and shown) then
+        d:SetScript("OnUpdate", nil)
+        d:Hide()
+        return
+    end
+    local s = IconSize(self.db, e)
+    d:SetSize(s, s)
+    d:ClearAllPoints()
+    d:SetPoint("CENTER", self.frame, "CENTER", e.x or 0, e.y or 0)
+    d.tex:SetTexture(IconOf(e))
+    d.tex:SetAlpha(e.preview and 0.9 or 0.6)
+    local can = HHT:CanMove(self)
+    d:EnableMouse(can)
+    if not can then d:SetScript("OnUpdate", nil) end
+    d:Show()
+end
+
+function M:BeginIconDrag(d, i)
+    local e = self.db.entries[i]
+    if not (e and HHT:CanMove(self)) then return end
+    local sc = self.frame:GetEffectiveScale()
+    local cx, cy = GetCursorPosition()
+    local sx, sy, ex, ey = cx / sc, cy / sc, e.x or 0, e.y or 0
+    d:SetScript("OnUpdate", function()
+        local mx, my = GetCursorPosition()
+        e.x = math.max(-800, math.min(800, floor(ex + mx / sc - sx + 0.5)))
+        e.y = math.max(-800, math.min(800, floor(ey + my / sc - sy + 0.5)))
+        self:LayoutDrag(i, e, true)
+        self:ApplyArts()
+    end)
 end
 
 function M:Layout()
@@ -306,7 +414,10 @@ function M:Layout()
     for i = 1, MAXP do
         local e, t = db.entries[i], self.pvs[i]
         local shown = e and not e.off and (e.preview or unlocked) and (not solo or i == 1)
-        if shown or (i == 1 and unlocked) then
+        self:LayoutDrag(i, e, shown)
+        if e and e.icon then
+            t:Hide()
+        elseif shown or (i == 1 and unlocked) then
             LayoutArt(t, f, ArtOf(e), db.size * ((e and e.scale) or 1), e and e.x, e and e.y)
             t:SetAlpha(e and e.preview and 0.9 or 0.5)
             t:Show()
@@ -583,6 +694,11 @@ local function BuildProcList(m, form)
     detail.preview = UI.Check(list, L("Preview"),
         function() return Cur() and Cur().preview end,
         function(v) if Cur() then Cur().preview = v and true or false; Changed() end end)
+    detail.icon = UI.Check(list, L("Show as icon"),
+        function() return Cur() and Cur().icon end,
+        function(v)
+            if Cur() then Cur().icon = v and true or false; Changed(); list:Refresh() end
+        end)
     local g, s = Num("scale", 1, 0.05)
     detail.from = UI.Cycle(list, L("Fades from"), {
         { "top", L("Top") }, { "bottom", L("Bottom") }, { "left", L("Left") }, { "right", L("Right") } },
@@ -593,7 +709,7 @@ local function BuildProcList(m, form)
     detail.x = UI.Stepper(list, L("Offset X"), g, s, -800, 800, 10)
     g, s = Num("y", 0, 10)
     detail.y = UI.Stepper(list, L("Offset Y"), g, s, -800, 800, 10)
-    local DETAIL_ORDER = { "preview", "from", "scale", "x", "y" }
+    local DETAIL_ORDER = { "preview", "icon", "from", "scale", "x", "y" }
 
     local function Rebuild()
         local n = #db.entries
@@ -619,7 +735,8 @@ local function BuildProcList(m, form)
         for _, k in ipairs(DETAIL_ORDER) do
             local w = detail[k]
             w:ClearAllPoints()
-            if n > 0 then
+            local cur = db.entries[list.sel]
+            if n > 0 and not (k == "from" and cur and cur.icon) then
                 w:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -y)
                 w:Show()
                 w:Refresh()
@@ -666,6 +783,8 @@ function M:BuildOptions(form)
     local db = self.db
     form:Header(L("Appearance"))
     form:Stepper(L("Art size"), db, "size", 64, 400, 16)
+    form:Stepper(L("Icon size"), db, "iconSize", 24, 128, 4)
+    form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
     form:Check(L("Play a sound when it appears"), db, "sound")
     form:Check(L("Show remaining time as fading art"), db, "drain")
     form:Check(L("Reverse the fading (art fills up instead of draining)"), db, "rising")
@@ -674,5 +793,6 @@ function M:BuildOptions(form)
     form:Check(L("Scan for new procs"), db, "scan")
     form:Note(L("While on, short buffs you gain out of combat are added to the list switched off. Switch the ones you want on."))
     form:Note(L("Use /hht auras while the proc is active to read its ID. The game draws the art itself, so nothing can be hidden or checked by the addon in combat."))
+    form:Note(L("Unlock the frames to drag the icons to where you want them."))
     BuildProcList(self, form)
 end

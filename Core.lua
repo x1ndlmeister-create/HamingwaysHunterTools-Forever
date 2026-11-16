@@ -206,11 +206,18 @@ end)
 -- ---------------------------------------------------------------------------
 -- Movable frames
 -- ---------------------------------------------------------------------------
+-- Modules the user switched off in the move-set popup stay put while the frames are unlocked.
+function HHT:InMoveSet(m)
+    local g = self.db and self.db.general
+    local skip = g and g.moveSkip
+    return not (m and skip and skip[m.key])
+end
+
 -- With a module argument it also answers true while that module is previewed or unlocked from its settings page.
 function HHT:IsUnlocked(m)
     local g = self.db and self.db.general
     if not g then return g end
-    if g.locked == false then return true end
+    if g.locked == false and self:InMoveSet(m) then return true end
     if m ~= nil and self.showcase and self.showcase[m.key] then return true end
     return m ~= nil and (m == self.previewModule or m.moveUnlock == true)
 end
@@ -219,7 +226,7 @@ end
 function HHT:CanMove(m)
     local g = self.db and self.db.general
     if not g then return false end
-    return g.locked == false or (m ~= nil and m.moveUnlock == true)
+    return (g.locked == false and self:InMoveSet(m)) or (m ~= nil and m.moveUnlock == true)
 end
 
 -- Shows one module in demo mode (nil ends it). Used while its settings page is open.

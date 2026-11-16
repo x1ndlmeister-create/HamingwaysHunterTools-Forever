@@ -15,6 +15,25 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.4.2",
+        en = {
+            "Cast bar: the default Blizzard cast bar is hidden by default while the HunterTools cast bar is active, including the red 'Interrupted' bar. It can be switched back in the cast bar settings and in the quick install.",
+            "Pet bar: the default Blizzard pet frame can be hidden (on by default), or the pet bar can be attached to it. Attached, you keep the Blizzard portrait, health, focus and happiness, and the HunterTools rows (experience, loyalty, abilities) sit underneath, with the level and the upgrade arrow drawn over the portrait and Frenzy to its left. Both options are in the pet settings and the quick install.",
+            "Proc overlay: each proc can be shown as an icon instead of the art, with timer, stack count, size and shape. Drag the icons where you want them while the frames are unlocked.",
+            "Proc overlay: all proc graphics were rendered at a higher resolution with smoother edges, so they look sharper on 2K and 4K monitors.",
+            "Frenzy proc: now sits above the others and fades from right to left by default.",
+            "Unlock frames: a cog next to the switch lets you choose which modules can be moved (all by default).",
+        },
+        de = {
+            "Zauberleiste: Die Standard-Zauberleiste von Blizzard ist standardmäßig ausgeblendet, solange die HunterTools-Zauberleiste aktiv ist, auch die rote 'Unterbrochen'-Leiste. In den Einstellungen der Zauberleiste und in der Schnell-Einrichtung lässt sich das wieder ändern.",
+            "Tierleiste: Das Standard-Begleiterfenster von Blizzard lässt sich ausblenden (standardmäßig an), oder die Tierleiste wird daran angeheftet. Angeheftet bleiben Porträt, Leben, Fokus und Zufriedenheit von Blizzard, und die HunterTools-Zeilen (Erfahrung, Loyalität, Fähigkeiten) sitzen darunter, mit Level und Upgrade-Pfeil über dem Porträt und Raserei links davon. Beide Optionen gibt es in den Tier-Einstellungen und in der Schnell-Einrichtung.",
+            "Proc-Anzeige: Jeder Proc lässt sich statt als Grafik auch als Symbol zeigen, mit Zeit, Stapelzahl, Größe und Form. Die Symbole kannst du bei entsperrten Fenstern an die gewünschte Stelle ziehen.",
+            "Proc-Anzeige: Alle Proc-Grafiken wurden in höherer Auflösung und mit glatteren Kanten neu erzeugt und sehen auf 2K- und 4K-Monitoren schärfer aus.",
+            "Raserei-Proc: sitzt jetzt standardmäßig über den anderen und verblasst von rechts nach links.",
+            "Fenster entsperren: Ein Zahnrad neben dem Schalter lässt dich wählen, welche Module verschoben werden können (standardmäßig alle).",
+        },
+    },
+    {
         v = "1.4.1",
         en = {
             "Fixed 'Interface action failed because of an AddOn' errors: the warnings, cooldowns and other icons with click buttons no longer resize, move or hide in combat (this is done right after the fight), and the pet map no longer loads the world map itself.",

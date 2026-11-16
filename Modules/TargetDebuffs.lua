@@ -93,6 +93,7 @@ local AuraBar = {}
 AuraBar.__index = AuraBar
 HHT.AuraBar = AuraBar
 AuraBar.FLOW = FLOW
+AuraBar.SetRound = SetRound
 
 function AuraBar.New(frame, style)
     local bar = setmetatable({ frame = frame, style = style, buttons = {}, groups = {}, conts = {}, errors = {} }, AuraBar)
