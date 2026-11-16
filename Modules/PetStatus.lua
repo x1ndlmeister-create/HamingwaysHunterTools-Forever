@@ -3,6 +3,10 @@ local ADDON, HHT = ...
 local L, UI, Icon, Bar = HHT.L, HHT.UI, HHT.Icon, HHT.Bar
 
 HHT:AddGerman({
+    ["Rename"] = "Umbenennen",
+    ["Dismiss"] = "Wegschicken",
+    ["Release"] = "Freilassen",
+    ["This pet cannot be renamed."] = "Dieser Begleiter kann nicht umbenannt werden.",
     ["Pet status"] = "Begleiter-Status",
     ["Pet portrait, health bar and happiness."] = "Begleiter-Portrait, Lebensbalken und Zufriedenheit.",
     ["Show happiness"] = "Zufriedenheit zeigen",
@@ -92,6 +96,73 @@ function M:OnInit()
     HHT:Listen(self, "UNIT_PORTRAIT_UPDATE", "OnPetChanged")
     HHT:Listen(self, "PLAYER_ENTERING_WORLD", "OnPetChanged")
     HHT:Every(self, 0.2, M.Tick)
+end
+
+-- Right-click menu on the pet bar (Rename, Dismiss, Release), like the default pet frame has.
+local function PetMenu()
+    if M.menu then return M.menu end
+    local m = CreateFrame("Frame", "HamingwaysHunterToolsPetMenu", UIParent)
+    m:SetFrameStrata("TOOLTIP")
+    m:SetFrameLevel(20)
+    m:SetSize(132, 3 * 22 + 8)
+    m:SetClampedToScreen(true)
+    m:EnableMouse(true)
+    m:Hide()
+    local pal = UI.PAL.menu
+    UI.Round(m, 6, pal[1], pal[2], pal[3], pal[4], "BACKGROUND")
+    UI.Shadow(m, 0.4)
+    UI.RoundBorder(m, 6, 1, 1, 1, 0.14)
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetFrameStrata("TOOLTIP")
+    catcher:SetFrameLevel(1)
+    catcher:SetAllPoints(UIParent)
+    catcher:RegisterForClicks("AnyUp")
+    catcher:Hide()
+    m.catcher = catcher
+    function m.Close()
+        catcher:Hide()
+        HHT.HideSecure(m)
+    end
+    catcher:SetScript("OnClick", m.Close)
+
+    local function Row(i, label, secure, onClick)
+        local b = CreateFrame("Button", nil, m, secure and "SecureActionButtonTemplate" or nil)
+        b:SetSize(126, 22)
+        b:SetPoint("TOPLEFT", m, "TOPLEFT", 3, -4 - (i - 1) * 22)
+        b:RegisterForClicks("AnyDown", "AnyUp")
+        local hl = b:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetAllPoints()
+        hl:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.22)
+        b.text = UI.Text(b, label, 12)
+        b.text:SetPoint("LEFT", b, "LEFT", 8, 0)
+        if onClick then b:SetScript("OnClick", function(_, _, down) if not down then m.Close(); onClick() end end) end
+        return b
+    end
+    Row(1, L("Rename"), false, function()
+        if PetCanBeRenamed and not PetCanBeRenamed() then HHT.Print(L("This pet cannot be renamed.")) return end
+        pcall(StaticPopup_Show, "RENAME_PET")
+    end)
+    local dismiss = Row(2, L("Dismiss"), true)
+    dismiss:SetAttribute("type", "macro")
+    dismiss:SetAttribute("macrotext", "/cast " .. HHT.Spells.CatalogName("dismissPet"))
+    dismiss:HookScript("PostClick", function(_, _, down) if not down then m.Close() end end)
+    Row(3, L("Release"), false, function()
+        local ok, name = pcall(UnitName, "pet")
+        pcall(StaticPopup_Show, "RELEASE_PET", ok and name or "")
+    end)
+    M.menu = m
+    return m
+end
+
+function M:OpenPetMenu()
+    if InCombatLockdown() or not HHT.SafeBool(UnitExists, "pet") then return end
+    local m = PetMenu()
+    local x, y = GetCursorPosition()
+    local s = UIParent:GetEffectiveScale()
+    m:ClearAllPoints()
+    m:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / s, y / s)
+    m.catcher:Show()
+    HHT.ShowSecure(m)
 end
 
 function M:Build()
@@ -284,13 +355,20 @@ function M:Layout()
     end
     f.portrait:ClearAllPoints()
     local pdx = HHT.modules.petdex
-    local click = not docked and not HHT:IsUnlocked(self) and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick and true or false
-    f.portrait:EnableMouse(click)
-    if not f.portrait.petdexHooked then
-        f.portrait.petdexHooked = true
-        f.portrait:SetScript("OnMouseUp", function(_, button)
-            if button == "LeftButton" and HHT.PetDex then HHT.PetDex:Toggle() end
-        end)
+    local menuOn = not docked and not HHT:IsUnlocked(self)
+    f.portrait:EnableMouse(menuOn)
+    f.bar:EnableMouse(menuOn)
+    if not f.petdexHooked then
+        f.petdexHooked = true
+        local function OnPetClick(_, button)
+            if button == "RightButton" then
+                M:OpenPetMenu()
+            elseif button == "LeftButton" and HHT.PetDex and pdx and pdx.enabled and pdx.db and pdx.db.openOnClick then
+                HHT.PetDex:Toggle()
+            end
+        end
+        f.portrait:SetScript("OnMouseUp", OnPetClick)
+        f.bar:SetScript("OnMouseUp", OnPetClick)
     end
     Bar.Apply(f.bar, db, "health")
     local gap = db.barSpacing or 2

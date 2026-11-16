@@ -58,6 +58,7 @@ HHT:AddGerman({
     ["Beast alerts paused for 15 minutes."] = "Hinweise für 15 Minuten pausiert.",
     ["Snooze 15 min"] = "15 Min. Pause",
     ["Target"] = "Anvisieren",
+    ["Click: target"] = "Klick: anvisieren",
     ["Map"] = "Karte",
     ["The arrow uses the spawn points of the pet database. Drag it while the frames are unlocked."] = "Der Pfeil nutzt die Spawnpunkte der Begleiter-Datenbank. Ziehe ihn, solange die Fenster entsperrt sind.",
     ["%s added to your wishlist."] = "%s wurde zur Wunschliste hinzugefügt.",
@@ -244,7 +245,7 @@ function M:Build()
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
     f.target:SetSize(78, 24)
     f.target:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 16, 14)
-    f.target:RegisterForClicks("AnyUp")
+    f.target:RegisterForClicks("AnyDown", "AnyUp")
     StyleButton(f.target, L("Target"))
 
     f.map = UI.Button(f, 54, 24, L("Map"), function()
@@ -293,21 +294,62 @@ local function BuildArrow()
     a.name:SetWidth(200)
     a.dist = UI.Text(a, "", 12, 0.75, 0.55, 1)
     a.dist:SetPoint("TOP", a.name, "BOTTOM", 0, -2)
+    a.click = CreateFrame("Button", nil, a, "SecureActionButtonTemplate")
+    a.click:SetAllPoints(a)
+    a.click:RegisterForClicks("AnyDown", "AnyUp")
+    a.click:SetAttribute("type", "macro")
+    a.click:EnableMouse(true)
+    a.click:RegisterForDrag("LeftButton")
+    a.click:SetScript("OnDragStart", function() local h = a:GetScript("OnDragStart"); if h then h(a) end end)
+    a.click:SetScript("OnDragStop", function() local h = a:GetScript("OnDragStop"); if h then h(a) end end)
+    a.click:SetScript("OnEnter", function(self)
+        if not (GameTooltip and M.track) then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(M.track.n)
+        GameTooltip:AddLine(L("Click: target"), 0.5, 0.8, 1)
+        GameTooltip:Show()
+    end)
+    a.click:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     a.stop = UI.Button(a, 16, 16, "x", function() PW.Track(nil) end)
     a.stop:SetPoint("TOPRIGHT", a, "TOPRIGHT", 14, 0)
+    a.stop:SetFrameLevel(a.click:GetFrameLevel() + 2)
     a:Hide()
     HHT:MakeMovable(a, M, "arrow", L("Rare arrow"))
+end
+
+-- A click on the arrow targets the beast; dragging the button moves the arrow while frames are unlocked.
+local function UpdateArrowClick()
+    local a = M.arrowFrame
+    if not (a and a.click) or InCombatLockdown() then return end
+    local b = M.track
+    local mm = HHT.modules.macros
+    local useMacro = b and mm and mm.enabled and mm.db.make.beast and GetMacroIndexByName and GetMacroIndexByName(mm.BEAST_MACRO) > 0
+    local key = useMacro and "macro" or (b and b.n)
+    if key and a.clickKey ~= key then
+        a.clickKey = key
+        if useMacro then
+            a.click:SetAttribute("macrotext", nil)
+            a.click:SetAttribute("macro", mm.BEAST_MACRO)
+        else
+            a.click:SetAttribute("macro", nil)
+            a.click:SetAttribute("macrotext", "/targetexact " .. b.n)
+        end
+    end
 end
 
 local function LayoutArrow()
     local a = M.arrowFrame
     if not a then return end
-    local s = M.db.arrowSize
-    a:SetSize(math.max(s, 90), s + 36)
-    a.tex:SetSize(s, s)
+    UpdateArrowClick()
     local c = M.db.colors.border
     a.tex:SetVertexColor(c[1], c[2], c[3])
     a.dist:SetTextColor(c[1], c[2], c[3])
+    -- The secure button is anchored to the arrow, so resizing it is blocked in combat.
+    if InCombatLockdown() then M.arrowDirty = true; return end
+    M.arrowDirty = nil
+    local s = M.db.arrowSize
+    a:SetSize(math.max(s, 90), s + 36)
+    a.tex:SetSize(s, s)
 end
 
 function M:OnInit()
@@ -335,7 +377,7 @@ end
 
 function M:OnDisable()
     if self.frame then self.frame:Hide() end
-    if self.arrowFrame then self.arrowFrame:Hide() end
+    if self.arrowFrame then HHT.HideSecure(self.arrowFrame) end
     self.track = nil
 end
 
@@ -358,6 +400,10 @@ function M:OnCombat()
 end
 
 function M:OnCombatEnd()
+    HHT.FlushHidden(self.arrowFrame)
+    if self.arrowDirty then LayoutArrow() end
+    local mm = HHT.modules.macros
+    if mm and mm.beastDirty then mm:UpdateBeast() end
     HHT.FlushHidden(self.frame)
     local p = self.pending
     self.pending = nil
@@ -639,7 +685,12 @@ local function Body(f, b)
     AbilityCols(learn, L("FAMILY LEARNS"))
 
     local need, sum = -COL_GAP, 0
-    for _, col in ipairs(cols) do
+    for i, col in ipairs(cols) do
+        if col.head ~= "" then
+            local h = Head(f, i)
+            h:SetText(col.head)
+            col.w = math.max(col.w, math.ceil(h:GetStringWidth()))
+        end
         col.cw = col.w + 2 * CARD_PAD
         need = need + col.cw + COL_GAP
         sum = sum + col.cw
@@ -764,7 +815,7 @@ function M:Preview()
     if b then self:Show({ kind = "rare", beast = b }, true) end
     local a = self.arrowFrame
     if a then
-        a:Show()
+        if not InCombatLockdown() then a:Show() end
         a.name:SetText(L("Rare arrow"))
         a.dist:SetText(string.format(L("%d yd"), 123))
         a.tex:SetRotation(0)
@@ -882,6 +933,8 @@ function PW.Track(b, quiet, auto)
     if b and not M.db.arrow then return end
     M.track = b
     M.trackAuto = (b and auto) and true or false
+    local mm = HHT.modules.macros
+    if b and mm and mm.enabled and mm.UpdateBeast then mm:UpdateBeast(b.n) end
     if b and not quiet then HHT.Print(string.format(L("Arrow points to %s."), b.n)) end
     UpdateButtons()
     M:ArrowTick()
@@ -909,10 +962,15 @@ function M:ArrowTick()
     if not a then return end
     local b = self.track
     if not b then
-        if not HHT:IsUnlocked(self) then a:Hide() end
+        if not HHT:IsUnlocked(self) then HHT.HideSecure(a) end
         return
     end
-    a:Show()
+    UpdateArrowClick()
+    if a.hhtFaded then
+        a.hhtFaded = nil
+        HHT:ApplyGlobalLook(a)
+    end
+    if not a:IsShown() and not InCombatLockdown() then a:Show() end
     a.name:SetText(b.n)
     local map, px, py = PM().PlayerPos()
     if map and b.sp and b.sp[map] then

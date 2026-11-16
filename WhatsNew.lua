@@ -15,6 +15,23 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.4.3",
+        en = {
+            "Rare pet arrow: click it to target the beast. A macro 'HHT Beast' is created and updated for you (it is not placed on any bar), and the chat tells you when it was updated. Clicking a spawn point on the world map now also sets the arrow.",
+            "Pet bar: right-click the portrait or the health bar for the pet menu (Rename, Dismiss, Release) when the default pet frame is hidden.",
+            "Pet upgrades in this zone: abilities you can already train in Beast Training (for example Dash) are no longer listed.",
+            "Beast alert: the 'Family learns' column is no longer cut off.",
+            "Fixed 'Interface action failed because of an AddOn' errors from the arrow and from the food window after taming.",
+        },
+        de = {
+            "Seltenen-Pfeil: Ein Klick darauf visiert das Tier an. Das Makro 'HHT Beast' wird automatisch angelegt und aktualisiert (es liegt auf keiner Leiste), und der Chat meldet, wann es aktualisiert wurde. Ein Klick auf einen Spawn-Punkt der Weltkarte setzt jetzt auch den Pfeil.",
+            "Tierleiste: Rechtsklick auf Porträt oder Lebensbalken öffnet das Begleiter-Menü (Umbenennen, Wegschicken, Freilassen), wenn das Standard-Begleiterfenster ausgeblendet ist.",
+            "Begleiter-Upgrades in dieser Zone: Fähigkeiten, die du in der Tierausbildung schon trainieren kannst (z. B. Spurt), werden nicht mehr aufgelistet.",
+            "Tier-Hinweis: Die Spalte 'Familie lernt' ist nicht mehr abgeschnitten.",
+            "Fehler 'Interface-Aktion wegen eines AddOns fehlgeschlagen' beim Pfeil und beim Futter-Fenster nach dem Zähmen behoben.",
+        },
+    },
+    {
         v = "1.4.2",
         en = {
             "Cast bar: the default Blizzard cast bar is hidden by default while the HunterTools cast bar is active, including the red 'Interrupted' bar. It can be switched back in the cast bar settings and in the quick install.",

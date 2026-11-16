@@ -37,6 +37,8 @@ HHT:AddGerman({
     ["general macros"] = "Allgemeine Makros",
     ["Macro on cursor: place it on an action bar."] = "Makro am Mauszeiger: auf eine Aktionsleiste legen.",
     ["To cursor"] = "Auf den Mauszeiger",
+    ["Target the tracked beast when clicking the arrow (automatic)"] = "Verfolgtes Tier per Klick auf den Pfeil anvisieren (automatisch)",
+    ["Target macro updated, click the arrow to target."] = "Ziel-Makro aktualisiert, Klick auf den Pfeil visiert das Tier an.",
 })
 
 local M = HHT:NewModule("macros", {
@@ -49,10 +51,12 @@ local M = HHT:NewModule("macros", {
         make = {
             smart = true, toggle = true, mend = true, revive = true, feed = true,
             attack = false, mark = false, aspect = false, trap = false, melee = false, feign = false,
-            kite = false, growl = false, tame = false, track = false, burst = false, ammo = false, stable = false,
+            kite = false, growl = false, tame = false, track = false, burst = false, ammo = false, stable = false, beast = true,
         },
     },
 })
+
+M.BEAST_MACRO = "HHT Beast"
 
 -- Feed stays at index 5 (UpdateFeed). Macros are account-wide (limit 120).
 local DEFS = {
@@ -74,6 +78,7 @@ local DEFS = {
     { key = "burst", name = "HHT Burst", label = "Burst: Rapid Fire and both trinkets", icon = "rapidFire", group = "hunter" },
     { key = "ammo", name = "HHT Ammo", label = "Ammo vendors: show on map and set waypoint", icon = "autoShot", iconItem = 2512, group = "hunter" },
     { key = "stable", name = "HHT Stable", label = "Stable masters: show on map and set waypoint", icon = "callPet", group = "hunter" },
+    { key = "beast", name = "HHT Beast", label = "Target the tracked beast when clicking the arrow (automatic)", icon = "tameBeast", group = "hunter" },
 }
 
 local function N(key) return S.CatalogName(key) end
@@ -96,6 +101,10 @@ local HUNTER_BODY = {
 }
 
 function M:Body(key)
+    if key == "beast" then
+        if self.beastName then return "/targetexact " .. self.beastName end
+        return "/script print(\"HHT: no beast tracked yet. Click a beast on the map.\")"
+    end
     local hb = HUNTER_BODY[key]
     if hb then
         local args = {}
@@ -174,6 +183,27 @@ function M:UpdateFeed()
     return true
 end
 
+-- Points the beast macro at the tracked beast; waits for the end of combat when needed.
+function M:UpdateBeast(name)
+    if name then self.beastName = name end
+    if not self.db.make.beast then return end
+    if InCombatLockdown and InCombatLockdown() then self.beastDirty = true; return end
+    self.beastDirty = nil
+    local def
+    for _, d in ipairs(DEFS) do if d.key == "beast" then def = d end end
+    local body, icon = self:Body("beast"), IconOf(def)
+    local idx = GetMacroIndexByName and GetMacroIndexByName(def.name) or 0
+    if idx and idx > 0 then
+        if not pcall(EditMacro, idx, def.name, icon, body) then pcall(EditMacro, idx, def.name, 134400, body) end
+    elseif not pcall(CreateMacro, def.name, icon, body, false) then
+        pcall(CreateMacro, def.name, 134400, body, false)
+    end
+    if self.beastName and self.beastShown ~= self.beastName then
+        self.beastShown = self.beastName
+        HHT.Print(L("Target macro updated, click the arrow to target."))
+    end
+end
+
 function M:Pickup(def)
     local idx = GetMacroIndexByName and GetMacroIndexByName(def.name) or 0
     if not idx or idx == 0 then
@@ -200,6 +230,6 @@ function M:BuildOptions(form)
     form:Button(L("Create or update macros"), function() self:Apply() end, 220)
     form:Header(L("To cursor"))
     for _, def in ipairs(DEFS) do
-        form:Button(def.name, function() self:Pickup(def) end, 170)
+        if def.key ~= "beast" then form:Button(def.name, function() self:Pickup(def) end, 170) end
     end
 end

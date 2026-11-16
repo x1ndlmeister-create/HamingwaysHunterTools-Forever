@@ -106,7 +106,9 @@ local function NewPin(canvas)
     p:SetScript("OnEnter", PinTip)
     p:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
     p:SetScript("OnClick", function(self)
-        if self.beast then PM:SetWaypointAt(self.map, self.x, self.y, self.beast.n) end
+        if not self.beast then return end
+        PM:SetWaypointAt(self.map, self.x, self.y, self.beast.n)
+        if HHT.PetWatch then HHT.PetWatch.Track(self.beast, true) end
     end)
     return p
 end

@@ -530,8 +530,27 @@ function M:Tick()
     local show = exists and not dead
     if show and db.mode == "hungry" and happy == 3 then show = false end
     if unlocked then show = true end
-    if f:IsShown() ~= show then f:SetShown(show) end
-    if not show then return end
+    -- The frame holds a secure button: in combat it is only faded, and shown or hidden once combat ends.
+    local combat = InCombatLockdown()
+    if show then
+        if f.hhtFaded then
+            f.hhtFaded = nil
+            HHT:ApplyGlobalLook(f)
+        end
+        if not f:IsShown() then
+            if combat then return end
+            f:Show()
+        end
+    else
+        if combat then
+            if f:IsShown() and not f.hhtFaded then HHT.HideSecure(f) end
+        elseif f.hhtFaded then
+            HHT.FlushHidden(f)
+        elseif f:IsShown() then
+            f:Hide()
+        end
+        return
+    end
 
     local cur = self.current
     local total = cur and cur.count or 0
