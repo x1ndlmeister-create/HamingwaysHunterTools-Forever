@@ -66,6 +66,119 @@ function HHT.Col(tbl, key)
     return c[1], c[2], c[3]
 end
 
+-- Border glow: 2 px of reach per strength step, one stacked layer per pixel. The brightness falls off
+-- quadratically, so the layers blend into a smooth fade instead of visible steps.
+HHT.GLOW_MAX = 16
+function HHT.GlowLayers()
+    local g = HHT.db and HHT.db.general
+    return math.max(2, math.min(HHT.GLOW_MAX, 2 * (g and g.borderGlowSize or 4)))
+end
+
+function HHT.GlowAlpha(i, n)
+    local function f(k) return k > n and 0 or 0.65 * (1 - (k - 1) / n) ^ 2 end
+    return f(i) - f(i + 1)
+end
+
+-- Changes when the general glow is switched or resized; icon modules that restyle only on a changed signature include it.
+function HHT.GlowSig()
+    local g = HHT.db and HHT.db.general
+    return g and g.borderGlow and HHT.GlowLayers() or 0
+end
+
+-- Glow of a rectangular element: eight pieces of one soft-edged texture (four corners, four edges) that fade
+-- out smoothly at any UI scale. The glow starts at `inner` pixels outside the element and reaches `reach` further.
+local GLOW_TEX = "Interface\\AddOns\\" .. ADDON .. "\\Media\\GlowBox"
+local GLOW_UV = {
+    { 0, 0.5, 0, 0.5 }, { 0.5, 1, 0, 0.5 }, { 0, 0.5, 0.5, 1 }, { 0.5, 1, 0.5, 1 },
+    { 0.484, 0.516, 0, 0.5 }, { 0.484, 0.516, 0.5, 1 }, { 0, 0.5, 0.484, 0.516 }, { 0.5, 1, 0.484, 0.516 },
+}
+
+function HHT.NewGlowBox(frame, layer)
+    local box = {}
+    for i, uv in ipairs(GLOW_UV) do
+        local t = frame:CreateTexture(nil, layer or "BACKGROUND", nil, -8)
+        t:SetTexture(GLOW_TEX)
+        t:SetTexCoord(uv[1], uv[2], uv[3], uv[4])
+        t:Hide()
+        box[i] = t
+    end
+    return box
+end
+
+function HHT.PlaceGlowBox(box, f, inner, reach)
+    local o, e = inner, inner + reach
+    local function Put(i, p1, r1, x1, y1, p2, r2, x2, y2)
+        local t = box[i]
+        t:ClearAllPoints()
+        t:SetPoint(p1, f, r1, x1, y1)
+        t:SetPoint(p2, f, r2, x2, y2)
+    end
+    Put(1, "TOPLEFT", "TOPLEFT", -e, e, "BOTTOMRIGHT", "TOPLEFT", -o, o)
+    Put(2, "TOPLEFT", "TOPRIGHT", o, e, "BOTTOMRIGHT", "TOPRIGHT", e, o)
+    Put(3, "TOPLEFT", "BOTTOMLEFT", -e, -o, "BOTTOMRIGHT", "BOTTOMLEFT", -o, -e)
+    Put(4, "TOPLEFT", "BOTTOMRIGHT", o, -o, "BOTTOMRIGHT", "BOTTOMRIGHT", e, -e)
+    Put(5, "TOPLEFT", "TOPLEFT", -o, e, "BOTTOMRIGHT", "TOPRIGHT", o, o)
+    Put(6, "TOPLEFT", "BOTTOMLEFT", -o, -o, "BOTTOMRIGHT", "BOTTOMRIGHT", o, -e)
+    Put(7, "TOPLEFT", "TOPLEFT", -e, o, "BOTTOMRIGHT", "BOTTOMLEFT", -o, -o)
+    Put(8, "TOPLEFT", "TOPRIGHT", o, o, "BOTTOMRIGHT", "BOTTOMRIGHT", e, -o)
+end
+
+function HHT.ShowGlowBox(box, on, r, g, b)
+    for i = 1, #box do
+        box[i]:SetVertexColor(r, g, b, 0.65)
+        box[i]:SetShown(on and true or false)
+    end
+end
+
+-- Glow of a pill shaped element (rounded bar): a half disk at each end plus soft strips on top and bottom.
+-- The end pieces come in steps of 5 % of inner to outer radius; the piece is sized so the inner radius stays exact.
+local PILL_TEX = "Interface\\AddOns\\" .. ADDON .. "\\Media\\RoundGlow"
+
+function HHT.NewGlowPill(frame, layer)
+    local pill = {}
+    for i = 1, 4 do
+        local t = frame:CreateTexture(nil, layer or "BACKGROUND", nil, -8)
+        t:Hide()
+        pill[i] = t
+    end
+    pill[1]:SetTexCoord(0, 0.5, 0, 1)
+    pill[2]:SetTexCoord(0.5, 1, 0, 1)
+    pill[3]:SetTexture(GLOW_TEX)
+    pill[3]:SetTexCoord(0.484, 0.516, 0, 0.5)
+    pill[4]:SetTexture(GLOW_TEX)
+    pill[4]:SetTexCoord(0.484, 0.516, 0.5, 1)
+    return pill
+end
+
+-- inner: distance from the pill to the start of the glow (the border), reach: how far it extends, h: pill height
+function HHT.PlaceGlowPill(pill, f, inner, reach, h)
+    local r = h / 2
+    local q = math.max(0.10, math.min(0.95, math.floor((r + inner) / (r + inner + reach) * 20 + 0.5) / 20))
+    local e = (r + inner) / q - r
+    local file = PILL_TEX .. math.floor(q * 100 + 0.5)
+    pill[1]:SetTexture(file)
+    pill[2]:SetTexture(file)
+    local function Put(i, p1, r1, x1, y1, p2, r2, x2, y2)
+        local t = pill[i]
+        t:ClearAllPoints()
+        t:SetPoint(p1, f, r1, x1, y1)
+        t:SetPoint(p2, f, r2, x2, y2)
+    end
+    Put(1, "TOPLEFT", "TOPLEFT", -e, e, "BOTTOMRIGHT", "BOTTOMLEFT", r, -e)
+    Put(2, "TOPLEFT", "TOPRIGHT", -r, e, "BOTTOMRIGHT", "BOTTOMRIGHT", e, -e)
+    Put(3, "TOPLEFT", "TOPLEFT", r, e, "BOTTOMRIGHT", "TOPRIGHT", -r, inner)
+    Put(4, "TOPLEFT", "BOTTOMLEFT", r, -inner, "BOTTOMRIGHT", "BOTTOMRIGHT", -r, -e)
+end
+
+function HHT.ShowGlowPill(pill, on, r, g, b)
+    for i = 1, #pill do
+        pill[i]:SetVertexColor(r, g, b, 0.65)
+        pill[i]:SetShown(on and true or false)
+    end
+end
+
+-- ---------------------------------------------------------------------------
+-- Defaults
 -- ---------------------------------------------------------------------------
 -- Defaults
 -- ---------------------------------------------------------------------------
@@ -81,7 +194,8 @@ local GENERAL_DEFAULTS = {
     alpha = 1.0,
     theme = "classic",
     style = "flat",
-    animations = true,
+    borderGlow = false,
+    borderGlowSize = 4,
     snap = true,
     preview = true,
 }
@@ -92,7 +206,7 @@ local function ModuleDefaults(m)
     if d.enabled == nil then d.enabled = (m.enabledByDefault ~= false) end
     if d.scale == nil then d.scale = 1.0 end
     if d.alpha == nil then d.alpha = 1.0 end
-    if d.onlyCombat == nil then d.onlyCombat = false end
+    if d.showWhen == nil then d.showWhen = "always" end
     if d.textStyle == nil then d.textStyle = "outline" end
     return d
 end
@@ -310,12 +424,25 @@ function HHT:ApplyGlobalLook(frame)
     local info = frame.hht
     local ms = info and info.module.db.scale or 1
     local ma = info and info.module.db.alpha or 1
-    local hidden = frame.hhtFaded or (info and info.module.db.onlyCombat and not self:IsUnlocked(info.module) and not self.InCombat())
+    local mod = info and info.module
+    local hidden = frame.hhtFaded or (mod and mod.db.visibility == nil and not self:ShouldShow(mod.db.showWhen, mod))
     local scale = (g.scale or 1) * ms
     -- Scaling a frame with secure buttons is blocked in combat; it is applied once combat ends.
     if not (InCombatLockdown() and frame:IsProtected()) and frame:GetScale() ~= scale then
+        local old = frame.hhtScaled
         frame:SetScale(scale)
+        frame.hhtScaled = scale
+        if self.Bar then self.Bar.ResnapAll() end
+        if old and old ~= scale and info and not frame.hhtFollow then
+            -- Offsets are measured in the frame's own scale, so they are converted to keep the frame where it is.
+            local m = info.module
+            local pos = m.db.pos and m.db.pos[info.key] or (m.positions and m.positions[info.key]) or { "CENTER", "CENTER", 0, 0 }
+            m.db.pos = m.db.pos or {}
+            m.db.pos[info.key] = { pos[1], pos[2], pos[3] * old / scale, pos[4] * old / scale }
+            self:ApplyPosition(frame)
+        end
     end
+    frame.hhtScaled = frame.hhtScaled or scale
     frame:SetAlpha(hidden and 0 or (g.alpha or 1) * ma)
 end
 
@@ -604,6 +731,83 @@ function HHT.ShapeChoices()
     return { { "square", L("Square") }, { "round", L("Round") } }
 end
 
+-- Look settings that most modules share (icon shape, border, bar texture). Reading gives the value most modules
+-- use; writing sets it in every module that has the setting, whatever it was before.
+local LOOK_DEFAULT = { shape = "round", borderSize = 2, borderAlpha = 1, barTexture = "blizzard", barShape = "square", bevel = 0.6 }
+
+function HHT:GetLook(key)
+    local counts, best, bestN = {}, nil, 0
+    for _, k in ipairs(self.moduleList) do
+        local v = self.modules[k].db[key]
+        if v ~= nil then
+            counts[v] = (counts[v] or 0) + 1
+            if counts[v] > bestN then best, bestN = v, counts[v] end
+        end
+    end
+    if best == nil then return LOOK_DEFAULT[key] end
+    return best
+end
+
+-- Border colour: the plain border colour keys ("edge" for bars, "border" for icons) of modules that have a border.
+-- Colours that carry a meaning (cooldown ready or not, warning, ammo low ...) are left alone.
+local BORDER_KEYS = { "edge", "border" }
+
+local function HasBorder(db)
+    return db.colors and (db.border ~= nil or db.borderSize ~= nil)
+end
+
+function HHT:GetBorderColor()
+    local first
+    for _, k in ipairs(self.moduleList) do
+        local db = self.modules[k].db
+        if HasBorder(db) then
+            for _, ck in ipairs(BORDER_KEYS) do
+                local c = db.colors[ck]
+                if c then
+                    if k == "castbar" then return c end
+                    first = first or c
+                end
+            end
+        end
+    end
+    return first or { 0.55, 0.42, 0.2 }
+end
+
+function HHT:SetBorderColor(c)
+    for _, k in ipairs(self.moduleList) do
+        local db = self.modules[k].db
+        if HasBorder(db) then
+            for _, ck in ipairs(BORDER_KEYS) do
+                if db.colors[ck] then db.colors[ck] = { c[1], c[2], c[3] } end
+            end
+        end
+    end
+end
+
+function HHT:SetLook(key, value)
+    if key == "borderColor" then
+        self:SetBorderColor(value)
+    else
+        for _, k in ipairs(self.moduleList) do
+            local db = self.modules[k].db
+            if db[key] ~= nil then db[key] = value end
+            if key == "borderSize" and db.border ~= nil then db.border = value > 0 end
+        end
+    end
+    self:RefreshAll()
+    if self.Icon and self.Icon.RefreshFinish then self.Icon.RefreshFinish() end
+    self:ApplyAllLooks()
+end
+
+-- A table whose fields read and write the shared look settings, so a form widget can be bound to it.
+HHT.Look = setmetatable({}, {
+    __index = function(_, key)
+        if key == "borderColor" then return HHT:GetBorderColor() end
+        return HHT:GetLook(key)
+    end,
+    __newindex = function(_, key, value) HHT:SetLook(key, value) end,
+})
+
 -- Small ticker so modules can poll cheaply without owning a frame.
 function HHT:Every(m, interval, fn)
     local f = CreateFrame("Frame")
@@ -638,8 +842,11 @@ function HHT:InitDB()
         local d = db.mods[m.key]
         if not d then d = {}; db.mods[m.key] = d end
         Fill(d, ModuleDefaults(m))
-        -- "Show only in combat" became a choice of the visibility option for the modules that have one.
-        if d.onlyCombat and d.visibility ~= nil then d.visibility = "combat"; d.onlyCombat = false end
+        -- "Show only in combat" became the choice "Show when" (the visibility option, or showWhen for modules without one).
+        if d.onlyCombat then
+            if d.visibility ~= nil then d.visibility = "combat" else d.showWhen = "combat" end
+            d.onlyCombat = false
+        end
         if m.wip then d.enabled = false end
         m.db = d
     end)
@@ -654,7 +861,7 @@ function HHT:Start()
         if m.db.enabled then self:SetEnabled(m, true) end
     end)
     if self.Config and self.Config.Init then self.Config:Init() end
-    for _, ev in ipairs({ "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED", "PLAYER_ENTERING_WORLD" }) do
+    for _, ev in ipairs({ "PLAYER_REGEN_ENABLED", "PLAYER_REGEN_DISABLED", "PLAYER_ENTERING_WORLD", "PLAYER_TARGET_CHANGED" }) do
         local f = self.combatFrame or CreateFrame("Frame")
         self.combatFrame = f
         f:RegisterEvent(ev)

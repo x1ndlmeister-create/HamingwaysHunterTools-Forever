@@ -81,7 +81,7 @@ function M:Build()
     self.frame = f
     f.border = UI.Panel(f, 0.67, 0.83, 0.45)
     UI.PopupHead(f, W, { icon = true, subLines = 2, noDiv = true, onClose = function() HHT.HideSecure(f) end })
-    HHT.Icon.Attach(f.icon)
+    HHT.Icon.Attach(f.icon, true)
     f.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
     f.target = CreateFrame("Button", nil, f, "SecureActionButtonTemplate")
@@ -248,7 +248,7 @@ function M:BuildZone()
     self.zone = z
     z.border = UI.Panel(z, 0.67, 0.83, 0.45)
     UI.PopupHead(z, ZW, { icon = true, divY = 70, onClose = function() z:Hide() end })
-    HHT.Icon.Attach(z.icon)
+    HHT.Icon.Attach(z.icon, true)
     z.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
     z.rows = {}
@@ -263,7 +263,7 @@ function M:BuildZone()
         r.icon:SetSize(18, 18)
         r.icon:SetPoint("LEFT", r, "LEFT", 6, 0)
         r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        HHT.Icon.Attach(r.icon)
+        HHT.Icon.Attach(r.icon, "shape")
         r.name = UI.Text(r, "", 11, 1, 1, 1)
         r.name:SetPoint("LEFT", r, "LEFT", 34, 0)
         r.name:SetWidth(150)
@@ -619,6 +619,7 @@ function M:BuildOptions(form)
     if PD then
         for _, a in ipairs(PD.abilities) do
             form:Check(PD.AbilityName(a), db.alertFor, a.key)
+            form:Group("Ability list")
         end
     end
 end

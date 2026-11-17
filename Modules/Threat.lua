@@ -25,7 +25,7 @@ local M = HHT:NewModule("threat", {
     desc = "Threat meter and aggro warning.",
     positions = { main = { "CENTER", "CENTER", 0, -98 } },
     defaults = {
-        width = 180, height = 16, bgAlpha = 0.85, barTexture = "blizzard", bevel = 0.6, border = true, smooth = true,
+        width = 180, height = 16, bgAlpha = 0.85, barTexture = "blizzard", barShape = "square", bevel = 0.6, border = true, borderSize = 1, smooth = true,
         flash = false, flashGlow = 1, flashGlowSize = 8,
         showLabel = true, showTime = true,
         onlyGroup = true, hideNoThreat = true, warnAt = 80, alertAggro = true, sound = true, blink = true,
@@ -187,9 +187,8 @@ function M:BuildOptions(form)
     form:Stepper(L("Background opacity"), db, "bgAlpha", 0, 1, 0.05)
     form:Check(L("Show label"), db, "showLabel")
     form:Check(L("Show percent"), db, "showTime")
-    form:Check(L("Show border"), db, "border")
+    Bar.AddBorder(form, db)
     Bar.AddOptions(form, db)
-    Bar.AddSmooth(form, db)
     Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Only in a group or with pet"), db, "onlyGroup")

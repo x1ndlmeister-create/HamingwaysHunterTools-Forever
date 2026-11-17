@@ -294,7 +294,7 @@ end
 function M:PaintGroup(g)
     local db, gd = self.db, self.db[g.key]
     local ic = g.icon
-    local sig = table.concat({ db.size, db.shape, db.borderSize, db.borderAlpha }, ",")
+    local sig = table.concat({ db.size, db.shape, db.borderSize, db.borderAlpha, HHT.GlowSig() }, ",")
     if g.styleSig ~= sig then
         g.styleSig = sig
         g.frame:SetSize(db.size, db.size)
@@ -447,8 +447,11 @@ function M:BuildOptions(form)
     form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
     form:Stepper(L("Icon size"), db, "size", 24, 96, 2)
     form:Stepper(L("Border size"), db, "borderSize", 0, 4, 1)
+    form:Stepper(L("Border alpha"), db, "borderAlpha", 0, 1, 0.1)
     form:Note(L("Choose the spell you press the key for. With a second spell the key switches between the two. Shift, Ctrl and Alt use their own spells on the same key."))
+    form:Group("key notes")
     form:Note(L("The key replaces its normal function while it is set."))
+    form:Group("key notes")
     for _, g in ipairs(GROUPS) do
         local gd = db[g.key]
         form:Header(L(g.title))
@@ -460,6 +463,7 @@ function M:BuildOptions(form)
                 form:Refresh()
             end)
         end, 220)
+        form:Name(g.key .. ": set key")
         function keyBtn:Refresh()
             self:SetLabel(string.format(L("Key: %s"), gd.key ~= "" and gd.key:upper() or L("not set")))
         end
@@ -469,13 +473,16 @@ function M:BuildOptions(form)
             M.bindDirty = true
             M:Tick()
         end, 220)
+        form:Name(g.key .. ": clear key")
         local names = { base = "", shift = "Shift: ", ctrl = "Ctrl: ", alt = "Alt: " }
         for _, s in ipairs(SLOTS) do
             local slot = s[1]
             local spellLabel = slot == "base" and L("Main spell") or L(names[slot] .. "spell")
             local altLabel = slot == "base" and L("Toggles with") or L(names[slot] .. "toggles with")
             PickRow(form, spellLabel, gd, slot, g.list, slot ~= "base")
+            form:Group(g.key .. (slot == "base" and ": main spell" or ": more spells"))
             PickRow(form, altLabel, gd, slot .. "Alt", g.list, true)
+            form:Group(g.key .. ": more spells")
         end
     end
     form:Header(L("Colors"))

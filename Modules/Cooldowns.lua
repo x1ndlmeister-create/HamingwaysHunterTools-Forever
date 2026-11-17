@@ -313,7 +313,7 @@ function M:TickSingle(show)
         end
     end
     local base = table.concat({ db.size, db.shape, db.borderSize, db.borderAlpha, db.numbers and 1 or 0, db.names and 1 or 0,
-        db.grow, db.perRow, db.spacing, bar and "b" or "s" }, ",")
+        db.grow, db.perRow, db.spacing, bar and "b" or "s", HHT.GlowSig() }, ",")
     local seen, binds, bindSig = {}, {}, {}
     for idx, e in ipairs(db.spells) do
         if e.on then
@@ -442,7 +442,7 @@ local function BuildSpellList(m, form)
                     row.icon:SetSize(18, 18)
                     row.icon:SetPoint("LEFT", row, "LEFT", 24, 0)
                     row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-                    HHT.Icon.Attach(row.icon)
+                    HHT.Icon.Attach(row.icon, true)
                     row.text = UI.Text(row, "", 12)
                     row.text:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
                     row.text:SetWidth(122)
@@ -545,7 +545,6 @@ function M:BuildOptions(form)
         self.signature = false
         for _, s in pairs(self.singles or {}) do s.styleSig = nil end
     end, 200)
-    form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Cycle(L("Icons shown"), db, "display", {
         { "all", L("All spells") }, { "cd", L("Only on cooldown") }, { "ready", L("Only when ready") } })
     form:Cycle(L("Grow direction"), db, "grow", {
@@ -564,4 +563,5 @@ function M:BuildOptions(form)
         HHT:RefreshModule(M)
     end, 200)
     form.spellList = BuildSpellList(self, form)
+    form:Name("Tracked spells")
 end

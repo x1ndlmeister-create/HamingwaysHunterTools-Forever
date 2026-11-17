@@ -130,32 +130,136 @@ function Icon.ApplyFinish(fin, size, round, bs)
     end
 end
 
--- Gives a plain icon texture (popups, lists, menus) the general style. Show, Hide, SetShown and SetAlpha are mirrored to the overlay.
-function Icon.Attach(tex, round)
+-- Shape, border and colour that the general settings give most modules.
+local function CurrentLook()
+    local ok, look = pcall(function()
+        local c = HHT:GetBorderColor()
+        return { round = HHT:GetLook("shape") == "round", bs = HHT:GetLook("borderSize") or 1, r = c[1], g = c[2], b = c[3] }
+    end)
+    if ok then return look end
+    return { round = false, bs = 1, r = 0.55, g = 0.42, b = 0.2 }
+end
+
+-- Border and glow of an attached icon. They live in the BORDER layer of the icon's parent, between the
+-- background and the icon, so they never cover it.
+local function SyncPlate(fin)
+    local p = fin.plate
+    if not p then return end
+    for _, t in ipairs(p.all) do
+        t:SetShown(fin.shown and t.want and true or false)
+        t:SetAlpha(fin.alpha)
+    end
+end
+
+local function ApplyPlate(fin, look)
+    local tex, parent = fin.tex, fin.parent
+    local w = tex:GetWidth() or 0
+    local bs = fin.shapeOnly and 0 or max(0, min(look.bs, w < 26 and 2 or 4))
+    local round = look.round
+    local g = HHT.db and HHT.db.general
+    local glow = not fin.shapeOnly and g and g.borderGlow and true or false
+    SetRound(tex, parent, round)
+    local p = fin.plate
+    if not p then
+        if bs == 0 and not glow then return end
+        p = { all = {}, halo = {} }
+        p.edge = parent:CreateTexture(nil, "BORDER", nil, -7)
+        p.all[1] = p.edge
+        fin.plate = p
+    end
+    for _, t in ipairs(p.all) do t.want = false end
+
+    p.edge:ClearAllPoints()
+    p.edge:SetPoint("TOPLEFT", tex, "TOPLEFT", -bs, bs)
+    p.edge:SetPoint("BOTTOMRIGHT", tex, "BOTTOMRIGHT", bs, -bs)
+    p.edge:SetColorTexture(look.r, look.g, look.b, 1)
+    SetRound(p.edge, parent, round)
+    p.edge.want = bs > 0
+
+    if glow then
+        local layers = HHT.GlowLayers()
+        if round then
+            for i = 1, layers do
+                local t = p.halo[i]
+                if not t then
+                    t = parent:CreateTexture(nil, "BORDER", nil, -8)
+                    t:SetTexture(WHITE)
+                    p.halo[i] = t
+                    p.all[#p.all + 1] = t
+                end
+                local d = bs + i
+                t:ClearAllPoints()
+                t:SetPoint("TOPLEFT", tex, "TOPLEFT", -d, d)
+                t:SetPoint("BOTTOMRIGHT", tex, "BOTTOMRIGHT", d, -d)
+                t:SetVertexColor(look.r, look.g, look.b, HHT.GlowAlpha(i, layers))
+                SetRound(t, parent, true)
+                t.want = true
+            end
+        else
+            if not p.box then
+                p.box = HHT.NewGlowBox(parent, "BORDER")
+                for _, t in ipairs(p.box) do p.all[#p.all + 1] = t end
+            end
+            HHT.PlaceGlowBox(p.box, tex, bs, layers)
+            HHT.ShowGlowBox(p.box, true, look.r, look.g, look.b)
+            for _, t in ipairs(p.box) do t.want = true end
+        end
+    end
+    SyncPlate(fin)
+end
+
+local function ApplyAttached(fin, look)
+    fin.round = look.round
+    Icon.ApplyFinish(fin, fin.size or fin.tex:GetWidth() or 0, look.round, 0)
+    ApplyPlate(fin, look)
+end
+
+-- Gives an icon texture (popups, lists, menus) the general look: shape, border, border colour, glow and style.
+-- plain = true applies only the style (menus and lists keep square icons); plain = "shape" adds the shape but no border
+-- or glow (popups). Show, Hide, SetShown and SetAlpha are mirrored to the overlay.
+function Icon.Attach(tex, plain)
     if tex.hhtFin then return tex.hhtFin end
     local parent = tex:GetParent()
     local host = CreateFrame("Frame", nil, parent)
     host:SetAllPoints(tex)
     host:SetFrameLevel(parent:GetFrameLevel() + 2)
     local fin = Icon.NewFinish(host, nil)
-    host:SetScript("OnSizeChanged", function(_, w)
-        if w and w > 0 then Icon.ApplyFinish(fin, w, round and true or false, 0) end
-    end)
-    local w = tex:GetWidth()
-    if w and w > 0 then Icon.ApplyFinish(fin, w, round and true or false, 0) end
+    fin.tex, fin.parent, fin.plain = tex, parent, plain == true
+    fin.shapeOnly = plain == "shape"
+    fin.shown, fin.alpha = tex:IsShown() and true or false, tex:GetAlpha() or 1
+    local function Apply(w)
+        if not (w and w > 0) then return end
+        fin.size = w
+        if fin.plain then Icon.ApplyFinish(fin, w, false, 0) else ApplyAttached(fin, CurrentLook()) end
+    end
+    host:SetScript("OnSizeChanged", function(_, w) Apply(w) end)
+    Apply(tex:GetWidth())
     local show, hide, setShown, setAlpha = tex.Show, tex.Hide, tex.SetShown, tex.SetAlpha
-    tex.Show = function(self, ...) host:Show(); return show(self, ...) end
-    tex.Hide = function(self, ...) host:Hide(); return hide(self, ...) end
-    tex.SetShown = function(self, v, ...) host:SetShown(v and true or false); return setShown(self, v, ...) end
-    tex.SetAlpha = function(self, a, ...) host:SetAlpha(a); return setAlpha(self, a, ...) end
+    local function Visible(v)
+        v = v and true or false
+        if fin.shown ~= v then fin.shown = v; SyncPlate(fin) end
+    end
+    tex.Show = function(self, ...) host:Show(); Visible(true); return show(self, ...) end
+    tex.Hide = function(self, ...) host:Hide(); Visible(false); return hide(self, ...) end
+    tex.SetShown = function(self, v, ...) host:SetShown(v and true or false); Visible(v); return setShown(self, v, ...) end
+    tex.SetAlpha = function(self, a, ...)
+        host:SetAlpha(a)
+        if fin.alpha ~= a then fin.alpha = a; SyncPlate(fin) end
+        return setAlpha(self, a, ...)
+    end
     tex.hhtFin = fin
     return fin
 end
 
--- Re-applies the finish everywhere after the general style changed.
+-- Re-applies the finish and the look everywhere after the general style changed.
 function Icon.RefreshFinish()
+    local look = CurrentLook()
     for fin in pairs(finishes) do
-        if fin.size then pcall(Icon.ApplyFinish, fin, fin.size, fin.round, fin.bs) end
+        if fin.tex and not fin.plain then
+            pcall(ApplyAttached, fin, look)
+        elseif fin.size then
+            pcall(Icon.ApplyFinish, fin, fin.size, fin.round, fin.bs)
+        end
     end
 end
 
@@ -177,6 +281,7 @@ function methods:Style(size, shape, borderSize, borderAlpha, numbers)
     SetRound(self.flash, self, round)
     Icon.ApplyFinish(self.fin, size, round, bs)
     SetSwipeRound(self.cool, round)
+    self:ApplyHalo(bs, round)
     pcall(self.cool.SetHideCountdownNumbers, self.cool, numbers == false)
     SetFont(self.text, max(8, floor(size * 0.42)), self)
     SetFont(self.count, max(8, floor(size * 0.30)), self)
@@ -187,6 +292,47 @@ end
 
 function methods:SetBorderColor(r, g, b)
     self.border:SetColorTexture(r, g, b, 1)
+    if self.halo and (self.haloR ~= r or self.haloG ~= g or self.haloB ~= b) then
+        for _, t in ipairs(self.halo) do t:SetVertexColor(r, g, b, t.haloA or 0) end
+        if self.haloBox and self.haloBox[1]:IsShown() then HHT.ShowGlowBox(self.haloBox, true, r, g, b) end
+    end
+    self.haloR, self.haloG, self.haloB = r, g, b
+end
+
+-- Soft glow around the border in the border colour. Round icons stack outlines that fade outwards,
+-- square ones use a soft-edged texture. Its reach is the general setting borderGlowSize (see HHT.GlowLayers).
+function methods:ApplyHalo(bs, round)
+    local g = HHT.db and HHT.db.general
+    local on = g and g.borderGlow
+    local halo = self.halo
+    if not (on or halo) then return end
+    halo = halo or {}
+    self.halo = halo
+    self.haloBox = self.haloBox or HHT.NewGlowBox(self)
+    local r, gr, b = self.haloR or 0.55, self.haloG or 0.42, self.haloB or 0.2
+    local layers = HHT.GlowLayers()
+    if on and not round then HHT.PlaceGlowBox(self.haloBox, self, bs, layers) end
+    HHT.ShowGlowBox(self.haloBox, on and not round, r, gr, b)
+    for i = 1, HHT.GLOW_MAX do
+        local t = halo[i]
+        if not t then
+            t = self:CreateTexture(nil, "BACKGROUND", nil, -8)
+            t:SetTexture(WHITE)
+            halo[i] = t
+        end
+        if on and round and i <= layers then
+            local d = bs + i
+            t:ClearAllPoints()
+            t:SetPoint("TOPLEFT", self, "TOPLEFT", -d, d)
+            t:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", d, -d)
+            t.haloA = HHT.GlowAlpha(i, layers)
+            t:SetVertexColor(r, gr, b, t.haloA)
+            SetRound(t, self, round)
+            t:Show()
+        else
+            t:Hide()
+        end
+    end
 end
 
 function methods:SetIcon(tex)
@@ -244,7 +390,6 @@ function methods:SetKey(text, size, pos, r, g, b)
 end
 
 function methods:Flash()
-    if not UI.Anim() then return end
     self.flashT = 0
     self.flash:SetAlpha(0.75)
     self.flash:Show()

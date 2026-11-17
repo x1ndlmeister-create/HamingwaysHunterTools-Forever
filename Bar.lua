@@ -10,6 +10,39 @@ Bar.FLASH_TIME = 0.5
 
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local SPARK = "Interface\\CastingBar\\UI-CastingBar-Spark"
+local MASK = "Interface\\AddOns\\" .. ADDON .. "\\Media\\BarMask"
+local MASK_RATIOS = { 2, 4, 8, 16, 32 }
+
+-- The rounded-bar masks come in a few width-to-height ratios; the closest one keeps the end caps nearly round.
+local function MaskFile(w, h)
+    local r = w / math.max(h, 1)
+    local best, bd = MASK_RATIOS[1], math.huge
+    for _, v in ipairs(MASK_RATIOS) do
+        local d = math.abs(math.log(r / v))
+        if d < bd then best, bd = v, d end
+    end
+    return MASK .. best
+end
+
+-- Clips a texture to a rounded bar shape that follows region (nil turns the clipping off).
+local function Clip(tex, region, w, h)
+    local owner = tex:GetParent()
+    if not (tex.AddMaskTexture and owner and owner.CreateMaskTexture) then return end
+    if region then
+        local m = tex.hhtMask
+        if not m then
+            m = owner:CreateMaskTexture()
+            tex.hhtMask = m
+        end
+        m:SetTexture(MaskFile(w, h), "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        m:ClearAllPoints()
+        m:SetAllPoints(region)
+        if not tex.hhtOn then tex:AddMaskTexture(m); tex.hhtOn = true end
+    elseif tex.hhtOn then
+        tex:RemoveMaskTexture(tex.hhtMask)
+        tex.hhtOn = false
+    end
+end
 
 Bar.TEXTURES = {
     flat = WHITE,
@@ -21,6 +54,8 @@ Bar.TEXTURES = {
 
 HHT:AddGerman({
     ["Bar texture"] = "Balkentextur",
+    ["Bar corners"] = "Leistenecken",
+    ["Rounded"] = "Abgerundet",
     ["Flat"] = "Flach",
     ["Smooth"] = "Weich",
     ["Glass"] = "Glas",
@@ -40,6 +75,61 @@ function Bar.TextureChoices()
     }
 end
 
+function Bar.ShapeChoices()
+    return { { "square", L("Square") }, { "round", L("Rounded") } }
+end
+
+local CIRCLE = "Interface\\AddOns\\" .. ADDON .. "\\Media\\RoundRing"
+
+-- A ring (or rectangular frame) around a bar, `a` pixels away from it and `th` pixels thick: the middle is empty,
+-- so it never shows through a transparent bar. Rounded bars use two half rings (a ring texture is chosen by the
+-- ratio of inner to outer radius, 0.70 - 0.98) plus strips on top and bottom. Pieces: 1/3 end caps, 2/4 top and
+-- bottom strips, 5/6 side strips (square bars only).
+local function NewRing(row, layer, sub)
+    local p = {}
+    for k = 1, 6 do
+        local t = row:CreateTexture(nil, layer, nil, sub)
+        t:SetTexture(WHITE)
+        t:Hide()
+        p[k] = t
+    end
+    p[1]:SetTexCoord(0, 0.5, 0, 1)
+    p[3]:SetTexCoord(0.5, 1, 0, 1)
+    return p
+end
+
+local function PlaceRing(p, row, a, th, h, rounded)
+    local o = a + th
+    local r = h / 2
+    local function Put(t, p1, r1, x1, y1, p2, r2, x2, y2)
+        t:ClearAllPoints()
+        t:SetPoint(p1, row, r1, x1, y1)
+        t:SetPoint(p2, row, r2, x2, y2)
+    end
+    if rounded then
+        local q = math.max(0.70, math.min(0.98, math.floor((r + a) / (r + o) * 50 + 0.5) / 50))
+        local file = CIRCLE .. math.floor(q * 100 + 0.5)
+        p[1]:SetTexture(file); p[3]:SetTexture(file)
+        Put(p[1], "TOPLEFT", "TOPLEFT", -o, o, "BOTTOMRIGHT", "BOTTOMLEFT", r, -o)
+        Put(p[3], "TOPLEFT", "TOPRIGHT", -r, o, "BOTTOMRIGHT", "BOTTOMRIGHT", o, -o)
+        Put(p[2], "TOPLEFT", "TOPLEFT", r, o, "BOTTOMRIGHT", "TOPRIGHT", -r, a)
+        Put(p[4], "TOPLEFT", "BOTTOMLEFT", r, -a, "BOTTOMRIGHT", "BOTTOMRIGHT", -r, -o)
+    else
+        Put(p[2], "TOPLEFT", "TOPLEFT", -o, o, "BOTTOMRIGHT", "TOPRIGHT", o, a)
+        Put(p[4], "TOPLEFT", "BOTTOMLEFT", -o, -a, "BOTTOMRIGHT", "BOTTOMRIGHT", o, -o)
+        Put(p[5], "TOPLEFT", "TOPLEFT", -o, a, "BOTTOMRIGHT", "BOTTOMLEFT", -a, -a)
+        Put(p[6], "TOPLEFT", "TOPRIGHT", a, a, "BOTTOMRIGHT", "BOTTOMRIGHT", o, -a)
+    end
+end
+
+local function ShowRing(p, rounded, on, r, g, b, a)
+    for k = 1, 6 do
+        p[k]:SetVertexColor(r, g, b, a)
+        local used = (k == 2 or k == 4) or (rounded and (k == 1 or k == 3)) or (not rounded and (k == 5 or k == 6))
+        p[k]:SetShown(on and used and true or false)
+    end
+end
+
 -- Vertical alpha gradient of one colour (bottom alpha -> top alpha).
 local function Grad(tex, r, g, b, aBottom, aTop)
     tex:SetTexture(WHITE)
@@ -52,8 +142,12 @@ local function Grad(tex, r, g, b, aBottom, aTop)
     end
 end
 
+local bars = setmetatable({}, { __mode = "k" })
+
 function Bar.New(parent)
     local row = CreateFrame("Frame", nil, parent)
+    bars[row] = true
+    row.rim = NewRing(row, "BACKGROUND", -1)
     row.bg = row:CreateTexture(nil, "BACKGROUND")
     row.bg:SetAllPoints()
     row.bg:SetTexture(WHITE)
@@ -174,28 +268,108 @@ end
 -- db: width, height, bgAlpha, border, barTexture, bevel, showLabel, showTime, colors{bg,edge,text,<fillKey>}
 local TEXT_POINT = { left = { "LEFT", 5 }, center = { "CENTER", 0 }, right = { "RIGHT", -5 } }
 
-local function PlaceText(fs, pos, row)
+local function PlaceText(fs, pos, row, pad)
     local t = TEXT_POINT[pos] or TEXT_POINT.left
+    local off = t[2]
+    if pad and off ~= 0 then off = off < 0 and -pad or pad end
     fs:ClearAllPoints()
-    fs:SetPoint(t[1], row, t[1], t[2], 0)
+    fs:SetPoint(t[1], row, t[1], off, 0)
     fs:SetJustifyH(t[1])
 end
+
+local FX_TEXTURES = { "shine", "shade", "lit", "spark", "flashTex" }
+
+-- Border thickness in pixels: the border switch turns it off, otherwise borderSize (older settings: 1 px).
+local function BorderSize(db)
+    if db.border == false then return 0 end
+    return math.max(0, math.min(4, db.borderSize or 1))
+end
+
+-- Rounds a thickness to whole screen pixels. A border of fractional pixels would come out 1 or 2 pixels thick
+-- depending on where on the screen the bar sits, so two identical bars could look different.
+local function ScreenHeight()
+    if GetPhysicalScreenSize then return select(2, GetPhysicalScreenSize()) end
+    local res = GetCVar and GetCVar("gxWindowedResolution") or GetCVar("gxResolution")
+    return res and tonumber(res:match("x(%d+)"))
+end
+
+local function SnapPx(row, v)
+    if v <= 0 then return 0 end
+    local ph = ScreenHeight()
+    local es = row:GetEffectiveScale()
+    if not (ph and ph > 0 and es and es > 0) then return v end
+    local px = 768 / ph / es
+    return math.max(1, math.floor(v / px + 0.5)) * px
+end
+
+-- Soft glow around the border: a soft-edged texture in the border colour, fading outwards.
+-- Its reach is the general setting borderGlowSize (see HHT.GlowLayers).
+local function ApplyHalo(row, db, on, rounded, bs)
+    if not (on or row.haloBox) then return end
+    row.haloBox = row.haloBox or HHT.NewGlowBox(row)
+    row.haloPill = row.haloPill or HHT.NewGlowPill(row)
+    local r, g, b = HHT.Col(db, "edge")
+    local layers = HHT.GlowLayers()
+    if on and rounded then
+        HHT.PlaceGlowPill(row.haloPill, row, bs, layers, db.height)
+    elseif on then
+        HHT.PlaceGlowBox(row.haloBox, row, bs, layers)
+    end
+    HHT.ShowGlowBox(row.haloBox, on and not rounded, r, g, b)
+    HHT.ShowGlowPill(row.haloPill, on and rounded, r, g, b)
+end
+
+-- Square or rounded bar: the border is a ring around the bar. Rounded bars clip the background, fill and
+-- effects to a pill shape.
+local function ApplyShape(row, db, rounded)
+    local w, h = db.width, db.height
+    local bs = SnapPx(row, BorderSize(db))
+    row.rounded = rounded
+    row.lit:SetHeight(SnapPx(row, 1))
+    for i = 1, 4 do row.edge[i]:Hide() end
+    -- the border grows outwards, so the bar keeps its width and height
+    local er, eg, eb = HHT.Col(db, "edge")
+    if bs > 0 then PlaceRing(row.rim, row, 0, bs, h, rounded) end
+    ShowRing(row.rim, rounded, bs > 0, er, eg, eb, 1)
+    row.bg:ClearAllPoints()
+    row.bg:SetAllPoints(row)
+    row.bar:ClearAllPoints()
+    row.bar:SetAllPoints(row)
+    if rounded then
+        Clip(row.bg, row.bg, w, h)
+        Clip(row.bar:GetStatusBarTexture(), row.bar, w, h)
+        for _, k in ipairs(FX_TEXTURES) do Clip(row[k], row.fx, w, h) end
+    else
+        Clip(row.bg)
+        Clip(row.bar:GetStatusBarTexture())
+        for _, k in ipairs(FX_TEXTURES) do Clip(row[k]) end
+    end
+    local g = HHT.db and HHT.db.general
+    ApplyHalo(row, db, g and g.borderGlow, rounded, bs)
+end
+
+-- Borders are snapped to whole screen pixels, which depends on the scale: redo it after a scale change.
+function Bar.ResnapAll()
+    for row in pairs(bars) do
+        if row.db then pcall(ApplyShape, row, row.db, row.rounded) end
+    end
+end
+
 function Bar.Apply(row, db, fillKey)
     row.db = db
     local h = db.height
     row:SetSize(db.width, h)
     row.bg:SetVertexColor(HHT.Col(db, "bg"))
     row.bg:SetAlpha(db.bgAlpha)
-    row.edge:SetColor(HHT.Col(db, "edge"))
-    for i = 1, 4 do row.edge[i]:SetShown(db.border) end
     row.bar:SetStatusBarTexture(Bar.TEXTURES[db.barTexture or "blizzard"] or WHITE)
     row.bar.hhtSmooth = db.smooth and true or false
     if fillKey then row.bar:SetStatusBarColor(HHT.Col(db, fillKey)) end
+    ApplyShape(row, db, db.barShape == "round")
 
-    local bevel = db.bevel or 0
+    -- The general style sets the strength of the 3D effect; a module's own setting scales it (0.6 is the default).
     local g = HHT.db and HHT.db.general
-    local level = ({ bevel = 0.5, glass = 0.9 })[g and g.style or "flat"] or 0
-    bevel = math.max(bevel, level)
+    local level = ({ bevel = 0.6, glass = 1 })[g and g.style or "flat"] or 0
+    local bevel = math.min(1, level * (db.bevel or 0.6) / 0.6)
     if db.barTexture == "glass" then bevel = math.max(bevel, 0.9) end
     local inner = math.max(2, h - 2)
     row.fx:SetShown(true)
@@ -212,8 +386,9 @@ function Bar.Apply(row, db, fillKey)
 
     row.label:SetShown(db.showLabel)
     row.time:SetShown(db.showTime)
-    PlaceText(row.label, db.labelPos or "left", row)
-    PlaceText(row.time, db.timePos or "right", row)
+    local pad = row.rounded and (math.floor(h / 3) + 4) or nil
+    PlaceText(row.label, db.labelPos or "left", row, pad)
+    PlaceText(row.time, db.timePos or "right", row, pad)
     row.label:SetTextColor(HHT.Col(db, "text"))
     row.time:SetTextColor(HHT.Col(db, "text"))
     local fs = math.max(8, math.min(14, h - 4))
@@ -225,6 +400,7 @@ end
 -- Shared option rows for bar look.
 function Bar.AddOptions(form, db)
     form:Cycle(L("Bar texture"), db, "barTexture", Bar.TextureChoices())
+    form:Cycle(L("Bar corners"), db, "barShape", Bar.ShapeChoices())
     form:Stepper(L("3D effect strength"), db, "bevel", 0, 1, 0.1)
     db.labelPos = db.labelPos or "left"
     db.timePos = db.timePos or "right"
@@ -233,13 +409,17 @@ function Bar.AddOptions(form, db)
     form:Cycle(L("Time position"), db, "timePos", pos)
 end
 
-function Bar.AddSmooth(form, db)
-    form:Check(L("Smooth bar movement"), db, "smooth")
+-- Border thickness slider (0 = no border); keeps the older on/off switch in step.
+function Bar.AddBorder(form, db)
+    local proxy = setmetatable({}, {
+        __index = function() return BorderSize(db) end,
+        __newindex = function(_, _, v) db.borderSize = v; db.border = v > 0 end,
+    })
+    form:Stepper(L("Border size"), proxy, "size", 0, 4, 1)
 end
 
 -- Short pulse in a brightened bar colour plus an outer glow, e.g. when a bar reaches 100 %.
 function Bar.Flash(row)
-    if not UI.Anim() then return end
     local r, g, b = row.bar:GetStatusBarColor()
     r, g, b = tonumber(r) or 1, tonumber(g) or 1, tonumber(b) or 1
     local s = 1 / math.max(r, g, b, 0.1)
@@ -249,11 +429,22 @@ function Bar.Flash(row)
     local gStr, gSize = db.flashGlow or 1, db.flashGlowSize or 8
     for _, t in ipairs(row.glow) do
         local k = 1 - (t.ring - 0.5) / math.max(gSize, 1)
-        if gStr <= 0 or t.ring > gSize or k <= 0 then
+        if gStr <= 0 or t.ring > gSize or k <= 0 or row.rounded then
             t:Hide()
         else
             t:SetVertexColor(r, g, b, math.min(1, 0.9 * gStr * k * k))
             t:Show()
+        end
+    end
+    -- Rounded bars glow with soft pill pieces instead of the square rings.
+    local pillOn = row.rounded and gStr > 0 and gSize > 0
+    if pillOn or row.flashPill then
+        row.flashPill = row.flashPill or HHT.NewGlowPill(row.flashF, "OVERLAY")
+        if pillOn then HHT.PlaceGlowPill(row.flashPill, row, 0, gSize, db.height or row:GetHeight()) end
+        HHT.ShowGlowPill(row.flashPill, pillOn, r, g, b)
+        if pillOn then
+            local a = math.min(1, 0.9 * gStr)
+            for _, t in ipairs(row.flashPill) do t:SetVertexColor(r, g, b, a) end
         end
     end
     row.flashT = 0

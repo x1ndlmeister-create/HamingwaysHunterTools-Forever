@@ -11,6 +11,15 @@ HHT:AddGerman({
     ["Step %d of %d"] = "Schritt %d von %d",
     ["Welcome"] = "Willkommen",
     ["Look"] = "Aussehen",
+    ["These change every module at once. Each module can still be set on its own page."] = "Diese ändern alle Module auf einmal. Jedes Modul lässt sich weiterhin auf seiner eigenen Seite einstellen.",
+    ["All icons: shape"] = "Alle Symbole: Form",
+    ["All borders: size (0 = none)"] = "Alle Rahmen: Stärke (0 = keiner)",
+    ["All bars: texture"] = "Alle Leisten: Textur",
+    ["All bars: corners"] = "Alle Leisten: Ecken",
+    ["All borders: color"] = "Alle Rahmen: Farbe",
+    ["Border glow"] = "Rahmen-Glühen",
+    ["Glow strength"] = "Glüh-Stärke",
+    ["Aimed Shot"] = "Gezielter Schuss",
     ["Done"] = "Fertig",
     ["How it works"] = "So funktioniert's",
     ["Good to know"] = "Gut zu wissen",
@@ -35,11 +44,6 @@ HHT:AddGerman({
         "Während der Einrichtung sind alle Werkzeuge beiseite gelegt, so siehst du jedes einzeln erscheinen. Überspringst oder schließt du, kommt alles so zurück, wie es war.",
     ["Drag the frame with the mouse. It stays visible until the quick install ends."] = "Verschiebe das Fenster mit der Maus. Es bleibt sichtbar, bis die Einrichtung endet.",
     ["Drag the example frame with the mouse while you are on this page."] = "Verschiebe das Beispielfenster mit der Maus, solange du auf dieser Seite bist.",
-    ["More options wait in the settings, and you can change everything later."] =
-        "Mehr Optionen warten in den Einstellungen, alles lässt sich später ändern.",
-    ["All settings are shown. You can change everything later in the settings."] =
-        "Alle Einstellungen werden gezeigt. Du kannst alles später in den Einstellungen ändern.",
-    ["Show all settings"] = "Alle Einstellungen zeigen",
     ["Quick install is not available in combat."] = "Die Schnell-Einrichtung ist im Kampf nicht verfügbar.",
     ["Quick install closed because combat started."] = "Schnell-Einrichtung geschlossen, weil ein Kampf begonnen hat.",
     ["Only the most important settings are shown here."] = "Hier siehst du nur die wichtigsten Einstellungen.",
@@ -65,132 +69,66 @@ local S = {}
 HHT.Setup = S
 
 local W, BODY_H, TOP = 540, 252, 68
+local MIN_BODY = 160
 local win, pages = nil, {}
 
 -- ---------------------------------------------------------------------------
--- Option sets and steps
+-- Steps
 -- ---------------------------------------------------------------------------
--- { kind, key, label, min, max, step }; options a module does not have are left out.
-local function Bar(minW, maxW, minH, maxH)
-    return {
-        { "check", "border", "Show border" },
-        { "stepper", "width", "Bar width", minW, maxW, 10 },
-        { "stepper", "height", "Bar height", minH, maxH, 1 },
-        { "stepper", "spacing", "Spacing", 0, 12, 1 },
-        { "stepper", "bgAlpha", "Background opacity", 0, 1, 0.05 },
-        { "check", "showTime", "Show remaining time" },
-        { "check", "showLabel", "Show bar labels" },
-        { "bar", "barTexture" },
-    }
-end
-
-local GROW = { { "right", "Right" }, { "left", "Left" }, { "up", "Up" }, { "down", "Down" } }
-
--- When a frame shows: always, in combat, with a target ...
-local VIS = { "cycle", "visibility", "Show when", "visibility" }
-local MINI = { { "check", "onMinimap", "Also show on the minimap" } }
-
-local function Plus(list, ...)
-    for _, o in ipairs({ ... }) do list[#list + 1] = o end
-    return list
-end
-
-local function Icons(minS, maxS)
-    return {
-        { "cycle", "shape", "Icon shape" },
-        { "stepper", "size", "Icon size", minS, maxS, 2 },
-        { "stepper", "borderSize", "Border size", 0, 4, 1 },
-        { "stepper", "borderAlpha", "Border alpha", 0, 1, 0.1 },
-        { "stepper", "spacing", "Spacing", 0, 30, 1 },
-        { "cycle", "grow", "Grow direction", GROW },
-        { "stepper", "perRow", "Icons per row", 1, 20, 1 },
-        { "check", "numbers", "Show cooldown numbers" },
-    }
-end
-
--- Pages. mods: key, opts, test (shows an example popup), popup (frame is only shown and movable on its own page).
+-- Pages. mods: key, test (shows an example popup), popup (frame is only shown and movable on its own page).
+-- The options of a module are the ones of its settings page (BuildOptions and the layout of Layout.lua).
 local STEPS = {
     { id = "welcome", title = "Welcome", fresh = true },
     { id = "look", title = "Look",
-      say = { en = "First, how should the workshop look? Pick yer language and the style of yer icons. I've put all me tools aside for now, so ye can watch each one come back. Skip, and everything returns as it was.",
-              de = "Zuerst: wie soll die Werkstatt aussehen? Wähle deine Sprache und den Stil deiner Symbole. Ich habe mein ganzes Werkzeug beiseite gelegt, so siehst du jedes Stück zurückkehren. Überspringst du, kommt alles so zurück, wie es war." } },
-    { id = "swing", mods = { { key = "swing",     opts = Plus(Bar(80, 600, 6, 40), VIS, { "check", "showMark", "Mark 0.5 s before the shot" }, { "check", "colorMark", "Color the bar for the last 0.5 s" }) } },
+      say = { en = "First, how should the workshop look? Pick the style and the shape of yer icons, borders and bars. What ye pick here counts for every tool at once, and ye can still tweak each one on its own page. I've put all me tools aside for now, so ye can watch each one come back. Skip, and everything returns as it was.",
+              de = "Zuerst: wie soll die Werkstatt aussehen? Wähle Stil und Form deiner Symbole, Rahmen und Leisten. Was du hier wählst, gilt sofort für jedes Werkzeug, und auf den einzelnen Seiten kannst du es noch feinjustieren. Ich habe mein ganzes Werkzeug beiseite gelegt, so siehst du jedes Stück zurückkehren. Überspringst du, kommt alles so zurück, wie es war." } },
+    { id = "swing", mods = { { key = "swing" } },
           say = { en = "Yer swing timer. Keep it close to yer crosshair. The shot only fires 0.5 seconds after ye stand still, so ye can move until the bar hits the grey line!",
                   de = "Dein Swing-Timer. Halte ihn nah am Fadenkreuz. Der Schuss geht erst 0,5 Sekunden nach dem Stehenbleiben raus, du kannst dich also bewegen, bis die Leiste die graue Markierung erreicht!" } },
-    { id = "castbar", mods = { { key = "castbar", opts = Plus(Bar(100, 600, 8, 48), VIS, { "check", "hideDefault", "Hide the default cast bar" }) } },
+    { id = "castbar", mods = { { key = "castbar" } },
       say = { en = "The cast bar shows yer shots and spells. Tick the box to hide the default one. If another addon already has a cast bar, switch this off.",
               de = "Die Zauberleiste zeigt Schüsse und Zauber. Setze den Haken, um die Standard-Leiste auszublenden. Hat schon ein anderes Addon eine Zauberleiste, schalte diese aus." } },
-    { id = "cooldowns", mods = { { key = "cooldowns",     opts = Plus(Icons(20, 96), VIS) } },
+    { id = "cooldowns", mods = { { key = "cooldowns" } },
       say = { en = "Yer cooldowns, in plain sight. Click the icons, or give 'em yer own keys in the settings. That keeps yer action bar tidy as a dwarven vault.",
               de = "Deine Abklingzeiten, gut sichtbar. Klicke die Symbole oder gib ihnen in den Einstellungen eigene Tasten. So bleibt deine Aktionsleiste aufgeräumt wie ein Zwergentresor." } },
-    { id = "warnings", mods = { { key = "warnings", opts = Plus(Icons(24, 128),
-        { "check", "hideInCombat", "Hide warnings in combat" },
-        { "cycle", "markTargets", "Hunter's Mark targets", { { "elite", "Elites and bosses only" }, { "all", "Every enemy" } } }) } },
+    { id = "warnings", mods = { { key = "warnings" } },
       say = { en = "Warnings for what a hunter forgets: aspect, mark, pet. Show 'em always or only in combat, as ye please.",
               de = "Warnungen für das, was ein Jäger gern vergisst: Aspekt, Mal, Begleiter. Zeige sie immer oder nur im Kampf, ganz wie du magst." } },
-    { id = "aspects", mods = { { key = "aspects", opts = Icons(24, 96) } },
+    { id = "aspects", mods = { { key = "aspects" } },
       say = { en = "One button for yer aspect and one for tracking. Click it or bind a key. A right-click lists everything ye know.",
               de = "Ein Knopf für deinen Aspekt und einer für das Aufspüren. Klicke ihn oder binde eine Taste. Ein Rechtsklick zeigt alles, was du kennst." } },
-    { id = "debuffs", mods = { { key = "debuffs", opts = Plus(Icons(16, 80), VIS,
-        { "cycle", "filter", "Which debuffs", { { "mine", "Only my debuffs" }, { "all", "All debuffs" } } }) } },
+    { id = "debuffs", mods = { { key = "debuffs" } },
       say = { en = "What ye put on the target: stings, marks and the like. Set it where it does not block yer view.",
               de = "Was du auf das Ziel legst: Stiche, Male und dergleichen. Setze es dorthin, wo es dir nicht die Sicht nimmt." } },
-    { id = "procs", mods = { { key = "procs", opts = { { "stepper", "size", "Art size", 64, 400, 16 } } } },
+    { id = "procs", mods = { { key = "procs" } },
       say = { en = "Procs light up the screen when something good happens. Make 'em as big or as small as ye please.",
               de = "Procs lassen den Bildschirm aufleuchten, wenn etwas Gutes passiert. Mach sie so groß oder klein, wie du willst." } },
-    { id = "summons", mods = { { key = "summons", opts = Plus(Icons(20, 96), VIS) } },
+    { id = "summons", mods = { { key = "summons" } },
       say = { en = "Summoned helpers, such as yer hawks, with their timers.",
               de = "Beschworene Helfer, zum Beispiel deine Falken, mit ihren Zeitanzeigen." } },
     { id = "threat", title = "Threat and distance",
-      mods = { { key = "threat", opts = Plus(Bar(60, 400, 8, 40),
-                   { "check", "onlyGroup", "Only in a group or with pet" },
-                   { "check", "hideNoThreat", "Hide when no threat" }) },
-               { key = "distance", opts = {
-                   { "cycle", "layout", "Layout", { { "segments", "Segments" }, { "badge", "Badge" }, { "text", "Text only" } }, rebuild = true },
-                   { "stepper", "size", "Size", 20, 120, 2 },
-                   { "cycle", "shape", "Icon shape", only = { "layout", "badge" } },
-                   { "check", "showText", "Show text" },
-                   VIS } } },
+      mods = { { key = "threat" }, { key = "distance" } },
       say = { en = "Threat shows how close ye be to pullin' the beast off the tank. Distance tells ye if the target be in melee, in shootin' range or in the dead zone.",
               de = "Bedrohung zeigt, wie nah du daran bist, dem Tank das Biest abzunehmen. Entfernung sagt dir, ob das Ziel im Nahkampf, in Schussweite oder in der toten Zone steht." } },
     { id = "tranq", mods = { { key = "tranq" } },
       say = { en = "For tranquilizing shot rotations in raids. Most hunters leave this off until they need it.",
               de = "Für Einlullender-Schuss-Rotationen in Raids. Die meisten Jäger lassen das aus, bis sie es brauchen." } },
     { id = "pet", title = "Pet and feeding",
-      mods = { { key = "pet", opts = {
-                  { "cycle", "shape", "Icon shape" },
-                  { "stepper", "iconSize", "Portrait size", 20, 80, 2 },
-                  { "stepper", "width", "Bar width", 60, 400, 10 },
-                  { "stepper", "height", "Bar height", 8, 40, 1 },
-                  { "check", "border", "Show border" },
-                  { "check", "hideNoPet", "Hide when no pet" },
-                  { "check", "hideDefault", "Hide the default pet frame" },
-                  { "check", "attachDefault", "Attach to the default pet frame" },
-                  { "check", "showHappiness", "Show happiness" },
-                  { "check", "showFocus", "Show focus bar" },
-                  { "check", "showLevel", "Show level" },
-                  { "check", "showXp", "Show experience bar" },
-                  { "check", "showLoyalty", "Show loyalty bar" },
-                  { "check", "showAbilities", "Show pet abilities" },
-                  { "bar", "barTexture" } } },
-               { key = "feeder", opts = Plus(Icons(20, 100),
-                  { "cycle", "mode", "Show when", { { "always", "Always (with pet)" }, { "hungry", "Only when not happy" } } }) } },
+      mods = { { key = "pet" }, { key = "feeder" } },
       say = { en = "Yer companion: health, happiness and food. A fed pet be a happy pet, and a happy pet bites harder. Simple dwarven math. I can hide the default pet frame, or dock me bars onto it.",
               de = "Dein Begleiter: Gesundheit, Zufriedenheit und Futter. Ein gefütterter Begleiter ist ein froher Begleiter, und ein froher Begleiter beißt härter. Einfache Zwergenrechnung. Ich kann das Standard-Begleiterfenster ausblenden oder meine Leisten daran anheften." } },
-    { id = "ammo", mods = { { key = "ammo", opts = Plus(Icons(20, 100), VIS,
-        { "check", "onlyLow", "Only show when ammo is low" }) } },
+    { id = "ammo", mods = { { key = "ammo" } },
       say = { en = "Yer ammo. Never run dry in the middle of a fight! I'll also tell ye when there be better ammo or a better quiver to be had.",
               de = "Deine Munition. Geh niemals mitten im Kampf leer aus! Ich sage dir auch Bescheid, wenn es bessere Munition oder einen besseren Köcher gibt." } },
     { id = "popups", title = "Pet popups",
-      mods = { { key = "petwatch", popup = true,
-                 opts = { { "check", "onlyMyLevel", "Only beasts up to my level" } } },
+      mods = { { key = "petwatch", popup = true },
                { key = "petnearby", popup = true },
                { key = "pettrain", popup = true }, { key = "petguide", popup = true } },
       say = { en = "These popups tell ye about rare beasts, new ranks yer pet can learn and where to train. The frames ye see be examples: drag 'em where ye want 'em and pick the size.",
               de = "Diese Hinweise melden seltene Tiere, neue Ränge, die dein Begleiter lernen kann, und wo du trainieren kannst. Die Fenster, die du siehst, sind Beispiele: Ziehe sie dorthin, wo du sie haben willst, und wähle die Größe." } },
     { id = "layers", title = "Map layers",
-      mods = { { key = "ammovendors", opts = MINI }, { key = "foodvendors", opts = MINI },
-               { key = "stablemasters", opts = MINI }, { key = "trainers", opts = MINI } },
+      mods = { { key = "ammovendors" }, { key = "foodvendors" },
+               { key = "stablemasters" }, { key = "trainers" } },
       say = { en = "Marks for ammo, food, stable masters and trainers, on the world map and on the minimap too. Nothin' else on yer screen.",
               de = "Markierungen für Munition, Futter, Stallmeister und Lehrer, auf der Weltkarte und auch auf der Minimap. Sonst nichts auf dem Bildschirm." } },
     { id = "extras", title = "Extras",
@@ -218,31 +156,10 @@ local function IsFrame(m, e)
     return not m.noFrame
 end
 
-local function AddOption(form, m, o)
-    local kind, key = o[1], o[2]
-    if m.db[key] == nil then return end
-    if o.only and m.db[o.only[1]] ~= o.only[2] then return end
-    local extra = o.rebuild and function() S:Rebuild() end or nil
-    if kind == "bar" then
-        HHT.Bar.AddOptions(form, m.db)
-        return
-    end
-    local label = L(o[3])
-    if kind == "check" then
-        form:Check(label, m.db, key)
-    elseif kind == "stepper" then
-        form:Stepper(label, m.db, key, o[4], o[5], o[6])
-    elseif kind == "cycle" then
-        local choices = HHT.ShapeChoices()
-        if o[4] == "visibility" then
-            choices = HHT.VisibilityChoices()
-        elseif o[4] then
-            choices = {}
-            for i, c in ipairs(o[4]) do choices[i] = { c[1], L(c[2]) } end
-        end
-        form:Cycle(label, m.db, key, choices, extra)
-    end
-end
+-- Rows the quick install hides, or places on their own row because the row they sit next to is hidden.
+local SETUP_SKIP = { ["Unlock frame"] = true }
+local SETUP_SKIP_POPUP = { ["Unlock frame"] = true, ["Show when"] = true }
+local SETUP_SOLO = { ["Reset position"] = true }
 
 -- The database window sits above the quick install. Escape would close both and undo the setup, so the setup leaves the Escape list while the database is open.
 local function OpenDex()
@@ -263,97 +180,160 @@ local function OpenDex()
     end
 end
 
-local function AddModule(form, e)
+local function AddModule(form, e, first)
     local m = HHT.modules[e.key]
     if not m or m.wip then return end
-    -- Header row: name on the left, on/off switch on the right.
+    if not first then
+        local gap = CreateFrame("Frame", nil, form.content)
+        gap:SetSize(440, 16)
+        form:Place(gap, 16, 4, 0)
+    end
+    -- Header row on a colour band: name on the left, on/off switch on the right.
     local row = CreateFrame("Frame", nil, form.content)
-    row:SetSize(440, 22)
+    row:SetSize(470, 30)
+    local c = UI.PAL.head
+    local band = row:CreateTexture(nil, "BACKGROUND")
+    band:SetAllPoints(row)
+    UI.Gradient(band, false, c[1], c[2], c[3], 0.34, 0.04)
+    local edge = row:CreateTexture(nil, "ARTWORK")
+    edge:SetColorTexture(c[1], c[2], c[3], 0.95)
+    edge:SetWidth(3)
+    edge:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+    edge:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
     local head = UI.Header(row, L(m.name))
-    head:SetPoint("LEFT", row, "LEFT", 0, 0)
+    head:SetPoint("LEFT", row, "LEFT", 12, 0)
     local sw = UI.Switch(row, function() return m.db.enabled end, function(v)
         m.db.enabled = v and true or false
         HHT:SetEnabled(m, m.db.enabled)
         S:Rebuild()
     end)
-    sw:SetPoint("RIGHT", row, "RIGHT", -4, 0)
+    sw:SetPoint("RIGHT", row, "RIGHT", -8, 0)
     local sl = UI.Text(row, L("Module enabled"), 12, 0.85, 0.85, 0.85)
     sl:SetPoint("RIGHT", sw, "LEFT", -8, 0)
-    form:Place(row, 22, 4, 4)
+    form:Place(row, 30, 4, 6)
     form:Note(L(m.desc))
     if not m.db.enabled then
         form:Note(L("Switch it on to place and style it."), 0.67, 0.83, 0.45)
         return
     end
     local frame = IsFrame(m, e)
-    local all = S.showAll
     if frame then
         form:Note(L(e.popup and "Drag the example frame with the mouse while you are on this page."
             or "Drag the frame with the mouse. It stays visible until the quick install ends."), 0.67, 0.83, 0.45)
     end
-    form:Note(L(all and "All settings are shown. You can change everything later in the settings."
-        or "More options wait in the settings, and you can change everything later."), 0.67, 0.83, 0.45)
-    if all then
-        if frame then
-            form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05)
-            form:Stepper(L("Opacity"), m.db, "alpha", 0.1, 1, 0.05)
-        end
-    else
-        for _, o in ipairs(e.opts or {}) do AddOption(form, m, o) end
-        if e.popup then form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05) end
-    end
-    if frame then
-        if not e.popup and m.db.visibility == nil then form:Check(L("Show only in combat"), m.db, "onlyCombat", function() HHT:ApplyAllLooks() end) end
-        form:Button(L("Reset position"), function()
-            m.db.pos = nil
-            HHT:ApplyAllPositions()
-        end, 170)
-    end
-    if all and m.BuildOptions then
+    -- The same rows as on the settings page. The frames are unlocked by the quick install itself.
+    local from = #form.entries + 1
+    HHT.CommonOptions(m, form)
+    if m.BuildOptions then
         local ok, err = pcall(m.BuildOptions, m, form)
         if not ok then HHT.Print("Quick install: " .. m.key .. ": " .. tostring(err)) end
     end
+    form:ApplyLayout(HHT.Layout and HHT.Layout[e.key], HHT.Tips, {
+        from = from, secId = e.key, solo = SETUP_SOLO, skip = e.popup and SETUP_SKIP_POPUP or SETUP_SKIP })
     if e.test then form:Button(L("Show example"), function() HHT.RunTest(e.test) end, 170) end
     if e.dex then form:Button(L("Open pet database"), OpenDex, 170) end
 end
 
 local PREVIEW_ICONS = {
     { "Ability_Hunter_RunningShot", "T" },
-    { "Ability_Rogue_FeignDeath", "SG" },
     { "Spell_Frost_FreezingBreath", "G" },
-    { "Ability_Hunter_BeastCall", "M5" },
 }
 
--- Four sample icons in the current style, so the style choice can be judged right away.
-local function StylePreview(form)
-    local row = CreateFrame("Frame", nil, form.content)
+-- Sample icons and a cast bar that fills over and over, in the current look, so every choice can be judged right away.
+-- The group is centred with room on every side for the border glow.
+local function StylePreview(page)
+    local row = CreateFrame("Frame", nil, page)
+    row:SetPoint("TOP", page, "TOP", 0, -4)
     row:SetSize(460, 64)
-    local cd = HHT.modules.cooldowns
-    local shape = (cd and cd.db.shape) or "round"
-    local size, gap = 44, 12
-    local x = (460 - (#PREVIEW_ICONS * size + (#PREVIEW_ICONS - 1) * gap)) / 2
+    local size, gap, barW, space = 40, 14, 230, 36
+    local start = (460 - (#PREVIEW_ICONS * size + (#PREVIEW_ICONS - 1) * gap + space + barW)) / 2
+    row.icons = {}
     for i, p in ipairs(PREVIEW_ICONS) do
         local ic = HHT.Icon.New(row)
-        ic:SetPoint("LEFT", row, "LEFT", x + (i - 1) * (size + gap), 0)
-        ic:Style(size, shape, 2, 1, false)
+        ic:SetPoint("LEFT", row, "LEFT", start + (i - 1) * (size + gap), 0)
         ic:SetIcon("Interface\\Icons\\" .. p[1])
         ic:SetKey(p[2], 12, "TOPRIGHT")
+        row.icons[i] = ic
     end
-    form:Place(row, 64, 4, 10)
+
+    local cb = HHT.modules.castbar
+    local bdb = {
+        width = barW, height = 20, bgAlpha = 0.85, bevel = 0.6, showLabel = true, showTime = true,
+        flashGlow = 1, flashGlowSize = 8,
+        colors = setmetatable({}, { __index = cb and cb.db.colors or { cast = { 0.67, 0.83, 0.45 }, bg = { 0.05, 0.04, 0.03 },
+            edge = { 0.55, 0.42, 0.2 }, text = { 0.95, 0.93, 0.85 } } }),
+    }
+    local bar = HHT.Bar.New(row)
+    bar:SetPoint("RIGHT", row, "RIGHT", -start, 0)
+    bar.label:SetText(L("Aimed Shot"))
+    row.bar = bar
+
+    function row:Update()
+        local c = HHT.Look.borderColor
+        for _, ic in ipairs(self.icons) do
+            ic:SetBorderColor(c[1], c[2], c[3])
+            ic:Style(size, HHT.Look.shape, HHT.Look.borderSize, 1, false)
+        end
+        bdb.border = HHT.Look.borderSize > 0
+        bdb.borderSize = HHT.Look.borderSize
+        bdb.colors.edge = HHT.Look.borderColor
+        bdb.barTexture = HHT.Look.barTexture
+        bdb.barShape = HHT.Look.barShape
+        HHT.Bar.Apply(bar, bdb, "cast")
+    end
+
+    -- 2.4 s of casting, a flash when full, a short pause, then again.
+    local t, flashed = 0, false
+    row:SetScript("OnUpdate", function(_, dt)
+        t = t + dt
+        if t > 3.4 then t, flashed = 0, false end
+        local p = math.min(1, t / 2.4)
+        bar.bar:SetMinMaxValues(0, 1)
+        bar.bar:SetValue(p)
+        bar.time:SetText(string.format("%.1f", 2.4 * (1 - p)))
+        bar.spark:ClearAllPoints()
+        bar.spark:SetPoint("CENTER", bar.bar, "LEFT", (bar:GetWidth() - 2) * p, 0)
+        bar.spark:SetShown(p < 1)
+        if p >= 1 and not flashed then
+            flashed = true
+            HHT.Bar.Flash(bar)
+        end
+    end)
+    row:Update()
+    return row
 end
 
-local function BuildLook(form)
+-- The preview stays above the scrolling options, so it is always in view.
+local function BuildLook(form, page)
     local g = HHT.db.general
-    StylePreview(form)
-    form:Cycle(L("Language"), g, "lang", {
-        { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
-        function() S:Relang() end)
+    local preview = StylePreview(page)
+    local function Changed() preview:Update() end
     form:Cycle(L("Style of icons and bars"), g, "style", {
         { "flat", L("Flat") }, { "bevel", L("3D frame") }, { "glass", L("Glass") } },
         function()
             HHT:RefreshAll()
             HHT.Icon.RefreshFinish()
+            Changed()
         end)
+    -- These apply to every module at once, whatever each one was set to before.
+    form:Cycle(L("All icons: shape"), HHT.Look, "shape", HHT.ShapeChoices(), Changed)
+    form:Stepper(L("All borders: size (0 = none)"), HHT.Look, "borderSize", 0, 4, 1, Changed)
+    form:Color(L("All borders: color"), HHT.Look, "borderColor", Changed)
+    form:Check(L("Border glow"), g, "borderGlow", function()
+        HHT:RefreshAll()
+        HHT.Icon.RefreshFinish()
+        Changed()
+        S:Rebuild()
+    end)
+    if g.borderGlow then
+        form:Stepper(L("Glow strength"), g, "borderGlowSize", 1, 8, 1, function()
+            HHT:RefreshAll()
+            HHT.Icon.RefreshFinish()
+            Changed()
+        end)
+    end
+    form:Cycle(L("All bars: texture"), HHT.Look, "barTexture", HHT.Bar.TextureChoices(), Changed)
+    form:Cycle(L("All bars: corners"), HHT.Look, "barShape", HHT.Bar.ShapeChoices(), Changed)
 end
 
 -- Row with the minimap button's logo next to a note.
@@ -386,7 +366,13 @@ local function BuildPage(i)
     local step = STEPS[i]
     local frame = CreateFrame("Frame", nil, win.body)
     frame:SetAllPoints(win.body)
-    local form = UI.NewForm(frame, function()
+    local list = frame
+    if step.id == "look" then
+        list = CreateFrame("Frame", nil, frame)
+        list:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -74)
+        list:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+    end
+    local form = UI.NewForm(list, function()
         -- A scale change moves a frame's corner; each popup keeps the spot it was dragged to.
         local corners = step.id == "popups" and S:PopupCorners()
         for _, e in ipairs(step.mods or {}) do
@@ -400,23 +386,9 @@ local function BuildPage(i)
     if step.id == "welcome" then
         local function Head(t) form:Place(UI.Header(form.content, L(t)), 16, 4, 6) end
         local function Bullet(t) form:Note("-  " .. L(t), 0.82, 0.82, 0.82) end
-        local sources = HHT.Profile and HHT.Profile.Sources() or {}
-        if #sources > 0 then
-            S.adoptIndex = math.min(S.adoptIndex or 1, #sources)
-            Head("Settings from another character")
-            form:Note(L("You already have settings saved from other characters or profiles. Take them over, then go through the steps and adjust what you like."), 0.67, 0.83, 0.45)
-            local pick = UI.Button(form.content, 290, 22, sources[S.adoptIndex].label, function(btn)
-                local items = {}
-                for n, s in ipairs(sources) do items[n] = { label = s.label, value = n } end
-                UI.ShowMenu(btn, items, function(item)
-                    S.adoptIndex = item.value
-                    btn:SetLabel(item.label)
-                end)
-            end)
-            form:Place(pick, 22, 4, 6)
-            form:Button(L("Take over these settings"), function() S:Adopt(sources[S.adoptIndex]) end, 220)
-            if S.adopted then form:Note(string.format(L("Settings taken over from %s."), S.adopted)) end
-        end
+        form:Cycle(L("Language"), HHT.db.general, "lang", {
+            { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
+            function() S:Relang() end)
         Head("How it works")
         Bullet("For every tool you decide if you want it, where it sits, how big it is and how it looks.")
         Bullet("Only the most important settings are shown here.")
@@ -426,14 +398,21 @@ local function BuildPage(i)
         LogoRow(form, L("Left click this button on the minimap to open the settings at any time."))
         form:Note(L("All tools are put aside while you set up, so you can watch each one appear. If you skip or close this, everything returns as it was."), 0.67, 0.83, 0.45)
     elseif step.id == "look" then
-        BuildLook(form)
+        BuildLook(form, frame)
     elseif step.id == "done" then
         local on, off = Count()
         form:Note(string.format(L("%d tools are on, %d are off."), on, off))
         form:Note(L("Everything else can be changed in the settings: left click the minimap button or type /hht. News are in /hht news, and /hht setup starts this again."))
         LogoRow(form, L("Left click this button on the minimap to open the settings at any time."))
     else
-        for _, e in ipairs(step.mods or {}) do AddModule(form, e) end
+        local first = true
+        for _, e in ipairs(step.mods or {}) do
+            local m = HHT.modules[e.key]
+            if m and not m.wip then
+                AddModule(form, e, first)
+                first = false
+            end
+        end
         if step.id == "popups" then
             form:Button(L("Arrange examples"), function() S:ArrangePopups(true) end, 170)
         end
@@ -448,9 +427,11 @@ end
 function S:Layout(dwarfH)
     if not win then return end
     local region = math.max(dwarfH or D.PORTRAIT, 112)
+    self.region = region
     win.body:ClearAllPoints()
     win.body:SetPoint("TOPLEFT", win, "TOPLEFT", 14, -(TOP + region + 8))
-    win:SetHeight(TOP + region + 8 + BODY_H + 46)
+    win.body:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -14, 46)
+    win:SetHeight(TOP + region + 8 + (tonumber(HHT.db.general.setupBodyH) or BODY_H) + 46)
 end
 
 -- Every enabled frame stays visible and movable until the quick install ends, so the whole layout can be built.
@@ -567,7 +548,7 @@ local function DeepCopy(v)
     return t
 end
 
-local SAVED_GENERAL = { "lang", "style" }
+local SAVED_GENERAL = { "lang", "style", "borderGlow", "borderGlowSize" }
 -- Taking over settings changes more of the general options; these keep their value when the quick install is cancelled.
 local KEEP_GENERAL = { setupDone = true, setupAsk = true, seenVersion = true, origin = true, fold = true }
 
@@ -658,19 +639,22 @@ end
 local function Window()
     if win then return win end
     win = UI.Window("HHTSetup", W, 500, L("Quick install") .. " - Hamingway's HunterTools")
+    local saved = tonumber(HHT.db.general.setupScale)
+    if saved then win:SetScale(math.min(1.6, math.max(0.6, saved))) end
     win:SetPoint("TOP", UIParent, "TOP", 0, -90)
+    local grip = UI.ScaleGrip(win, function() HHT.db.general.setupScale = win:GetScale() end)
+    -- smaller than in the settings window so it stays clear of the Next button
+    grip:SetSize(12, 12)
+    grip:ClearAllPoints()
+    grip:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", -2, 2)
+    UI.HeightGrip(win, function() return (S.region or 112) + TOP + 8 + MIN_BODY + 46 end, function(h)
+        HHT.db.general.setupBodyH = math.floor(h - TOP - (S.region or 112) - 8 - 46 + 0.5)
+    end)
     win:Hide()
     if UISpecialFrames then table.insert(UISpecialFrames, "HHTSetup") end
 
     win.progress = UI.Text(win, "", 11, 0.72, 0.74, 0.78)
     win.progress:SetPoint("LEFT", win, "TOPLEFT", 14, -42)
-    win.allSwitch = UI.Switch(win, function() return S.showAll end, function(v)
-        S.showAll = v and true or false
-        S:RebuildAll()
-    end)
-    win.allSwitch:SetPoint("RIGHT", win, "TOPRIGHT", -14, -42)
-    win.allLabel = UI.Text(win, L("Show all settings"), 11, 0.85, 0.85, 0.85)
-    win.allLabel:SetPoint("RIGHT", win.allSwitch, "LEFT", -8, 0)
     local track = CreateFrame("Frame", nil, win)
     track:SetSize(W - 28, 6)
     track:SetPoint("TOPLEFT", win, "TOPLEFT", 14, -54)
@@ -705,6 +689,77 @@ local function Window()
     end)
     S:Layout(D.PORTRAIT)
     return win
+end
+
+-- Offer to take over settings from another character: a small panel beside the window, shown on the first page only.
+local ADOPT_W = 250
+
+local function AdoptPanel()
+    if S.adopt then return S.adopt end
+    local p = UI.Window("HHTSetupAdopt", ADOPT_W, 160, L("Settings from another character"))
+    p:SetParent(win)
+    p:SetFrameStrata("DIALOG")
+    p.close:Hide()
+    p:SetScript("OnDragStart", nil)
+    p.title:SetWidth(ADOPT_W - 24)
+    p.title:SetJustifyH("LEFT")
+    p.note = UI.Text(p, "", 11, 0.67, 0.83, 0.45)
+    p.note:SetPoint("TOPLEFT", p, "TOPLEFT", 12, -40)
+    p.note:SetWidth(ADOPT_W - 24)
+    p.note:SetJustifyH("LEFT")
+    p.note:SetWordWrap(true)
+    p.pick = UI.Button(p, ADOPT_W - 24, 22, "", function(btn)
+        local items = {}
+        for n, s in ipairs(p.sources) do items[n] = { label = s.label, value = n } end
+        UI.ShowMenu(btn, items, function(item)
+            S.adoptIndex = item.value
+            btn:SetLabel(item.label)
+        end)
+    end)
+    p.take = UI.Button(p, ADOPT_W - 24, 22, "", function() S:Adopt(p.sources[S.adoptIndex]) end)
+    p.done = UI.Text(p, "", 11, 0.85, 0.85, 0.85)
+    p.done:SetWidth(ADOPT_W - 24)
+    p.done:SetJustifyH("LEFT")
+    p.done:SetWordWrap(true)
+    S.adopt = p
+    return p
+end
+
+function S:UpdateAdopt()
+    local sources = (self.step == 1 and HHT.Profile and HHT.Profile.Sources()) or {}
+    if #sources == 0 then
+        if self.adopt then self.adopt:Hide() end
+        return
+    end
+    local p = AdoptPanel()
+    p.sources = sources
+    self.adoptIndex = math.min(self.adoptIndex or 1, #sources)
+    p.title:SetText(L("Settings from another character"))
+    p.note:SetText(L("You already have settings saved from other characters or profiles. Take them over, then go through the steps and adjust what you like."))
+    p.pick:SetLabel(sources[self.adoptIndex].label)
+    p.take:SetLabel(L("Take over these settings"))
+    p.pick:ClearAllPoints()
+    p.pick:SetPoint("TOPLEFT", p.note, "BOTTOMLEFT", 0, -10)
+    p.take:ClearAllPoints()
+    p.take:SetPoint("TOPLEFT", p.pick, "BOTTOMLEFT", 0, -8)
+    local h = 40 + p.note:GetStringHeight() + 10 + 22 + 8 + 22 + 14
+    p.done:ClearAllPoints()
+    if self.adopted then
+        p.done:SetText(string.format(L("Settings taken over from %s."), self.adopted))
+        p.done:SetPoint("TOPLEFT", p.take, "BOTTOMLEFT", 0, -8)
+        p.done:Show()
+        h = h + p.done:GetStringHeight() + 8
+    else
+        p.done:Hide()
+    end
+    p:SetHeight(h)
+    p:ClearAllPoints()
+    if (UIParent:GetRight() or 0) - (win:GetRight() or 0) >= ADOPT_W + 8 then
+        p:SetPoint("TOPLEFT", win, "TOPRIGHT", 8, 0)
+    else
+        p:SetPoint("TOPRIGHT", win, "TOPLEFT", -8, 0)
+    end
+    p:Show()
 end
 
 function S:Left()
@@ -752,17 +807,14 @@ function S:Show(i, quiet)
         pages[i] = page
     end
     page:Show()
-
-    local title = step.title and L(step.title)
+    -- a page built earlier may show values that another page changed since (the look settings apply to every tool)
+    if page.form and page.form.Refresh then page.form:Refresh() end
     if not title then
         local m = step.mods and HHT.modules[step.mods[1].key]
         title = m and L(m.name) or ""
     end
     w.progress:SetText(string.format(L("Step %d of %d"), i, #STEPS) .. ": " .. title)
     w.fill:SetWidth(math.max(6, (W - 28) * i / #STEPS))
-    local hasMods = step.mods ~= nil
-    w.allSwitch:SetShown(hasMods)
-    w.allLabel:SetShown(hasMods)
 
     local say = step.say
     if step.id == "welcome" then say = g.setupDone and SAY_AGAIN or SAY_WELCOME end
@@ -780,6 +832,8 @@ function S:Show(i, quiet)
         w.b2:Show()
     end
     self:SyncMove()
+    self:UpdateAdopt()
+    if HHT.WhatsNew and HHT.WhatsNew.Dock then HHT.WhatsNew.Dock() end
     if step.id == "popups" and not quiet then self:ArrangeLater() end
 end
 
@@ -817,7 +871,6 @@ function S:Relang()
     if HHT.Config and HHT.Config.Relang then HHT.Config:Relang() end
     if win then
         win.title:SetText(L("Quick install") .. " - Hamingway's HunterTools")
-        win.allLabel:SetText(L("Show all settings"))
     end
     self:Show(self.step or 1)
     self:KeepScroll(pos)
@@ -833,9 +886,7 @@ function S.Open(step)
     if cfg and cfg.window and cfg.window:IsShown() then cfg.window:Hide() end
     local w = Window()
     S.restoreLater = false
-    S.showAll = false
     S.adopted, S.adoptIndex = nil, 1
-    w.allSwitch:Refresh()
     w:Show()
     S:Begin()
     S:Show(step or 1)

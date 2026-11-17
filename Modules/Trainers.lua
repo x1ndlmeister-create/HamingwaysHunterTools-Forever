@@ -17,7 +17,7 @@ local M = HHT:NewModule("trainers", {
     name = "Trainers",
     desc = "Shows hunter trainers and pet trainers on the world map from a built-in list.",
     noFrame = true,
-    defaults = { onMap = false, onMinimap = true, ownFaction = true },
+    defaults = { onMap = false, onMinimap = true },
 })
 
 local TR = {}
@@ -37,11 +37,11 @@ end
 
 function TR.List()
     local faction = UnitFactionGroup and UnitFactionGroup("player")
-    local key = M.db.ownFaction and faction or ""
+    local key = faction or ""
     if M.cache and M.cacheKey == key then return M.cache end
     local out = {}
     for _, e in ipairs(HHT.TrainerData or {}) do
-        local ok = e.fa == "N" or not M.db.ownFaction or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
+        local ok = e.fa == "N" or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
         if ok then
             local pet = e.k == "P"
             out[#out + 1] = {
@@ -93,6 +93,5 @@ function M:BuildOptions(form)
     form:Check(L("Also show on the minimap"), db, "onMinimap")
     form:Button(L("Trainers on map"), TR.Show, 240)
     form:Button(L("Waypoint to nearest trainer"), TR.Nearest, 240)
-    form:Check(L("Only my faction"), db, "ownFaction")
     form:Note(string.format(L("Built-in list: %d trainers (hunter and pet)."), #(HHT.TrainerData or {})))
 end

@@ -47,7 +47,7 @@ HHT:AddGerman({
     ["Warn when Aspect of the Pack is active"] = "Warnen wenn Aspekt des Rudels aktiv ist",
     ["Pack in dungeon"] = "Rudel im Dungeon",
     ["Click: switch to %s"] = "Klick: zu %s wechseln",
-    ["Warn when the pet is hungry or pet food runs low (needs Pet feeder)"] = "Warnen wenn der Begleiter hungrig ist oder das Futter knapp wird (braucht Begleiter-Futter)",
+    ["Warn when the pet is hungry or food is low"] = "Warnen wenn der Begleiter hungrig ist oder das Futter knapp wird",
     ["Pet hungry"] = "Begleiter hungrig",
     ["Low pet food"] = "Wenig Futter",
     ["Click: feed the pet"] = "Klick: Begleiter füttern",
@@ -61,7 +61,7 @@ local M = HHT:NewModule("warnings", {
     defaults = {
         size = 48, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 10, grow = "right", perRow = 8,
         blink = true, sound = false, showText = true, hideInCombat = false, clickCast = true,
-        aspectWarn = true, aspectWrong = true, aspectShow = false, aspectMain = "aspectHawk",
+        aspectWarn = true, aspectWrong = false, aspectShow = false, aspectMain = "aspectHawk",
         trueshotWarn = true,
         markWarn = true, markTargets = "elite",
         petWarn = true,
@@ -641,7 +641,7 @@ function M:BuildOptions(form)
     form:Stepper(L("Low health below (%)"), db, "petLowPct", 5, 90, 5)
     form:Check(L("Warn when the hurt pet is out of Mend Pet range"), db, "petRangeWarn")
     form:Header(L("Pet food"))
-    form:Check(L("Warn when the pet is hungry or pet food runs low (needs Pet feeder)"), db, "foodWarn")
+    form:Check(L("Warn when the pet is hungry or food is low"), db, "foodWarn")
     form:Header(L("Growl"))
     form:Check(L("Warn when the pet's Growl autocast is on"), db, "growlWarn")
     form:Check(L("Only in dungeons and raids"), db, "growlInstanceOnly")

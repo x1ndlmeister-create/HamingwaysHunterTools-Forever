@@ -21,7 +21,7 @@ local M = HHT:NewModule("foodvendors", {
     name = "Food vendors",
     desc = "Shows vendors that sell food for your current pet on the world map and learns missing ones.",
     noFrame = true,
-    defaults = { onMap = false, onMinimap = true, ownFaction = true, allDiets = false, learned = {} },
+    defaults = { onMap = false, onMinimap = true, allDiets = false, learned = {} },
 })
 
 local FV = {}
@@ -75,7 +75,7 @@ function FV.List()
     if not db then return {} end
     local faction = UnitFactionGroup and UnitFactionGroup("player")
     local want = db.allDiets and "" or PetCodes()
-    local key = want .. (db.ownFaction and faction or "") .. (M.ver or 0) .. #db.learned
+    local key = want .. (faction or "") .. (M.ver or 0) .. #db.learned
     if M.cache and M.cacheKey == key then return M.cache end
     local out, seen = {}, {}
     local function add(e)
@@ -89,7 +89,7 @@ function FV.List()
         }
     end
     for _, e in ipairs(HHT.FoodVendorData or {}) do
-        local ok = e.fa == "N" or not db.ownFaction or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
+        local ok = e.fa == "N" or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
         if ok then add(e) end
     end
     for _, e in ipairs(db.learned) do add(e) end
@@ -188,7 +188,6 @@ function M:BuildOptions(form)
     local db = self.db
     form:Check(L("Show on the world map"), db, "onMap")
     form:Check(L("Also show on the minimap"), db, "onMinimap")
-    form:Check(L("Only my faction"), db, "ownFaction")
     form:Check(L("Show all diets (ignore my pet)"), db, "allDiets")
     form:Button(L("Food vendors on map"), FV.Show, 240)
     form:Button(L("Waypoint to nearest food vendor"), FV.Nearest, 240)

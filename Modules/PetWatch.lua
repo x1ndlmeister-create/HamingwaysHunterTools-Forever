@@ -221,7 +221,7 @@ function M:Build()
     self.frame = f
     f.border = UI.Panel(f, 0.75, 0.55, 1)
     UI.PopupHead(f, W, { icon = true, onClose = CloseAlert })
-    HHT.Icon.Attach(f.icon)
+    HHT.Icon.Attach(f.icon, true)
     -- Body columns: the rows are created on demand in Body().
     f.cells, f.arows, f.foods, f.heads, f.hits, f.cards = {}, {}, {}, {}, {}, {}
     f.cardLayer = CreateFrame("Frame", nil, f)

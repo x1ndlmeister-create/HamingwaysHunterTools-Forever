@@ -15,6 +15,33 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.5.0",
+        en = {
+            "Quick install (the in-game installer) now shows the same rows as the settings, so what you set there is what you get later. Modules on one page are separated by a coloured header, and the window can be made taller or shorter by dragging its bottom edge. /hht setup starts it any time.",
+            "Settings: every module page was rebuilt. Rows are grouped, and each section has a Simple and an Advanced view, so you only see what you need.",
+            "One look for everything: icon shape (round or square), border thickness and colour, border glow and its strength, bar texture and rounded bars are set once, in the general settings or in the quick install, with an animated preview. Every module page can still change its own.",
+            "Border glow: a soft glow in the border colour around icons and bars. Rounded bars get a matching pill-shaped glow, and the cast bar flash glows with it. Menu icons, list icons and the icons of the pet popups stay plain.",
+            "Cast bar: choose the icon shape, and the space between icon and bar (Advanced).",
+            "Show when and Opacity sit in the same place on every module page.",
+            "Pet popups: new header with the pet icon, and the pet training hint shows the Beast Training icon.",
+            "Map layers always show only your own faction, the 'Only my faction' switch is gone.",
+            "Scaling no longer pushes frames out of place, and borders stay sharp at every UI scale.",
+            "Fixed: the border glow now appears on the cooldowns, aspect and tracking keys and summons as soon as you switch it on. The macro page of the quick install is tidy again.",
+        },
+        de = {
+            "Die Schnell-Einrichtung (der Ingame-Installer) zeigt jetzt dieselben Zeilen wie die Einstellungen, was du dort einstellst, bekommst du später genauso. Module auf einer Seite sind durch eine farbige Kopfzeile getrennt, und die Fensterhöhe lässt sich am unteren Rand ziehen. /hht setup startet sie jederzeit.",
+            "Einstellungen: Jede Modulseite wurde neu aufgebaut. Die Zeilen sind gruppiert, und jeder Abschnitt hat eine Einfach- und eine Erweitert-Ansicht, damit du nur siehst, was du brauchst.",
+            "Ein Look für alles: Symbolform (rund oder eckig), Rahmenstärke und -farbe, Rahmen-Glühen mit Stärke, Leistentextur und abgerundete Leisten stellst du einmal ein, in den allgemeinen Einstellungen oder in der Schnell-Einrichtung, mit animierter Vorschau. Jede Modulseite kann es weiterhin einzeln ändern.",
+            "Rahmen-Glühen: ein weicher Schein in der Rahmenfarbe um Symbole und Leisten. Abgerundete Leisten bekommen einen passenden pillenförmigen Schein, und beim Aufblitzen der Zauberleiste glüht er mit. Menü-Symbole, Listen-Symbole und die Symbole der Tier-Popups bleiben schlicht.",
+            "Zauberleiste: Du kannst die Symbolform und den Abstand zwischen Symbol und Leiste wählen (Erweitert).",
+            "Anzeigen wenn und Deckkraft stehen auf jeder Modulseite am selben Platz.",
+            "Tier-Popups: neue Kopfzeile mit dem Tier-Symbol, und der Tierausbildungs-Hinweis zeigt das Symbol der Tierausbildung.",
+            "Kartenebenen zeigen immer nur deine eigene Fraktion, der Schalter 'Nur meine Fraktion' entfällt.",
+            "Beim Skalieren rutschen Fenster nicht mehr weg, und Rahmen bleiben bei jeder UI-Skalierung scharf.",
+            "Behoben: Das Rahmen-Glühen erscheint jetzt auch bei den Abklingzeiten, den Aspekt- und Aufspür-Tasten und den Beschwörungen, sobald du es einschaltest. Die Makro-Seite der Schnell-Einrichtung ist wieder ordentlich.",
+        },
+    },
+    {
         v = "1.4.3",
         en = {
             "Rare pet arrow: click it to target the beast. A macro 'HHT Beast' is created and updated for you (it is not placed on any bar), and the chat tells you when it was updated. Clicking a spawn point on the world map now also sets the arrow.",
@@ -379,7 +406,15 @@ function WN.Dock()
     local setup = _G.HHTSetup
     if setup and setup:IsShown() then
         win:ClearAllPoints()
-        if (UIParent:GetRight() or 0) - (setup:GetRight() or 0) >= WIDTH + 8 then
+        local adopt = _G.HHTSetupAdopt
+        if adopt and adopt:IsShown() and adopt:GetLeft() and setup:GetRight() then
+            -- stacked under the settings-takeover panel on the same side
+            if adopt:GetLeft() >= setup:GetRight() then
+                win:SetPoint("TOPLEFT", adopt, "BOTTOMLEFT", 0, -8)
+            else
+                win:SetPoint("TOPRIGHT", adopt, "BOTTOMRIGHT", 0, -8)
+            end
+        elseif (UIParent:GetRight() or 0) - (setup:GetRight() or 0) >= WIDTH + 8 then
             win:SetPoint("TOPLEFT", setup, "TOPRIGHT", 8, 0)
         else
             win:SetPoint("TOPRIGHT", setup, "TOPLEFT", -8, 0)

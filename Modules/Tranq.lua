@@ -338,10 +338,12 @@ function M:OnAddon(event, prefix, msg, channel, sender)
         if RankOf(sender) >= 1 then self:ApplyRotation(a, b) end
     elseif kind == "X" then
         if RankOf(sender) >= 1 and a ~= "" then self:Miss(a) end
+    elseif kind == "V" then
+        if RankOf(sender) >= 1 then self.force = (a == "show" or a == "hide") and a or nil end
     elseif kind == "Q" then
         self.helloAt = self.helloAt or (GetTime() + 1 + math.random() * 3)
         local set = self.real
-        if RankOf(self.me) == 2 and #set.order + #set.backup > 0 and not self.sendAt then
+        if RankOf(self.me) == 2 and (#set.order + #set.backup > 0 or self.force) and not self.sendAt then
             self.sendAt = GetTime() + 2 + math.random() * 2
         end
     end
@@ -620,11 +622,7 @@ function M:Build()
     al.text:SetPoint("CENTER")
     al:SetWidth(math.max(200, al.text:GetStringWidth() + 40))
     al:SetScript("OnUpdate", function(self)
-        if UI.Anim() then
-            self.text:SetAlpha(0.65 + 0.35 * math.abs(math.sin(GetTime() * 3)))
-        else
-            self.text:SetAlpha(1)
-        end
+        self.text:SetAlpha(0.65 + 0.35 * math.abs(math.sin(GetTime() * 3)))
     end)
     HHT:MakeMovable(al, self, "alert", L("Tranq alert"))
     al:Hide()
@@ -793,6 +791,7 @@ function M:Tick()
         if now - (self.lastRot or 0) > 10 then
             self.lastRot = now
             self:SendRotation(self.real)
+            if self.force and self:CanEdit() then Send("V\t" .. self.force) end
         end
     end
     self:Update()
@@ -834,7 +833,12 @@ function M:Update()
     local canEdit = self:CanEdit()
     local unlocked = HHT:IsUnlocked(self)
     local grouped = IsInGroup and IsInGroup()
+    if not grouped then self.force = nil end
     local show = db.show ~= false and (demo or (grouped and #rot + #bak > 0)) and true or false
+    if not demo and grouped then
+        if self.force == "hide" then show = false
+        elseif self.force == "show" then show = #rot + #bak > 0 end
+    end
     if show then
         f.bCast:SetShown(canEdit)
         f.bReset:SetShown(canEdit)
@@ -885,6 +889,19 @@ end
 
 function M:BuildOptions(form)
     local db = self.db
+    form:Cond("You are raid leader or assist", function()
+        return IsInGroup and IsInGroup() and self:CanEdit() and true or false
+    end)
+    local raidMode = setmetatable({}, {
+        __index = function() return self.force or "auto" end,
+        __newindex = function(_, _, v)
+            self.force = (v == "show" or v == "hide") and v or nil
+            Send("V\t" .. (self.force or "auto"))
+            self:Update()
+        end,
+    })
+    form:Cycle(L("Raid: show or hide for everyone"), raidMode, "mode", {
+        { "auto", L("Automatic") }, { "show", L("Show for everyone") }, { "hide", L("Hide for everyone") } })
     form:Header(L("Rotation"))
     form:Check(L("Show rotation window"), db, "show")
     form:Check(L("Only hunters who know Tranquilizing Shot"), db, "onlyKnown")

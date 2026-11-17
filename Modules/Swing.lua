@@ -16,7 +16,6 @@ HHT:AddGerman({
     ["Bar width"] = "Balkenbreite",
     ["Bar height"] = "Balkenhöhe",
     ["Background opacity"] = "Hintergrund-Deckkraft",
-    ["Bar mode"] = "Balkenmodus",
     ["Ranged bar"] = "Fernkampf-Balken",
     ["Melee bar"] = "Nahkampf-Balken",
     ["Dead zone"] = "Totzone",
@@ -36,8 +35,6 @@ HHT:AddGerman({
     ["Mark 0.5 s before the shot"] = "Markierung 0,5 s vor dem Schuss",
     ["Color the bar for the last 0.5 s"] = "Leiste in den letzten 0,5 s einfärben",
     ["Last 0.5 s of the shot"] = "Letzte 0,5 s vor dem Schuss",
-    ["Auto Shot only fires 0.5 s after you stand still. You can move until the bar reaches the grey line without delaying the shot."] =
-        "Der Auto-Shot geht erst 0,5 s nach dem Stehenbleiben raus. Du kannst dich bewegen, bis die Leiste die graue Markierung erreicht, ohne den Schuss zu verzögern.",
 })
 
 local M = HHT:NewModule("swing", {
@@ -47,10 +44,10 @@ local M = HHT:NewModule("swing", {
     defaults = {
         showRanged = true, showMelee = true, showRange = true,
         showTime = true, showLabel = true, showSpark = true, colorByRange = true,
-        border = true, barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
+        border = true, borderSize = 1, barTexture = "blizzard", barShape = "square", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
         showMark = true, colorMark = true,
         width = 220, height = 16, spacing = 3, bgAlpha = 0.85,
-        visibility = "combattarget", fillMode = "fill",
+        visibility = "combattarget",
         colors = {
             ranged = { 0.67, 0.83, 0.45 },
             shot = { 0.95, 0.80, 0.20 },
@@ -199,17 +196,12 @@ local function UpdateRow(self, row, t, now, demoPhase)
         end
     end
     row.bar:SetMinMaxValues(0, 1)
-    if db.fillMode == "drain" then
-        row.bar:SetValue(remain and (1 - progress) or 1)
-    else
-        row.bar:SetValue(progress)
-    end
+    row.bar:SetValue(progress)
     row.time:SetText(remain and string.format("%.1f", remain) or "")
     if db.showSpark and remain then
         local w = row:GetWidth() - 2
-        local pos = (db.fillMode == "drain") and (1 - progress) or progress
         row.spark:ClearAllPoints()
-        row.spark:SetPoint("CENTER", row.bar, "LEFT", w * pos, 0)
+        row.spark:SetPoint("CENTER", row.bar, "LEFT", w * progress, 0)
         row.spark:Show()
     else
         row.spark:Hide()
@@ -223,7 +215,7 @@ local function UpdateMark(self, row, t, unlocked)
     local duration = t.duration or (unlocked and 2.2) or nil
     if not (self.db.showMark and duration and duration > 0.5) then mark:Hide(); return end
     local frac = 0.5 / duration
-    local pos = (self.db.fillMode == "drain") and frac or (1 - frac)
+    local pos = 1 - frac
     mark:ClearAllPoints()
     mark:SetPoint("CENTER", row.bar, "LEFT", (row:GetWidth() - 2) * pos, 0)
     mark:SetHeight(row:GetHeight() - 2)
@@ -291,8 +283,7 @@ function M:BuildOptions(form)
     form:Check(L("Show spark"), db, "showSpark")
     form:Check(L("Mark 0.5 s before the shot"), db, "showMark")
     form:Check(L("Color the bar for the last 0.5 s"), db, "colorMark")
-    form:Note(L("Auto Shot only fires 0.5 s after you stand still. You can move until the bar reaches the grey line without delaying the shot."), 0.67, 0.83, 0.45)
-    form:Check(L("Show border"), db, "border")
+    HHT.Bar.AddBorder(form, db)
     form:Check(L("Ranged bar turns red in the dead zone"), db, "colorByRange")
     form:Stepper(L("Bar width"), db, "width", 80, 600, 10)
     form:Stepper(L("Bar height"), db, "height", 6, 40, 1)
@@ -300,9 +291,6 @@ function M:BuildOptions(form)
     form:Stepper(L("Background opacity"), db, "bgAlpha", 0, 1, 0.05)
     HHT.Bar.AddOptions(form, db)
     HHT.Bar.AddFlash(form, db)
-    form:Cycle(L("Bar mode"), db, "fillMode", { { "fill", L("Fill") }, { "drain", L("Drain") } })
-    form:Header(L("Behavior"))
-    form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Header(L("Colors"))
     form:Color(L("Ranged bar"), db.colors, "ranged")
     form:Color(L("Last 0.5 s of the shot"), db.colors, "shot")

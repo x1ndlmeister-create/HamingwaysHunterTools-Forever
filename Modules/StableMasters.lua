@@ -12,7 +12,6 @@ HHT:AddGerman({
     ["Forget learned stable masters"] = "Gelernte Stallmeister vergessen",
     ["Stable master learned: %s"] = "Stallmeister gelernt: %s",
     ["Stable master"] = "Stallmeister",
-    ["Only my faction"] = "Nur meine Fraktion",
     ["No stable masters known here."] = "Keine Stallmeister bekannt.",
     ["Stable masters on map"] = "Stallmeister auf der Karte",
     ["Waypoint to nearest stable master"] = "Wegpunkt zum nächsten Stallmeister",
@@ -22,7 +21,7 @@ local M = HHT:NewModule("stablemasters", {
     name = "Stable masters",
     desc = "Shows stable masters on the world map from a built-in list and learns missing ones.",
     noFrame = true,
-    defaults = { onMap = false, onMinimap = true, ownFaction = true, learned = {} },
+    defaults = { onMap = false, onMinimap = true, learned = {} },
 })
 
 local SM = {}
@@ -42,7 +41,7 @@ end
 function SM.List()
     local learned = M.db and M.db.learned or {}
     local faction = UnitFactionGroup and UnitFactionGroup("player")
-    local key = #learned .. (M.db.ownFaction and faction or "")
+    local key = #learned .. (faction or "")
     if M.cache and M.cacheKey == key then return M.cache end
     local out, seen = {}, {}
     local function add(e)
@@ -55,7 +54,7 @@ function SM.List()
         }
     end
     for _, e in ipairs(HHT.StableMasterData or {}) do
-        local ok = e.fa == "N" or not M.db.ownFaction or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
+        local ok = e.fa == "N" or (e.fa == "A" and faction == "Alliance") or (e.fa == "H" and faction == "Horde")
         if ok then add(e) end
     end
     for _, e in ipairs(learned) do add(e) end
@@ -122,7 +121,6 @@ function M:BuildOptions(form)
     form:Check(L("Also show on the minimap"), db, "onMinimap")
     form:Button(L("Stable masters on map"), SM.Show, 240)
     form:Button(L("Waypoint to nearest stable master"), SM.Nearest, 240)
-    form:Check(L("Only my faction"), db, "ownFaction")
     form:Note(string.format(L("Built-in list: %d stable masters. Learned by visiting: %d."), #(HHT.StableMasterData or {}), #db.learned))
     form:Note(L("Stable masters are learned when you open their stable window. Visit one to add it."))
     form:Button(L("Forget learned stable masters"), function()

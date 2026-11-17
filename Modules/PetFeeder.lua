@@ -10,7 +10,7 @@ HHT:AddGerman({
     ["Clear all blacklists"] = "Alle Blacklists leeren",
     ["Keep the HHT Feed macro up to date"] = "HHT-Feed-Makro aktuell halten",
     ["Click: feed. Right-click: choose food. Shift+click in the menu: blacklist or allow a food."] = "Klick: füttern. Rechtsklick: Futter wählen. Umschalt+Klick im Menü: Futter sperren oder erlauben.",
-    ["Show when"] = "Anzeigen wenn",
+    ["Show food icons"] = "Futter-Symbole zeigen",
     ["Always (with pet)"] = "Immer (mit Begleiter)",
     ["Only when not happy"] = "Nur wenn nicht glücklich",
     ["Show food name"] = "Futternamen zeigen",
@@ -50,7 +50,7 @@ local M = HHT:NewModule("feeder", {
     positions = { main = { "CENTER", "CENTER", -260, -205 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1,
-        showText = true, showName = false, mode = "always", syncMacro = true, key = "",
+        showText = true, showName = false, mode = "always", key = "",
         hungerWarn = true, hungerContent = true, hungerSound = false, supplyWarn = true, supplyBelow = 10, protectBuff = true,
         selected = {}, blacklist = {},
         colors = {
@@ -462,11 +462,6 @@ function M:SyncSecure()
         self.button:SetAttribute("macrotext1", text)
         self.attrText = text
     end
-    local id = cur and cur.id or 0
-    if self.db.syncMacro and id ~= self.macroId then
-        local mm = HHT.modules.macros
-        if mm and mm.UpdateFeed and mm:UpdateFeed() then self.macroId = id end
-    end
 end
 
 function M:Alert(text)
@@ -594,14 +589,16 @@ function M:BuildOptions(form)
     form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
     form:Stepper(L("Icon size"), db, "size", 20, 100, 2)
     form:Stepper(L("Border size"), db, "borderSize", 0, 4, 1)
+    form:Stepper(L("Border alpha"), db, "borderAlpha", 0, 1, 0.1)
     form:Check(L("Show count text"), db, "showText")
     form:Check(L("Show food name"), db, "showName")
-    form:Cycle(L("Show when"), db, "mode", {
+    form:Cycle(L("Show food icons"), db, "mode", {
         { "always", L("Always (with pet)") }, { "hungry", L("Only when not happy") } })
     form:Header(L("Pet feeder"))
     form:Note(L("Click: feed. Right-click: choose food. Shift+click in the menu: blacklist or allow a food."))
     local choose = UI.Button(form.content, 220, 22, L("Choose food (Shift+click: blacklist)"), function(btn) self:OpenMenu(btn) end)
     form:Place(choose, 22, 4, 6)
+    form:Name("Choose food")
     form:Button(L("Clear blacklist (this pet)"), function()
         db.blacklist[self.petKey] = nil
         self.signature = false
@@ -612,7 +609,6 @@ function M:BuildOptions(form)
         self.signature = false
         HHT.Print(L("Blacklist cleared."))
     end, 220)
-    form:Check(L("Keep the HHT Feed macro up to date"), db, "syncMacro")
     local keyBtn = form:Button("", function()
         if HHT.CaptureKey then
             HHT.CaptureKey(function(key)
@@ -623,6 +619,7 @@ function M:BuildOptions(form)
             end)
         end
     end, 220)
+    form:Name("Set key")
     function keyBtn:Refresh()
         self:SetLabel(string.format(L("Feed key: %s"), db.key ~= "" and db.key:upper() or L("not set")))
     end
@@ -633,8 +630,6 @@ function M:BuildOptions(form)
         self.signature = false
     end, 220)
     form:Note(L("The key replaces its normal function while it is set. Changes apply after combat."))
-    form:Button(L("Food vendors on map"), function() if HHT.FoodVendors then HHT.FoodVendors.Show() end end, 220)
-    form:Button(L("Waypoint to nearest food vendor"), function() if HHT.FoodVendors then HHT.FoodVendors.Nearest() end end, 220)
     form:Header(L("Warnings"))
     form:Check(L("Warn when the pet gets unhappy"), db, "hungerWarn")
     form:Check(L("Also warn when the pet is only content (not green)"), db, "hungerContent")

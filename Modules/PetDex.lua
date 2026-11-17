@@ -1620,7 +1620,7 @@ local function Build()
         row.icon:SetSize(20, 20)
         row.icon:SetPoint("LEFT", row, "LEFT", 4, 0)
         row.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        HHT.Icon.Attach(row.icon)
+        HHT.Icon.Attach(row.icon, true)
         row.cells = {}
         for k = 1, 7 do
             local fs = UI.Text(row, "", 12)

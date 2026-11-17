@@ -12,7 +12,11 @@
 
 **The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 25 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
 
-**Version 1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** a quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+**New: the in-game installer.** On first start Hamingway walks you through every tool, one page at a time: on or off, position, size and look, with a live preview and the same rows as the settings. Skipping changes nothing, and `/hht setup` starts it again any time.
+
+![In-game installer: welcome page](images/install_welcome.png) ![In-game installer: swing timer page](images/install_step.png)
+
+**Version 1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
 
 A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
@@ -239,7 +243,9 @@ Learned automatically:
 
 ![Settings](images/settings.png)
 
-- Every module has its own switch and its own page
+- The in-game installer (`/hht setup`) sets up every tool page by page and shows the same rows as the settings
+- Every module has its own switch and its own page, with a Simple and an Advanced view per section
+- One look for all modules: icon shape, border thickness and colour, border glow, bar texture and rounded bars, set once and still adjustable per module
 - Own scale and opacity per module, plus global values for all
 - Show always, in combat, with a target, or both
 - All bar colours adjustable
@@ -447,7 +453,9 @@ Automatisch gelernt:
 
 ### Einstellungen
 
-- Jedes Modul hat einen eigenen Schalter und eine eigene Seite
+- Der Ingame-Installer (`/hht setup`) richtet jedes Werkzeug Seite für Seite ein und zeigt dieselben Zeilen wie die Einstellungen
+- Jedes Modul hat einen eigenen Schalter und eine eigene Seite, mit Einfach- und Erweitert-Ansicht je Abschnitt
+- Ein Look für alle Module: Symbolform, Rahmenstärke und -farbe, Rahmen-Glühen, Leistentextur und abgerundete Leisten, einmal eingestellt und je Modul weiter änderbar
 - Eigene Größe und Transparenz je Modul, dazu global für alle
 - Anzeige immer, im Kampf, mit Ziel oder beides
 - Alle Farben der Balken wählbar
@@ -464,12 +472,13 @@ Automatisch gelernt:
 ## Install
 
 1. Copy the `HamingwaysHunterTools` folder to `Interface\AddOns`.
-2. Type `/reload` or start the game.
-3. Type `/hht` to open the settings.
+2. Type `/reload` or start the game. The in-game installer opens by itself, you can skip it any time.
+3. Type `/hht` to open the settings, or `/hht setup` to run the installer again.
 
 | Command | Effect |
 | --- | --- |
 | `/hht` | Open the settings |
+| `/hht setup` | Start the in-game installer |
 | `/hht unlock` / `/hht lock` | Unlock or lock the frames |
 | `/hht reset` | Reset the positions |
 | `/hht petinfo` | Print the active pet's abilities |

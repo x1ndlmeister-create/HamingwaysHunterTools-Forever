@@ -6,7 +6,7 @@ HHT:AddGerman({
     ["Pet training hint"] = "Begleiter-Training-Hinweis",
     ["Popup when your pet can learn ability ranks you already know, with a button to train each one."] = "Hinweis, wenn dein Begleiter Fähigkeitsränge lernen kann, die du schon kennst, mit Knopf zum Trainieren.",
     ["PET TRAINING"] = "BEGLEITER-TRAINING",
-    ["%s can learn new abilities"] = "%s kann neue Fähigkeiten lernen",
+    ["%s can learn new abilities"] = "Neue Fähigkeiten verfügbar",
     ["Your pet"] = "Dein Begleiter",
     ["Learn"] = "Lernen",
     ["(now rank %d)"] = "(jetzt Rang %d)",
@@ -36,7 +36,7 @@ local M = HHT:NewModule("pettrain", {
 })
 
 local W, ROW_H, MAXROWS = 440, 30, 5
-local ROW_TOP = 70
+local ROW_TOP = 82
 local lastSig, tries, dueAt
 local lastClick = 0
 local craftOpen, pending = false, nil
@@ -50,7 +50,9 @@ function M:Build()
     f:SetFrameStrata("DIALOG")
     self.frame = f
     f.border = UI.Panel(f, 0.67, 0.83, 0.45)
-    UI.PopupHead(f, W, { divY = 58, subLines = 1, onClose = function() HHT.HideSecure(f) end })
+    UI.PopupHead(f, W, { icon = true, divY = 70, subLines = 1, onClose = function() HHT.HideSecure(f) end })
+    HHT.Icon.Attach(f.icon, true)
+    f.icon:SetTexture("Interface\\Icons\\Ability_Hunter_BeastTraining")
     f.sub:Hide()
     f.eyebrow:SetTextColor(0.67, 0.83, 0.45)
 
@@ -63,7 +65,7 @@ function M:Build()
         r.icon:SetSize(22, 22)
         r.icon:SetPoint("LEFT", r, "LEFT", 0, 0)
         r.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        HHT.Icon.Attach(r.icon)
+        HHT.Icon.Attach(r.icon, "shape")
         r.text = UI.Text(r, "", 12, 1, 1, 1)
         r.text:SetPoint("LEFT", r.icon, "RIGHT", 10, 0)
         r.text:SetJustifyH("LEFT")
@@ -134,11 +136,12 @@ function M:Fill(list, preview)
         end
     end
     -- Width follows the widest row (icon + text + two buttons) or the title, whichever is wider.
-    local w = f.title:GetStringWidth() + 32 + 40
+    f.title:SetWidth(2000)
+    local w = f.title:GetStringWidth() + f.x0 + 44
     for i = 1, n do w = math.max(w, 32 + 22 + 10 + f.rows[i].textW + 16 + 74 + 8 + 60) end
     w = math.max(300, math.ceil(w))
     f:SetWidth(w)
-    f.title:SetWidth(w - 76)
+    f.title:SetWidth(w - f.x0 - 40)
     for i = 1, n do
         local r = f.rows[i]
         r:SetWidth(w - 32)
@@ -396,10 +399,14 @@ function M:BuildOptions(form)
     form:Header(L("Abilities that trigger a hint"))
     local PD = HHT.PetDex
     if PD then
-        for _, a in ipairs(PD.abilities) do form:Check(PD.AbilityName(a), db.alertFor, a.key) end
+        for _, a in ipairs(PD.abilities) do
+            form:Check(PD.AbilityName(a), db.alertFor, a.key)
+            form:Group("Ability list")
+        end
         for _, a in ipairs(PD.trainerAbilities) do
             if db.alertFor[a.key] == nil then db.alertFor[a.key] = true end
             form:Check(PD.AbilityName(a), db.alertFor, a.key)
+            form:Group("Ability list")
         end
     end
 end

@@ -6,6 +6,7 @@ HHT:AddGerman({
     ["Cast bar"] = "Zauberleiste",
     ["Player cast bar with icon, spell name and time."] = "Zauberleiste des Spielers mit Symbol, Zaubername und Zeit.",
     ["Show spell icon"] = "Zaubersymbol zeigen",
+    ["Space to icon"] = "Abstand zum Symbol",
     ["Show spell name"] = "Zaubernamen zeigen",
     ["Hide the default cast bar"] = "Standard-Zauberleiste ausblenden",
     ["Cast"] = "Zauber",
@@ -19,8 +20,8 @@ local M = HHT:NewModule("castbar", {
     desc = "Player cast bar with icon, spell name and time.",
     positions = { main = { "CENTER", "CENTER", 0, -128 } },
     defaults = {
-        showIcon = true, showLabel = true, showTime = true, showSpark = true, border = true,
-        hideDefault = true, visibility = "always", barTexture = "blizzard", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
+        showIcon = true, showLabel = true, showTime = true, showSpark = true, border = true, borderSize = 1, shape = "square", iconGap = 2,
+        hideDefault = true, visibility = "always", barTexture = "blizzard", barShape = "square", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
         width = 260, height = 22, bgAlpha = 0.85,
         colors = {
             cast = { 0.67, 0.83, 0.45 },
@@ -69,11 +70,7 @@ function M:Build()
     f:SetSize(260, 22)
     f:Hide()
     self.frame = f
-    f.icon = CreateFrame("Frame", nil, f)
-    f.icon.tex = f.icon:CreateTexture(nil, "ARTWORK")
-    f.icon.tex:SetAllPoints()
-    f.icon.tex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    f.icon.edge = UI.Border(f.icon, 1, 1, 1, 1)
+    f.icon = HHT.Icon.New(f)
     f.bar = Bar.New(f)
     HHT:MakeMovable(f, self, "main", L("Cast bar"))
     self:Layout()
@@ -142,13 +139,14 @@ function M:Layout()
     local h = db.height
     f:SetSize(db.width, h)
     Bar.Apply(f.bar, db, "cast")
-    f.icon:SetSize(h, h)
+    local bs = db.border ~= false and math.max(0, math.min(4, db.borderSize or 1)) or 0
+    f.icon:SetBorderColor(HHT.Col(db, "edge"))
+    f.icon:Style(h, db.shape, bs, 1, false)
     f.icon:ClearAllPoints()
     f.icon:SetPoint("TOPLEFT", f, "TOPLEFT", 0, 0)
-    f.icon.edge:SetColor(HHT.Col(db, "edge"))
     f.icon:SetShown(db.showIcon)
     f.bar:ClearAllPoints()
-    local off = db.showIcon and (h + 2) or 0
+    local off = db.showIcon and (h + 2 * bs + (db.iconGap or 2)) or 0
     f.bar:SetPoint("TOPLEFT", f, "TOPLEFT", off, 0)
     f.bar:SetSize(db.width - off, h)
     HHT:ApplyGlobalLook(f)
@@ -181,7 +179,7 @@ end
 
 -- Keeps the full bar on screen for the length of the flash.
 function M:Complete(st)
-    if not self.db.flash or not UI.Anim() or not self.frame then return end
+    if not self.db.flash or not self.frame then return end
     if self.doneS == st.s and self.doneE == st.e then return end
     self.doneS, self.doneE = st.s, st.e
     self.done = { name = st.name, icon = st.icon, channel = st.channel, till = GetTime() + Bar.FLASH_TIME }
@@ -268,17 +266,18 @@ function M:BuildOptions(form)
     local db = self.db
     form:Header(L("Appearance"))
     form:Check(L("Show spell icon"), db, "showIcon")
+    form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
+    form:Stepper(L("Space to icon"), db, "iconGap", 0, 20, 1)
     form:Check(L("Show spell name"), db, "showLabel")
     form:Check(L("Show remaining time"), db, "showTime")
     form:Check(L("Show spark"), db, "showSpark")
-    form:Check(L("Show border"), db, "border")
+    Bar.AddBorder(form, db)
     form:Stepper(L("Bar width"), db, "width", 100, 600, 10)
     form:Stepper(L("Bar height"), db, "height", 8, 48, 1)
     form:Stepper(L("Background opacity"), db, "bgAlpha", 0, 1, 0.05)
     Bar.AddOptions(form, db)
     Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
-    form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Check(L("Hide the default cast bar"), db, "hideDefault")
     form:Header(L("Colors"))
     form:Color(L("Cast"), db.colors, "cast")

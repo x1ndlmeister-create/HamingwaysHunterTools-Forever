@@ -61,20 +61,34 @@ function D.New(parent, width, onSize, size)
 
     d.bubble, d.text = bub, text
 
+    -- Hidden copy of the text, so the bubble can be measured against the whole line while it is typed out.
+    local meas = UI.Text(bub, "", 12)
+    meas:SetPoint("TOPLEFT", bub, "TOPLEFT", 12, -26)
+    meas:SetWidth(width - ps - GAP - 24)
+    meas:SetJustifyH("LEFT")
+    meas:SetAlpha(0)
+
     local function Stop()
         bub:SetScript("OnUpdate", nil)
         text:SetText(d.full or "")
     end
 
+    local function Fit(force)
+        meas:SetText(d.full or "")
+        local bh = math.max(64, math.ceil(meas:GetStringHeight()) + 44)
+        if not force and math.abs(bh - bub:GetHeight()) < 0.5 then return end
+        bub:SetHeight(bh)
+        d:SetHeight(math.max(bh, ps))
+        if onSize then onSize(d:GetHeight()) end
+    end
+
     -- Says a line: the bubble sizes itself to the whole line, then the text is typed out (a click shows it all).
     function d:Say(line)
         self.full = line
-        text:SetText(line)
-        local bh = math.max(64, math.ceil(text:GetStringHeight()) + 38)
-        bub:SetHeight(bh)
-        self:SetHeight(math.max(bh, ps))
-        if onSize then onSize(self:GetHeight()) end
-        if UI.Anim() and #line > 0 then
+        Fit(true)
+        -- a scaled window only settles its text width a moment later
+        if C_Timer and C_Timer.After then C_Timer.After(0.1, function() Fit() end) end
+        if #line > 0 then
             local shown, acc = 0, 0
             text:SetText("")
             bub:SetScript("OnUpdate", function(_, dt)

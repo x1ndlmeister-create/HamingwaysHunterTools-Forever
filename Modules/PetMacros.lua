@@ -47,9 +47,8 @@ local M = HHT:NewModule("macros", {
     noFrame = true,
     enabledByDefault = true,
     defaults = {
-        food = "",
         make = {
-            smart = true, toggle = true, mend = true, revive = true, feed = true,
+            smart = true, toggle = true, mend = true, revive = true,
             attack = false, mark = false, aspect = false, trap = false, melee = false, feign = false,
             kite = false, growl = false, tame = false, track = false, burst = false, ammo = false, stable = false, beast = true,
         },
@@ -58,13 +57,12 @@ local M = HHT:NewModule("macros", {
 
 M.BEAST_MACRO = "HHT Beast"
 
--- Feed stays at index 5 (UpdateFeed). Macros are account-wide (limit 120).
+-- Macros are account-wide (limit 120).
 local DEFS = {
     { key = "smart", name = "HHT Pet", label = "One button: revive, call or mend", icon = "callPet", group = "pet" },
     { key = "toggle", name = "HHT Call", label = "Call or dismiss", icon = "callPet", group = "pet" },
     { key = "mend", name = "HHT Mend", label = "Mend Pet macro", icon = "mendPet", group = "pet" },
     { key = "revive", name = "HHT Revive", label = "Revive Pet macro", icon = "revivePet", group = "pet" },
-    { key = "feed", name = "HHT Feed", label = "Feed Pet macro", icon = "feedPet", group = "pet" },
     { key = "attack", name = "HHT Attack", label = "Attack: clear dead target, next enemy, Auto Shot", icon = "autoShot", group = "hunter" },
     { key = "mark", name = "HHT Mark", label = "Pet attack and Hunter's Mark", icon = "hunterMark", group = "hunter" },
     { key = "aspect", name = "HHT Aspect", label = "Aspect: Cheetah, Ctrl Hawk, Shift Monkey", icon = "aspectCheetah", group = "hunter" },
@@ -112,7 +110,7 @@ function M:Body(key)
         return string.format(hb[1], unpack(args))
     end
     local call, dismiss, mend = S.CatalogName("callPet"), S.CatalogName("dismissPet"), S.CatalogName("mendPet")
-    local revive, feed = S.CatalogName("revivePet"), S.CatalogName("feedPet")
+    local revive = S.CatalogName("revivePet")
     if key == "smart" then
         return string.format("#showtooltip\n/cast [@pet,dead] %s; [nopet] %s; [@pet,exists,nodead] %s", revive, call, mend)
     elseif key == "toggle" then
@@ -121,15 +119,6 @@ function M:Body(key)
         return string.format("#showtooltip\n/cast %s", mend)
     elseif key == "revive" then
         return string.format("#showtooltip\n/cast %s", revive)
-    elseif key == "feed" then
-        local food = (self.db.food or ""):match("^%s*(.-)%s*$")
-        if food == "" then
-            local fm = HHT.modules.feeder
-            food = fm and fm.enabled and fm:CurrentFoodName() or ""
-        end
-        local body = string.format("#showtooltip %s\n/cast %s", feed, feed)
-        if food ~= "" then body = body .. "\n/use " .. food end
-        return body
     end
 end
 
@@ -173,16 +162,6 @@ function M:Apply()
     end
 end
 
--- Refreshes only the existing feed macro; returns false while the update has to wait (combat).
-function M:UpdateFeed()
-    if InCombatLockdown and InCombatLockdown() then return false end
-    if not self.db.make.feed then return true end
-    local def = DEFS[5]
-    local idx = GetMacroIndexByName and GetMacroIndexByName(def.name) or 0
-    if idx and idx > 0 then pcall(EditMacro, idx, def.name, IconOf(def), self:Body("feed")) end
-    return true
-end
-
 -- Points the beast macro at the tracked beast; waits for the end of combat when needed.
 function M:UpdateBeast(name)
     if name then self.beastName = name end
@@ -224,12 +203,15 @@ function M:BuildOptions(form)
             group = def.group
             if group == "hunter" then form:Header(L("Hunter macros")) end
         end
-        form:Check(L(def.label) .. "  (" .. def.name .. ")", db.make, def.key)
+        form:Check(L(def.label), db.make, def.key, nil, { col = 360, note = def.name })
+        form:Group("Keep macros up to date")
     end
-    form:Text(L("Food item name for Feed Pet"), db, "food")
     form:Button(L("Create or update macros"), function() self:Apply() end, 220)
     form:Header(L("To cursor"))
     for _, def in ipairs(DEFS) do
-        if def.key ~= "beast" then form:Button(def.name, function() self:Pickup(def) end, 170) end
+        if def.key ~= "beast" then
+            form:Button(def.name, function() self:Pickup(def) end, 170)
+            form:Group("Pick up macro")
+        end
     end
 end

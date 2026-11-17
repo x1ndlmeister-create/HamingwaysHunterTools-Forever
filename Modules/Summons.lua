@@ -168,8 +168,9 @@ function M:Tick()
         list[2] = { name = L("Summon Hawk"), icon = HAWK, start = now - 55, dur = 60 }
     end
 
-    local restyle = not self.styled
-    self.styled = true
+    local glow = HHT.GlowSig()
+    local restyle = not self.styled or self.glowSig ~= glow
+    self.styled, self.glowSig = true, glow
     for i, item in ipairs(list) do
         local ic = self.icons[i]
         if not ic then
@@ -229,12 +230,12 @@ function M:BuildOptions(form)
     form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
     form:Stepper(L("Icon size"), db, "size", 20, 96, 2)
     form:Stepper(L("Border size"), db, "borderSize", 0, 4, 1)
+    form:Stepper(L("Border alpha"), db, "borderAlpha", 0, 1, 0.1)
     form:Stepper(L("Spacing"), db, "spacing", 0, 30, 1)
     form:Check(L("Show remaining time numbers"), db, "numbers")
     form:Check(L("Show names"), db, "names")
     form:Color(L("Border colour"), db.colors, "border")
     form:Header(L("Behavior"))
-    form:Cycle(L("Show when"), db, "visibility", HHT.VisibilityChoices())
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") }, { "down", L("Down") } })
     form:Stepper(L("Icons per row"), db, "perRow", 1, 4, 1)

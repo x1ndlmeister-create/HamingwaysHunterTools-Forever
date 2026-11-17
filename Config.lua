@@ -8,6 +8,7 @@ HHT.Config = C
 
 C.pages = {}
 local W, H = 760, 640
+local MIN_H = 440
 local BANNER, TABS, SIDE_W = 62, 36, 184
 local TOP = BANNER + TABS + 12
 
@@ -63,19 +64,18 @@ function HHT.CommonOptions(m, form)
         end, 170)
         return
     end
-    form:Header(L("Position"))
-    form:Check(L("Unlock this module (move with mouse)"), m, "moveUnlock", function() HHT:ApplyLock() end)
-    form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05)
-    form:Stepper(L("Opacity"), m.db, "alpha", 0.1, 1, 0.05)
-    if m.db.visibility == nil then
-        form:Check(L("Show only in combat"), m.db, "onlyCombat", function() HHT:ApplyAllLooks() end)
-    end
-    form:Cycle(L("Text style"), m.db, "textStyle", {
-        { "outline", L("Outline") }, { "thick", L("Thick outline") }, { "plain", L("Plain") } })
+    form:Cycle(L("Show when"), m.db, m.db.visibility ~= nil and "visibility" or "showWhen", HHT.VisibilityChoices(),
+        function() HHT:ApplyAllLooks() end)
+    form:Check(L("Unlock frame"), m, "moveUnlock", function() HHT:ApplyLock() end)
     form:Button(L("Reset position"), function()
         m.db.pos = nil
         HHT:ApplyAllPositions()
-    end, 170)
+    end, 140)
+    form:Inline(300)
+    form:Stepper(L("Scale"), m.db, "scale", 0.5, 2, 0.05)
+    form:Stepper(L("Opacity"), m.db, "alpha", 0.1, 1, 0.05)
+    form:Cycle(L("Text style"), m.db, "textStyle", {
+        { "outline", L("Outline") }, { "thick", L("Thick outline") }, { "plain", L("Plain") } })
     form:Button(L("Reset this module"), function()
         HHT:ResetModule(m)
         C:InvalidatePage(m.key)
@@ -171,15 +171,25 @@ function C:BuildGeneral(form)
     form:Cycle(L("Style of icons and bars"), g, "style", {
         { "flat", L("Flat") }, { "bevel", L("3D frame") }, { "glass", L("Glass") } },
         function() HHT:RefreshAll(); HHT.Icon.RefreshFinish() end)
-    form:Check(L("Animations"), g, "animations")
+    form:Cycle(L("All icons: shape"), HHT.Look, "shape", HHT.ShapeChoices())
+    form:Stepper(L("All borders: size (0 = none)"), HHT.Look, "borderSize", 0, 4, 1)
+    form:Color(L("All borders: color"), HHT.Look, "borderColor")
+    form:Stepper(L("All borders: alpha"), HHT.Look, "borderAlpha", 0, 1, 0.1)
+    form:Check(L("Border glow"), g, "borderGlow", function() HHT:RefreshAll(); HHT.Icon.RefreshFinish() end)
+    form:Stepper(L("Glow strength"), g, "borderGlowSize", 1, 8, 1, function() HHT:RefreshAll(); HHT.Icon.RefreshFinish() end)
+    form:Cycle(L("All bars: texture"), HHT.Look, "barTexture", HHT.Bar.TextureChoices())
+    form:Cycle(L("All bars: corners"), HHT.Look, "barShape", HHT.Bar.ShapeChoices())
+    form:Stepper(L("3D effect strength"), HHT.Look, "bevel", 0, 1, 0.1)
+    form:Stepper(L("Global scale"), g, "scale", 0.5, 2, 0.05, function() HHT:ApplyAllLooks() end)
+    form:Stepper(L("Global opacity"), g, "alpha", 0.1, 1, 0.05, function() HHT:ApplyAllLooks() end)
     form:Check(L("Live preview"), g, "preview", function() C:Select(C.current or "general") end)
     form:Button(L("Start quick install"), function() if HHT.Setup then HHT.Setup.Open() end end, 200)
 
-    form:Header(L("Behavior"))
     local unlock = UI.Check(form.content, L("Unlock frames (move with mouse)"),
         function() return g.locked == false end,
         function(v) HHT:SetLocked(not v) end)
     form:Place(unlock, 20, 4, 4)
+    form:Name("Unlock frames (move with mouse)")
     local gear = UI.Button(form.content, 24, 20, "", function() C:OpenMoveSet(unlock) end)
     gear:SetPoint("LEFT", unlock, "RIGHT", 8, 0)
     local gicon = gear:CreateTexture(nil, "ARTWORK")
@@ -197,9 +207,6 @@ function C:BuildGeneral(form)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
     form:Check(L("Tell me about new versions"), g, "versionNotice")
     form:Check(L("Show what's new after an update"), g, "whatsNew")
-    form:Header(L("Size"))
-    form:Stepper(L("Global scale"), g, "scale", 0.5, 2, 0.05, function() HHT:ApplyAllLooks() end)
-    form:Stepper(L("Global opacity"), g, "alpha", 0.1, 1, 0.05, function() HHT:ApplyAllLooks() end)
 end
 
 function C:BuildModulesPage(form)
@@ -317,7 +324,9 @@ function C:BuildPage(key)
     local form
     if key == "general" or key == "modules" or key == "support" then
         form = UI.NewForm(body, nil, key)
-        if key == "general" then self:BuildGeneral(form)
+        if key == "general" then
+            self:BuildGeneral(form)
+            form:ApplyLayout(HHT.Layout and HHT.Layout.general, HHT.Tips)
         elseif key == "modules" then self:BuildModulesPage(form)
         else self:BuildSupport(form) end
     else
@@ -328,6 +337,7 @@ function C:BuildPage(key)
         else
             HHT.CommonOptions(m, form)
             if m.BuildOptions then m:BuildOptions(form) end
+            form:ApplyLayout(HHT.Layout and HHT.Layout[key], HHT.Tips)
         end
     end
     local page = { frame = parent, form = form }
@@ -455,6 +465,8 @@ function C:Create()
     local w = UI.Window("HamingwaysHunterToolsConfig", W, H, "Hamingway's HunterTools", BANNER)
     local saved = tonumber(HHT.db.general.menuScale)
     if saved then w:SetScale(math.min(1.6, math.max(0.6, saved))) end
+    local savedH = tonumber(HHT.db.general.menuH)
+    if savedH then w:SetHeight(math.max(MIN_H, savedH)) end
     w:SetPoint("CENTER")
     local pos = HHT.db.general.menuPos
     if pos then
@@ -497,67 +509,18 @@ function C:Create()
     if UISpecialFrames then table.insert(UISpecialFrames, "HamingwaysHunterToolsConfig") end
 
     -- grip in the bottom-right corner: drag to scale the window, right-click resets
-    local grip = CreateFrame("Button", nil, w)
-    grip:SetSize(18, 18)
-    grip:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -3, 3)
-    grip:SetFrameLevel(w:GetFrameLevel() + 30)
-    grip:RegisterForClicks("RightButtonUp")
-    local dots = {}
-    for _, p in ipairs({ { 4, 4 }, { 10, 4 }, { 4, 10 } }) do
-        local d = grip:CreateTexture(nil, "OVERLAY")
-        d:SetTexture(UI.TEX_CIRCLE)
-        d:SetSize(3, 3)
-        d:SetPoint("BOTTOMRIGHT", grip, "BOTTOMRIGHT", -p[1] + 3, p[2] - 3)
-        dots[#dots + 1] = d
-    end
-    local function GripColor(a, hot)
-        for _, d in ipairs(dots) do
-            if hot then d:SetVertexColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.9) else d:SetVertexColor(1, 1, 1, a) end
-        end
-    end
-    GripColor(0.3)
-    local function SaveView()
+    UI.ScaleGrip(w, function()
         local g = HHT.db.general
         g.menuScale = w:GetScale()
         local p, _, rp, x, y = w:GetPoint()
         g.menuPos = { p, rp, x, y }
-    end
-    local drag
-    grip:SetScript("OnMouseDown", function(self, btn)
-        if btn ~= "LeftButton" then return end
-        local s = w:GetScale()
-        drag = { left = w:GetLeft() * s, top = w:GetTop() * s }
     end)
-    grip:SetScript("OnMouseUp", function()
-        if drag then drag = nil; SaveView() end
+    UI.HeightGrip(w, MIN_H, function(h)
+        local g = HHT.db.general
+        g.menuH = h
+        local p, _, rp, x, y = w:GetPoint()
+        g.menuPos = { p, rp, x, y }
     end)
-    grip:SetScript("OnUpdate", function()
-        if not drag then return end
-        local ps = UIParent:GetEffectiveScale()
-        local cx, cy = GetCursorPosition()
-        cx, cy = cx / ps, cy / ps
-        local ns = ((cx - drag.left) / W + (drag.top - cy) / H) / 2
-        ns = math.min(1.6, math.max(0.6, ns))
-        if math.abs(ns - 1) < 0.03 then ns = 1 end
-        w:SetScale(ns)
-        w:ClearAllPoints()
-        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", drag.left / ns, drag.top / ns)
-    end)
-    grip:SetScript("OnClick", function()
-        local s = w:GetScale()
-        local left, top = w:GetLeft() * s, w:GetTop() * s
-        w:SetScale(1)
-        w:ClearAllPoints()
-        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
-        SaveView()
-    end)
-    grip:SetScript("OnEnter", function(self)
-        GripColor(0, true)
-        GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
-        GameTooltip:SetText(L("Drag to scale, right-click to reset"))
-        GameTooltip:Show()
-    end)
-    grip:SetScript("OnLeave", function() GripColor(0.3); GameTooltip:Hide() end)
 
     -- category tabs
     local tabBar = CreateFrame("Frame", nil, w)
@@ -598,7 +561,8 @@ function C:Create()
 
     local side = CreateFrame("Frame", nil, w)
     side:SetPoint("TOPLEFT", w, "TOPLEFT", 10, -TOP)
-    side:SetSize(SIDE_W, H - TOP - 12)
+    side:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 10, 12)
+    side:SetWidth(SIDE_W)
     local divider = w:CreateTexture(nil, "ARTWORK")
     divider:SetWidth(1)
     divider:SetPoint("TOPLEFT", w, "TOPLEFT", 10 + SIDE_W + 8, -TOP)

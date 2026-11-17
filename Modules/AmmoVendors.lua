@@ -13,7 +13,6 @@ HHT:AddGerman({
     ["Arrows and bullets"] = "Pfeile und Kugeln",
     ["Show vendors for"] = "Händler zeigen für",
     ["Ammo your weapon uses"] = "Munition deiner Waffe",
-    ["Only my faction"] = "Nur meine Fraktion",
     ["Pins appear on the world map. Click a pin to set a waypoint."] = "Die Punkte erscheinen auf der Weltkarte. Klick auf einen Punkt setzt einen Wegpunkt. Ein- und ausschalten geht auch über den Knopf oben links an der Karte.",
     ["Show on the world map"] = "Auf der Weltkarte zeigen",
     ["Also show on the minimap"] = "Auch auf der Minimap zeigen",
@@ -25,7 +24,7 @@ local M = HHT:NewModule("ammovendors", {
     name = "Ammo vendors",
     desc = "Shows ammo vendors on the world map and sets a waypoint to the nearest one.",
     noFrame = true,
-    defaults = { kind = "auto", ownFaction = true, onMap = false, onMinimap = true },
+    defaults = { kind = "auto", onMap = false, onMinimap = true },
 })
 
 local AV = {}
@@ -72,7 +71,7 @@ function AV.List()
     local faction = UnitFactionGroup and UnitFactionGroup("player")
     local out = {}
     for _, v in ipairs(data) do
-        local factionOk = v.fa == "N" or not db.ownFaction or (v.fa == "A" and faction == "Alliance") or (v.fa == "H" and faction == "Horde")
+        local factionOk = v.fa == "N" or (v.fa == "A" and faction == "Alliance") or (v.fa == "H" and faction == "Horde")
         local typeOk = want == "all" or v.t == "ab" or v.t == want
         if factionOk and typeOk then out[#out + 1] = Entry(v) end
     end
@@ -120,5 +119,4 @@ function M:BuildOptions(form)
     form:Header(L("Behavior"))
     form:Cycle(L("Show vendors for"), db, "kind", {
         { "auto", L("Ammo your weapon uses") }, { "a", L("Arrows") }, { "b", L("Bullets") }, { "all", L("Arrows and bullets") } })
-    form:Check(L("Only my faction"), db, "ownFaction")
 end

@@ -720,6 +720,16 @@ local function BuildProcList(m, form)
             local row = list.rows[i] or NewRow(i)
             local e = db.entries[i]
             row.text:SetLabel(EntryName(e))
+            local P = UI.PAL
+            if i == list.sel then
+                row.text.edgeRest = { A[1], A[2], A[3], 1 }
+                row.text.edge:SetColor(A[1], A[2], A[3], 1)
+                row.text.fill:SetColor(A[1] * 0.3, A[2] * 0.3, A[3] * 0.3, 0.95)
+            else
+                row.text.edgeRest = nil
+                row.text.edge:SetColor(1, 1, 1, 0.07)
+                row.text.fill:SetColor(P.button[1], P.button[2], P.button[3], P.button[4])
+            end
             if i == list.sel then row.text.label:SetTextColor(A[1], A[2], A[3])
             elseif e.off then row.text.label:SetTextColor(0.5, 0.52, 0.57)
             else row.text.label:SetTextColor(0.92, 0.94, 0.97) end
@@ -795,4 +805,5 @@ function M:BuildOptions(form)
     form:Note(L("Use /hht auras while the proc is active to read its ID. The game draws the art itself, so nothing can be hidden or checked by the addon in combat."))
     form:Note(L("Unlock the frames to drag the icons to where you want them."))
     BuildProcList(self, form)
+    form:Name("Tracked procs")
 end

@@ -51,11 +51,6 @@ local function Tint(tex, c, a)
 end
 UI.Tint = Tint
 
-function UI.Anim()
-    local g = HHT.db and HHT.db.general
-    return not (g and g.animations == false)
-end
-
 -- One-colour alpha gradient. a1 = bottom (or left), a2 = top (or right).
 function UI.Gradient(tex, vertical, r, g, b, a1, a2, file)
     tex:SetTexture(file or WHITE)
@@ -245,7 +240,6 @@ function UI.Reveal(f, dur, color, radius)
         tex:SetAlpha(k * k)
     end)
     f:HookScript("OnShow", function()
-        if not UI.Anim() then return end
         t = 0
         tex:SetAlpha(1)
         cover:Show()
@@ -494,27 +488,86 @@ function UI.Check(parent, label, get, set)
     return c
 end
 
--- [-] value [+] row
+-- Column of the controls in a settings row: right of the label, at least 250.
+local function ColX(text)
+    return math.min(300, math.max(250, math.ceil(text:GetStringWidth()) + 16))
+end
+
+-- Settings row with the on/off switch of the module headers, in the column of the other controls. get() -> boolean ; set(boolean)
+-- opts.col fixes the switch column for a list of long labels; opts.note adds grey text right of the switch.
+function UI.Toggle(parent, label, get, set, opts)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetSize(380, 22)
+    local text = UI.Text(f, label, 12)
+    text:SetPoint("LEFT", f, "LEFT", 0, 0)
+    local sw = UI.Switch(f, get, set)
+    sw:SetPoint("LEFT", f, "LEFT", opts and opts.col or ColX(text), 0)
+    if opts and opts.note then
+        local n = UI.Text(f, opts.note, 11, 0.6, 0.6, 0.58)
+        n:SetPoint("LEFT", sw, "RIGHT", 8, 0)
+    end
+    function f:Refresh() sw:Refresh() end
+    return f
+end
+
+-- Slider with the current value shown to its right.
 function UI.Stepper(parent, label, get, set, minv, maxv, step)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(380, 20)
     local text = UI.Text(f, label, 12)
     text:SetPoint("LEFT", f, "LEFT", 0, 0)
-    local minus = UI.Button(f, 20, 20, "-", function()
-        set(math.max(minv, (get() or minv) - step)); f:Refresh()
-    end)
-    minus:SetPoint("LEFT", f, "LEFT", 250, 0)
+
+    local s = CreateFrame("Slider", nil, f)
+    s:SetOrientation("HORIZONTAL")
+    s:SetSize(130, 18)
+    s:SetPoint("LEFT", f, "LEFT", ColX(text), 0)
+    s:SetMinMaxValues(minv, maxv)
+    s:SetValueStep(step)
+    if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
+    local P = UI.PAL
+    local track = s:CreateTexture(nil, "BACKGROUND")
+    track:SetHeight(4)
+    track:SetPoint("LEFT", s, "LEFT", 0, 0)
+    track:SetPoint("RIGHT", s, "RIGHT", 0, 0)
+    track:SetColorTexture(P.box[1] + 0.08, P.box[2] + 0.08, P.box[3] + 0.08, 1)
+    s:SetThumbTexture(UI.TEX_ROUND)
+    local thumb = s:GetThumbTexture()
+    thumb:SetSize(13, 13)
+    thumb:SetVertexColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 1)
+    local fill = s:CreateTexture(nil, "ARTWORK")
+    fill:SetHeight(4)
+    fill:SetPoint("LEFT", s, "LEFT", 0, 0)
+    fill:SetPoint("RIGHT", thumb, "CENTER", 0, 0)
+    fill:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.55)
+
     local value = UI.Text(f, "", 12)
-    value:SetPoint("LEFT", minus, "RIGHT", 0, 0)
-    value:SetWidth(40)
-    local plus = UI.Button(f, 20, 20, "+", function()
-        set(math.min(maxv, (get() or minv) + step)); f:Refresh()
+    value:SetPoint("LEFT", s, "RIGHT", 10, 0)
+    value:SetWidth(44)
+    value:SetJustifyH("LEFT")
+
+    local function Show(v)
+        value:SetText(v and string.format("%g", tonumber(string.format("%.3f", v))) or "")
+    end
+    local busy = false
+    s:SetScript("OnValueChanged", function(_, v)
+        if busy then return end
+        v = math.max(minv, math.min(maxv, v))
+        if v ~= get() then set(v) end
+        Show(get())
     end)
-    plus:SetPoint("LEFT", value, "RIGHT", 0, 0)
-    function f:Refresh() value:SetText(tostring(get() or "")) end
+    s:SetScript("OnEnter", function() thumb:SetVertexColor(1, 1, 1, 1) end)
+    s:SetScript("OnLeave", function() thumb:SetVertexColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 1) end)
+    function f:Refresh()
+        local v = get() or minv
+        busy = true
+        s:SetValue(v)
+        busy = false
+        Show(v)
+    end
     f:Refresh()
     return f
 end
+
 
 -- Cycles through a static list of {value, label}.
 function UI.Cycle(parent, label, choices, get, set)
@@ -533,14 +586,15 @@ function UI.Cycle(parent, label, choices, get, set)
         if idx > #choices then idx = 1 end
         set(choices[idx][1]); f:Refresh()
     end)
-    btn:SetPoint("LEFT", f, "LEFT", 250, 0)
+    local colX = ColX(text)
+    btn:SetPoint("LEFT", f, "LEFT", colX, 0)
     -- wide enough for the longest choice
     local widest = 0
     for _, c in ipairs(choices) do
         btn.label:SetText(c[2])
         widest = math.max(widest, btn.label:GetStringWidth())
     end
-    btn:SetWidth(math.min(226, math.max(110, widest + 24)))
+    btn:SetWidth(math.min(476 - colX, math.max(110, widest + 24)))
     function f:Refresh() btn:SetLabel(labelOf(get())) end
     f:Refresh()
     return f
@@ -559,7 +613,7 @@ function UI.Color(parent, label, get, set)
 
     local sw = CreateFrame("Button", nil, f)
     sw:SetSize(30, 18)
-    sw:SetPoint("LEFT", f, "LEFT", 250, 0)
+    sw:SetPoint("LEFT", f, "LEFT", ColX(text), 0)
     local swFill = UI.Round(sw, 5, 0, 0, 0, 1, "BACKGROUND")
     UI.RoundBorder(sw, 5, 1, 1, 1, 0.3)
 
@@ -659,6 +713,7 @@ function UI.ScrollBar(sf, child, xOff, step)
     end
     local function Update()
         local viewH, range, h = Metrics()
+        if sf:GetVerticalScroll() > range then sf:SetVerticalScroll(range) end
         if range <= 1 then bar:Hide(); return end
         bar:Show()
         thumb:SetHeight(h)
@@ -797,6 +852,113 @@ function UI.Window(name, w, h, title, bannerH)
     return f
 end
 
+-- Grip in the bottom-right corner of a window: drag to scale, right-click to reset. onSave runs after a change.
+function UI.ScaleGrip(w, onSave)
+    local grip = CreateFrame("Button", nil, w)
+    grip:SetSize(18, 18)
+    grip:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -3, 3)
+    grip:SetFrameLevel(w:GetFrameLevel() + 30)
+    grip:RegisterForClicks("RightButtonUp")
+    local dots = {}
+    for _, p in ipairs({ { 4, 4 }, { 10, 4 }, { 4, 10 } }) do
+        local d = grip:CreateTexture(nil, "OVERLAY")
+        d:SetTexture(UI.TEX_CIRCLE)
+        d:SetSize(3, 3)
+        d:SetPoint("BOTTOMRIGHT", grip, "BOTTOMRIGHT", -p[1] + 3, p[2] - 3)
+        dots[#dots + 1] = d
+    end
+    local function GripColor(a, hot)
+        for _, d in ipairs(dots) do
+            if hot then d:SetVertexColor(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.9) else d:SetVertexColor(1, 1, 1, a) end
+        end
+    end
+    GripColor(0.3)
+    local drag
+    grip:SetScript("OnMouseDown", function(_, btn)
+        if btn ~= "LeftButton" then return end
+        local s = w:GetScale()
+        drag = { left = w:GetLeft() * s, top = w:GetTop() * s }
+    end)
+    grip:SetScript("OnMouseUp", function()
+        if drag then drag = nil; if onSave then onSave() end end
+    end)
+    grip:SetScript("OnUpdate", function()
+        if not drag then return end
+        local ps = UIParent:GetEffectiveScale()
+        local cx, cy = GetCursorPosition()
+        cx, cy = cx / ps, cy / ps
+        local ns = ((cx - drag.left) / w:GetWidth() + (drag.top - cy) / w:GetHeight()) / 2
+        ns = math.min(1.6, math.max(0.6, ns))
+        if math.abs(ns - 1) < 0.03 then ns = 1 end
+        w:SetScale(ns)
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", drag.left / ns, drag.top / ns)
+    end)
+    grip:SetScript("OnClick", function()
+        local s = w:GetScale()
+        local left, top = w:GetLeft() * s, w:GetTop() * s
+        w:SetScale(1)
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        if onSave then onSave() end
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GripColor(0, true)
+        GameTooltip:SetOwner(self, "ANCHOR_TOPLEFT")
+        GameTooltip:SetText(HHT.L("Drag to scale, right-click to reset"))
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GripColor(0.3); GameTooltip:Hide() end)
+    return grip
+end
+
+-- Bottom edge of a window: drag up or down to change the height (the top edge stays). onSave(height) runs after a change.
+function UI.HeightGrip(w, minH, onSave)
+    local g = CreateFrame("Button", nil, w)
+    g:SetHeight(8)
+    g:SetPoint("BOTTOMLEFT", w, "BOTTOMLEFT", 24, 0)
+    g:SetPoint("BOTTOMRIGHT", w, "BOTTOMRIGHT", -26, 0)
+    g:SetFrameLevel(w:GetFrameLevel() + 30)
+    local line = g:CreateTexture(nil, "OVERLAY")
+    line:SetPoint("BOTTOMLEFT", g, "BOTTOMLEFT", 0, 1)
+    line:SetPoint("BOTTOMRIGHT", g, "BOTTOMRIGHT", 0, 1)
+    line:SetHeight(2)
+    line:SetColorTexture(UI.ACCENT[1], UI.ACCENT[2], UI.ACCENT[3], 0.7)
+    line:Hide()
+    local drag
+    local function Follow()
+        if not drag then return end
+        local cy = select(2, GetCursorPosition()) / w:GetEffectiveScale()
+        local maxH = UIParent:GetHeight() * UIParent:GetEffectiveScale() / w:GetEffectiveScale() - 40
+        local mh = type(minH) == "function" and minH() or minH
+        w:SetHeight(math.floor(math.min(maxH, math.max(mh, drag.h + drag.cy - cy)) + 0.5))
+    end
+    g:SetScript("OnMouseDown", function(self, btn)
+        if btn ~= "LeftButton" then return end
+        drag = { h = w:GetHeight(), cy = select(2, GetCursorPosition()) / w:GetEffectiveScale() }
+        local left, top = w:GetLeft(), w:GetTop()
+        w:ClearAllPoints()
+        w:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        line:Show()
+        self:SetScript("OnUpdate", Follow)
+    end)
+    g:SetScript("OnMouseUp", function(self)
+        if not drag then return end
+        drag = nil
+        self:SetScript("OnUpdate", nil)
+        if not self:IsMouseOver() then line:Hide() end
+        if onSave then onSave(w:GetHeight()) end
+    end)
+    g:SetScript("OnEnter", function(self)
+        line:Show()
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(HHT.L("Drag to change the height"))
+        GameTooltip:Show()
+    end)
+    g:SetScript("OnLeave", function() if not drag then line:Hide() end; GameTooltip:Hide() end)
+    return g
+end
+
 -- Paged pick list. items = { {label=, icon=, value=, tip=function(tooltip) end}, ... }; onPick(item)
 local PAGE = 14
 local menu
@@ -861,7 +1023,7 @@ local function MenuBuild()
         b.icon:SetSize(16, 16)
         b.icon:SetPoint("LEFT", b, "LEFT", 2, 0)
         b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        HHT.Icon.Attach(b.icon)
+        HHT.Icon.Attach(b.icon, true)
         b.text = UI.Text(b, "", 12)
         b.text:SetPoint("LEFT", b, "LEFT", 24, 0)
         b:SetScript("OnClick", function(self)
