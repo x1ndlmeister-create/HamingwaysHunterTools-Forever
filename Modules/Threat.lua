@@ -6,7 +6,9 @@ HHT:AddGerman({
     ["Threat"] = "Bedrohung",
     ["Threat meter and aggro warning."] = "Bedrohungsanzeige und Aggro-Warnung.",
     ["Aggro!"] = "Aggro!",
-    ["Only in a group or with pet"] = "Nur in Gruppe oder mit Pet",
+    ["Show bar"] = "Anzeige",
+    ["In a group or with pet"] = "In Gruppe oder mit Pet",
+    ["Only in a group"] = "Nur in Gruppe",
     ["Hide when no threat"] = "Ausblenden ohne Bedrohung",
     ["Warn at threat percent"] = "Warnen ab Bedrohung in Prozent",
     ["Warn when gaining aggro"] = "Warnen bei Aggro",
@@ -28,7 +30,7 @@ local M = HHT:NewModule("threat", {
         width = 180, height = 16, bgAlpha = 0.85, barTexture = "blizzard", barShape = "square", bevel = 0.6, border = true, borderSize = 1, smooth = true,
         flash = false, flashGlow = 1, flashGlowSize = 8,
         showLabel = true, showTime = true,
-        onlyGroup = true, hideNoThreat = true, warnAt = 80, alertAggro = true, sound = true, blink = true,
+        showFor = "grouppet", hideNoThreat = true, warnAt = 80, alertAggro = true, sound = true, blink = true,
         colors = {
             low = { 0.67, 0.83, 0.45 },
             mid = { 0.95, 0.80, 0.20 },
@@ -42,6 +44,12 @@ local M = HHT:NewModule("threat", {
 })
 
 function M:OnInit()
+    local db = self.db
+    -- replaces the old "only in a group or with pet" checkbox
+    if db.onlyGroup ~= nil then
+        if db.onlyGroup == false then db.showFor = "always" end
+        db.onlyGroup = nil
+    end
     self.warned = false
     self.hadAggro = false
     self.flip = false
@@ -91,8 +99,8 @@ function M:Refresh()
     self:Layout()
 end
 
-local function InGroup()
-    if UnitExists and UnitExists("pet") then return true end
+local function InGroup(withPet)
+    if withPet and UnitExists and UnitExists("pet") then return true end
     if IsInGroup and IsInGroup() then return true end
     return GetNumGroupMembers ~= nil and (GetNumGroupMembers() or 0) > 1
 end
@@ -136,7 +144,7 @@ function M:Tick()
     end
 
     local pct, tanking
-    if HHT.HasAttackableTarget() and (not db.onlyGroup or InGroup()) then
+    if HHT.HasAttackableTarget() and (db.showFor == "always" or InGroup(db.showFor ~= "group")) then
         pct, tanking = ReadThreat()
     end
     if not pct or (db.hideNoThreat and pct <= 0 and not tanking) then
@@ -191,7 +199,8 @@ function M:BuildOptions(form)
     Bar.AddOptions(form, db)
     Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
-    form:Check(L("Only in a group or with pet"), db, "onlyGroup")
+    form:Cycle(L("Show bar"), db, "showFor", {
+        { "always", L("Always") }, { "grouppet", L("In a group or with pet") }, { "group", L("Only in a group") } })
     form:Check(L("Hide when no threat"), db, "hideNoThreat")
     form:Stepper(L("Warn at threat percent"), db, "warnAt", 40, 95, 5)
     form:Check(L("Warn when gaining aggro"), db, "alertAggro")

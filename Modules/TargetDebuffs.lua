@@ -13,6 +13,7 @@ HHT:AddGerman({
     ["Only my debuffs"] = "Nur meine Debuffs",
     ["All debuffs"] = "Alle Debuffs",
     ["Border color"] = "Randfarbe",
+    ["Missing debuff"] = "Debuff fehlt",
     ["Blink the red placeholder when a tracked debuff is missing"] = "Roten Platzhalter blinken lassen, wenn ein überwachter Debuff fehlt",
     ["Tracked debuffs"] = "Überwachte Debuffs",
     ["Ticked debuffs get a fixed slot and a red placeholder while they are missing. The button sets on which targets the placeholder shows. Debuffs that are not ticked still appear in the normal row when active."] =
@@ -123,6 +124,7 @@ function AuraBar:StyleButton(e)
     e.border:SetColorTexture(st.color[1], st.color[2], st.color[3], st.borderAlpha)
     SetRound(e, st.shape == "round")
     if e.fin then Icon.ApplyFinish(e.fin, s, st.shape == "round", bs) end
+    if st.glow then Icon.ApplyHaloTo(b, bs, st.shape == "round", st.color[1], st.color[2], st.color[3]) end
 end
 
 function AuraBar:StyleAll()
@@ -253,10 +255,11 @@ local M = HHT:NewModule("debuffs", {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 6, grow = "right", perRow = 20,
         showRow = true, max = 5, filter = "mine", visibility = "target", blink = true,
         entries = {}, custom = {},
-        colors = { border = { 0.55, 0.42, 0.20 } },
+        colors = { active = { 0.67, 0.83, 0.45 }, missing = { 1, 0.3, 0.3 } },
     },
 })
 HHT.Debuffs = M
+M.ownAlpha = true
 
 local function ReadTier()
     local ok, c = pcall(UnitClassification, "target")
@@ -290,6 +293,12 @@ function M:BuildEntries()
     end
     self.entries = list
     db.showSting, db.showMark, db.markTargets = nil, nil, nil
+    -- the old border colour only mirrored the general border colour; the new active colour starts from its default
+    db.colors.border = nil
+    if not db.activeColorSet then
+        db.activeColorSet = true
+        db.colors.active = { 0.67, 0.83, 0.45 }
+    end
 end
 
 -- Name and icon of an entry from the first id the client knows; an unknown Serpent Sting or Mark gets a stand-in icon.
@@ -320,8 +329,8 @@ end
 
 function M:Style()
     local db = self.db
-    local r, g, b = HHT.Col(db, "border")
-    return { size = db.size, spacing = db.spacing, shape = db.shape, borderSize = db.borderSize, borderAlpha = db.borderAlpha, color = { r, g, b } }
+    local r, g, b = HHT.Col(db, "active")
+    return { size = db.size, spacing = db.spacing, shape = db.shape, borderSize = db.borderSize, borderAlpha = db.borderAlpha, glow = true, color = { r, g, b } }
 end
 
 function M:OnInit()
@@ -330,7 +339,12 @@ function M:OnInit()
     self.tier = nil
     self:BuildEntries()
     HHT:Every(self, 0.2, M.Tick)
-    HHT:Listen(self, "PLAYER_TARGET_CHANGED", function(m) m.tier = nil end)
+    HHT:Listen(self, "PLAYER_TARGET_CHANGED", function(m)
+        m.tier = nil
+        -- the aura engine needs a moment for the new target; until then no placeholder may flash
+        m.settleUntil = GetTime() + 0.4
+        m:Tick()
+    end)
     HHT:Listen(self, "SPELLS_CHANGED", function(m) if not HHT.InCombat() then m:Layout() end end)
 end
 
@@ -341,7 +355,6 @@ function M:Build()
     self.frame = f
     for i = 1, MAXTRACK do
         local ph = Icon.New(f)
-        ph.tex:SetVertexColor(1, 0.3, 0.3)
         ph:SetAlpha(0.7)
         ph:Hide()
         self.phs[i] = ph
@@ -397,7 +410,9 @@ function M:Layout()
         local ph = self.phs[i]
         if e then
             local x, y = Offset((i - 1) % per, math.floor((i - 1) / per))
+            ph:SetBorderColor(HHT.Col(db, "missing"))
             ph:Style(s, db.shape, 0, 0, false)
+            ph.tex:SetVertexColor(HHT.Col(db, "missing"))
             ph:ClearAllPoints()
             ph:SetPoint(anchor, f, anchor, x, y)
             for id in pairs(e.ids) do excl[id] = true end
@@ -434,8 +449,10 @@ function M:Refresh()
     self:Layout()
 end
 
+-- Tick right away so the demo placeholders do not stay on screen until the next 0.2 s tick.
 function M:OnLockChanged()
     self:Layout()
+    self:Tick()
 end
 
 function M:OnReset()
@@ -453,12 +470,14 @@ function M:Tick()
 
     local tier = ReadTier()
     if tier ~= nil then self.tier = tier end
+    local settling = GetTime() < (self.settleUntil or 0)
     for i = 1, MAXTRACK do
         local ph, e = self.phs[i], self.slotEntry[i]
         local on = e ~= nil
         if on and not unlocked and self.tier then
             on = self.tier >= (TIER[e.cfg.targets] or 0)
         end
+        if on and settling and not unlocked then on = false end
         if on then
             Info(e)
             if ph.hhtIcon ~= e.icon then
@@ -621,7 +640,8 @@ function M:BuildOptions(form)
     form:Stepper(L("Maximum icons"), db, "max", 1, MAXROW, 1)
     form:Note(L("The game fills these icons itself. A red dimmed icon means the debuff is not on the target (missed, immune or expired). Size and border changes apply out of combat."))
     form:Header(L("Colors"))
-    form:Color(L("Border color"), db.colors, "border")
+    form:Color(L("Active border"), db.colors, "active")
+    form:Color(L("Missing debuff"), db.colors, "missing")
     form:Header(L("Tracked debuffs"))
     form:Note(L("Ticked debuffs get a fixed slot and a red placeholder while they are missing. The button sets on which targets the placeholder shows. Debuffs that are not ticked still appear in the normal row when active."))
     BuildTrackList(self, form)

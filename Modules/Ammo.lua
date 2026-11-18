@@ -80,6 +80,7 @@ local function Kind(id)
     kindCache[id] = k
     return k or nil
 end
+HHT.AmmoKind = Kind
 
 local function ItemName(id)
     if C_Item and C_Item.GetItemNameByID then
@@ -442,6 +443,16 @@ function M:Tick()
     for _, e in ipairs(list) do
         sig[#sig + 1] = e.kind .. e.n .. tostring(e.icon) .. "u" .. #(self.upgrades[e.kind] or {}) .. "b" .. #(self.bagUpgrades[e.kind] or {})
         if e.n < db.low and (e.kind == self.needs or not self.needs) then isLow = true end
+    end
+    -- the low state for the ammo vendors does not depend on the icon being shown
+    local lowNow = false
+    for _, kind in ipairs(KINDS) do
+        local n = self:Shown(kind)
+        if self:Visible(kind, n) and n < db.low and kind == self.needs then lowNow = true end
+    end
+    if lowNow ~= self.lowNow then
+        self.lowNow = lowNow
+        if HHT.PetMap then HHT.PetMap:Update() end
     end
     local signature = table.concat(sig, ",")
     if isLow and not self.wasLow and db.sound and not unlocked and not self.shot then

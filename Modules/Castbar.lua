@@ -10,6 +10,7 @@ HHT:AddGerman({
     ["Show spell name"] = "Zaubernamen zeigen",
     ["Hide the default cast bar"] = "Standard-Zauberleiste ausblenden",
     ["Cast"] = "Zauber",
+    ["Looting"] = "Looten",
     ["Channel"] = "Kanalisierung",
     ["Failed"] = "Fehlgeschlagen",
     ["Interrupted"] = "Unterbrochen",
@@ -38,17 +39,23 @@ local function Num(v)
     return HHT.SafeNumber(v)
 end
 
+-- Opening a quest object or chest runs an internal spell called "Opening - No Text"
+local function Pretty(name)
+    if name:find("No Text", 1, true) or name:find("Kein Text", 1, true) then return L("Looting") end
+    return name
+end
+
 -- name, icon, startSec, endSec for the current cast or channel; nil when none or unreadable
 local function ReadCast()
     local ok, name, _, icon, s, e = pcall(UnitCastingInfo, "player")
     if ok and name and not HHT.IsSecret(name) then
         s, e = Num(s), Num(e)
-        if s and e and e > s then return name, icon, s / 1000, e / 1000, false end
+        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, false end
     end
     ok, name, _, icon, s, e = pcall(UnitChannelInfo, "player")
     if ok and name and not HHT.IsSecret(name) then
         s, e = Num(s), Num(e)
-        if s and e and e > s then return name, icon, s / 1000, e / 1000, true end
+        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, true end
     end
 end
 

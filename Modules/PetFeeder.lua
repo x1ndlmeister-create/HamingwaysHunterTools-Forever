@@ -524,7 +524,11 @@ function M:Tick()
     local pm = HHT.modules.pet
     local happy = pm and pm.ReadHappiness and pm.ReadHappiness() or nil
     local supplyLow = self:CheckAlerts(exists, dead, happy, unlocked)
-
+    -- the food vendors appear on the map while the supply is low
+    if supplyLow ~= self.lastSupplyLow then
+        self.lastSupplyLow = supplyLow
+        if HHT.PetMap then HHT.PetMap:Update() end
+    end
     local show = exists and not dead
     if show and db.mode == "hungry" and happy == 3 then show = false end
     if unlocked then show = true end

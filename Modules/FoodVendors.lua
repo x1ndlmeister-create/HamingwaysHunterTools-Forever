@@ -176,11 +176,23 @@ function M:OnDisable()
     if HHT.PetMap then HHT.PetMap:Update() end
 end
 
+-- While the low-food warning is active the vendors show on the map by themselves; hiding them there keeps them off until it is over.
+function FV.AutoShown()
+    local fm = HHT.modules.feeder
+    local low = fm and fm.enabled and fm.supplyLow and true or false
+    if not low then FV.dismissed = nil end
+    return low and not FV.dismissed
+end
+
 if HHT.PetMap then
     HHT.PetMap.AddLayer("food", "Food vendors",
-        function() if M.enabled and M.db and M.db.onMap then return FV.List() end end,
-        function() return M.db and M.db.onMap end,
-        function(v) if M.db then M.db.onMap = v and true or false end end,
+        function() if M.enabled and M.db and (M.db.onMap or FV.AutoShown()) then return FV.List() end end,
+        function() return M.db and (M.db.onMap or FV.AutoShown()) and true or false end,
+        function(v)
+            if not M.db then return end
+            M.db.onMap = v and true or false
+            FV.dismissed = (not v) and FV.AutoShown() or nil
+        end,
         function() return M.db and M.db.onMinimap ~= false end)
 end
 

@@ -15,6 +15,27 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.5.2",
+        en = {
+            "Ammo vendors: a new Restock ammo icon appears in the vendor window's button row. One click fills your quiver or ammo pouch with the ammo your weapon uses (the equipped kind, otherwise the best the vendor sells). The tooltip shows amount and price, and a prompt asks before buying. Position, spacing and the shifting of the vendor's own buttons can be set under Ammo vendors > Vendor window (Advanced).",
+            "Low ammo or low pet food: the matching vendors are now shown on the map automatically while the warning is active, and hidden again when it is fixed. If they were already on, they stay on.",
+            "Threat: the old checkbox is now a choice, 'Show bar': always, in a group or with a pet, or only in a group (the pet does not count).",
+            "Target debuffs: the border colour is replaced by two colours, 'Active border' (green by default) and 'Missing debuff'. The border glow now works on the debuff icons too.",
+            "Target debuffs: the missing icon no longer flashes briefly when you change target or click through the settings.",
+            "Proc icons now sit behind the other modules.",
+            "Cast bar: the game's 'Opening - No Text' (quest items, chests) now reads 'Looting'.",
+        },
+        de = {
+            "Munitionshändler: Im Händlerfenster gibt es in der Knopfreihe ein neues Symbol 'Munition auffüllen'. Ein Klick füllt Köcher oder Munitionsbeutel mit der Munition, die deine Waffe nutzt (die angelegte Sorte, sonst die beste des Händlers). Der Tooltip zeigt Menge und Preis, und vor dem Kauf fragt ein Fenster nach. Position, Abstand und das Verschieben der Händlerknöpfe stellst du unter Ammo vendors > Händlerfenster ein (Erweitert).",
+            "Wenig Munition oder wenig Tierfutter: Die passenden Händler erscheinen jetzt automatisch auf der Karte, solange die Warnung aktiv ist, und verschwinden wieder, sobald sie behoben ist. Waren sie schon eingeschaltet, bleiben sie an.",
+            "Bedrohung: Aus der alten Checkbox wurde eine Auswahl 'Anzeige': immer, in Gruppe oder mit Pet, oder nur in Gruppe (das Pet zählt nicht).",
+            "Ziel-Debuffs: Die Rahmenfarbe wurde durch zwei Farben ersetzt, 'Aktiver Rahmen' (standardmäßig grün) und 'Debuff fehlt'. Das Rahmen-Glühen funktioniert jetzt auch bei den Debuff-Symbolen.",
+            "Ziel-Debuffs: Das Symbol für einen fehlenden Debuff blitzt nicht mehr kurz auf, wenn du das Ziel wechselst oder durch die Einstellungen klickst.",
+            "Die Proc-Symbole liegen jetzt hinter den anderen Modulen.",
+            "Zauberleiste: Das Spiel-interne 'Opening - No Text' (Questgegenstände, Truhen) heißt jetzt 'Looten'.",
+        },
+    },
+    {
         v = "1.5.1",
         en = {
             "Pet feeder: buff food (for example Tasty Lion Steak) is now reliably recognised and left alone by the automatic pick, even when its tooltip was not fully loaded the first time.",

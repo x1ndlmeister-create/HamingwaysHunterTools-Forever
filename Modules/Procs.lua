@@ -322,6 +322,7 @@ end
 function M:Build()
     if self.frame then return end
     local f = CreateFrame("Frame", "HamingwaysHunterToolsProcs", UIParent)
+    f:SetFrameStrata("LOW")
     f:SetSize(200, 200)
     self.frame = f
     self.pvs = {}

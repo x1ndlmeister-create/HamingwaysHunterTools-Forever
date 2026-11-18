@@ -339,6 +339,12 @@ function methods:SetIcon(tex)
     self.tex:SetTexture(tex)
 end
 
+-- Glow for a frame that is not an Icon (e.g. an engine-made aura button), in the colour r, g, b.
+function Icon.ApplyHaloTo(frame, bs, round, r, g, b)
+    frame.haloR, frame.haloG, frame.haloB = r, g, b
+    methods.ApplyHalo(frame, bs, round)
+end
+
 function methods:SetDesaturated(on)
     self.tex:SetDesaturated(on and true or false)
 end

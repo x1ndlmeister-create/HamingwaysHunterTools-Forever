@@ -443,6 +443,11 @@ function HHT:ApplyGlobalLook(frame)
         end
     end
     frame.hhtScaled = frame.hhtScaled or scale
+    if mod and mod.ownAlpha and not hidden then
+        -- The module sets its own alpha from its tick; a full alpha here would flash it until the next tick.
+        if mod.bar then mod:Tick() else frame:SetAlpha(0) end
+        return
+    end
     frame:SetAlpha(hidden and 0 or (g.alpha or 1) * ma)
 end
 
