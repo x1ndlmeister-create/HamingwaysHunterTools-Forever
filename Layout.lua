@@ -126,6 +126,7 @@ HHT.Layout = {
             "Show remaining time",
             "+Time position >> Show remaining time",
             "Hide the default cast bar",
+            "+Move cast bar to back",
             "+Show spark",
         } },
         { "Flash", {
@@ -950,6 +951,7 @@ HHT.Tips = {
     ["Minimap button"] = "Shows or hides the HHT button on the minimap",
     ["Missing debuff"] = "Click to change this color",
     ["Movable modules"] = "Choose which modules move when all frames are unlocked",
+    ["Move cast bar to back"] = "Puts the cast bar behind windows such as the profession window; by default it stays on top",
     ["Move vendor buttons to make room"] = "Slides the repair and sell-junk buttons left so the restock icon fits in the row",
     ["Near color (up to 15 yd)"] = "Used up to 15 yards",
     ["Neutral color"] = "Click to change this color",
@@ -1255,6 +1257,7 @@ HHT:AddGerman({
     ["Used up to 25 yards"] = "Gilt bis 25 Meter",
     ["Shows or hides the HHT button on the minimap"] = "Zeigt oder versteckt den HHT-Button an der Minimap",
     ["Choose which modules move when all frames are unlocked"] = "Wähle, welche Module sich bewegen lassen, wenn alle Fenster entsperrt sind",
+    ["Puts the cast bar behind windows such as the profession window; by default it stays on top"] = "Legt die Zauberleiste hinter Fenster wie das Berufefenster; standardmäßig bleibt sie ganz oben",
     ["Slides the repair and sell-junk buttons left so the restock icon fits in the row"] = "Schiebt die Knöpfe für Reparieren und Müll verkaufen nach links, damit das Auffüll-Symbol in die Reihe passt",
     ["Used up to 15 yards"] = "Gilt bis 15 Meter",
     ["Keeps special buff foods in your bags unless you pick them yourself"] = "Lässt spezielles Buff-Futter in deinen Taschen, solange du es nicht selbst wählst",

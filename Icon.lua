@@ -366,6 +366,13 @@ function methods:ClearCooldown()
     self.cool:Clear()
 end
 
+-- Reverse swipe: the lit part is the remaining time and the elapsed part greys out (for timed buffs and summons).
+function methods:SetReverse(on)
+    if self.reverse == on then return end
+    self.reverse = on
+    self.cool:SetReverse(on and true or false)
+end
+
 -- Static timer: start/duration in plain numbers (not secret)
 function methods:SetTimer(start, duration)
     self.cool:SetCooldown(start, duration)

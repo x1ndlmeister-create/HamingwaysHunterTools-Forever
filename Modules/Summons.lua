@@ -186,6 +186,7 @@ function M:Tick()
         local pos = i - 1
         if ic.hhtPos ~= pos then self:Place(ic, pos); ic.hhtPos = pos end
         ic:SetIcon(item.icon)
+        ic:SetReverse(true)
         if item.slot then
             -- the engine hides empty slots and runs the timer from the duration object
             pcall(ic.SetAlphaFromBoolean, ic, item.have, 1, 0)

@@ -15,6 +15,19 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.5.4",
+        en = {
+            "Cast bar: it now stays on top of other windows (for example the profession window). The new Advanced option 'Move cast bar to back' puts it behind them again.",
+            "Cast bar: when you craft several items at once, the bar covers the whole batch and only fills once the last one is done. The name shows the count, e.g. (3/10), and the time shows the total time left in brackets.",
+            "Summons: the timer swipe now runs the other way round: the remaining time stays bright and the elapsed part greys out.",
+        },
+        de = {
+            "Zauberleiste: Sie bleibt jetzt über anderen Fenstern (zum Beispiel dem Berufefenster). Die neue Erweitert-Option 'Zauberleiste nach hinten legen' schiebt sie wieder dahinter.",
+            "Zauberleiste: Stellst du mehrere Gegenstände auf einmal her, zeigt die Leiste den ganzen Stapel und füllt sich erst, wenn der letzte fertig ist. Der Name zeigt den Zähler, z. B. (3/10), und die Zeit die Gesamtrestzeit in Klammern.",
+            "Beschwörungen: Der Timer-Kreis läuft jetzt andersherum: Die Restzeit bleibt hell, der abgelaufene Teil wird grau.",
+        },
+    },
+    {
         v = "1.5.3",
         en = {
             "Restock ammo now also works with BetterBags' vendor window: the button sits at the bottom left of its Buy tab.",

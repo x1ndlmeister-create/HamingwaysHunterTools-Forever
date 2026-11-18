@@ -9,6 +9,7 @@ HHT:AddGerman({
     ["Space to icon"] = "Abstand zum Symbol",
     ["Show spell name"] = "Zaubernamen zeigen",
     ["Hide the default cast bar"] = "Standard-Zauberleiste ausblenden",
+    ["Move cast bar to back"] = "Zauberleiste nach hinten legen",
     ["Cast"] = "Zauber",
     ["Looting"] = "Looten",
     ["Channel"] = "Kanalisierung",
@@ -45,22 +46,42 @@ local function Pretty(name)
     return name
 end
 
--- name, icon, startSec, endSec for the current cast or channel; nil when none or unreadable
+-- name, icon, startSec, endSec, channel, spellID for the current cast or channel; nil when none or unreadable
 local function ReadCast()
-    local ok, name, _, icon, s, e = pcall(UnitCastingInfo, "player")
+    local ok, name, _, icon, s, e, _, _, _, spellID = pcall(UnitCastingInfo, "player")
     if ok and name and not HHT.IsSecret(name) then
         s, e = Num(s), Num(e)
-        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, false end
+        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, false, Num(spellID) end
     end
-    ok, name, _, icon, s, e = pcall(UnitChannelInfo, "player")
+    ok, name, _, icon, s, e, _, _, spellID = pcall(UnitChannelInfo, "player")
     if ok and name and not HHT.IsSecret(name) then
         s, e = Num(s), Num(e)
-        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, true end
+        if s and e and e > s then return Pretty(name), icon, s / 1000, e / 1000, true, Num(spellID) end
+    end
+end
+
+-- "m:ss" from one minute up, otherwise seconds with one decimal
+local function Clock(sec)
+    if sec >= 60 then return string.format("%d:%02d", sec / 60, sec % 60) end
+    return string.format("%.1f", sec)
+end
+
+-- A crafting window asking for several items runs one cast per item; the requested amount is only known at that call.
+function M:HookCrafting()
+    local function Queue(count)
+        count = tonumber(count)
+        self.batch = nil
+        self.pending = count and count > 1 and { total = math.floor(count), t = GetTime() } or nil
+    end
+    if _G.DoTradeSkill then pcall(hooksecurefunc, "DoTradeSkill", function(_, n) Queue(n) end) end
+    if _G.C_TradeSkillUI and C_TradeSkillUI.CraftRecipe then
+        pcall(hooksecurefunc, C_TradeSkillUI, "CraftRecipe", function(_, n) Queue(n) end)
     end
 end
 
 function M:OnInit()
     self.state = nil
+    self:HookCrafting()
     for _, ev in ipairs({
         "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
         "UNIT_SPELLCAST_DELAYED", "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP",
@@ -145,6 +166,7 @@ function M:Layout()
     local db = self.db
     local h = db.height
     f:SetSize(db.width, h)
+    f:SetFrameStrata(db.toBack and "MEDIUM" or "FULLSCREEN_DIALOG")
     Bar.Apply(f.bar, db, "cast")
     local bs = db.border ~= false and math.max(0, math.min(4, db.borderSize or 1)) or 0
     f.icon:SetBorderColor(HHT.Col(db, "edge"))
@@ -160,18 +182,37 @@ function M:Layout()
 end
 
 function M:Sync()
-    local name, icon, s, e, channel = ReadCast()
+    local name, icon, s, e, channel, spellID = ReadCast()
     if name then
-        self.state = { name = name, icon = icon, s = s, e = e, channel = channel }
+        self.state = { name = name, icon = icon, s = s, e = e, channel = channel, spellID = spellID }
     else
         self.state = nil
     end
+end
+
+-- Counts the casts of a multi-craft; any other spell, a cancel or a pause ends it.
+function M:TrackBatch(event)
+    local st = self.state
+    local b = self.batch
+    if event == "UNIT_SPELLCAST_INTERRUPTED" then self.batch, self.pending = nil, nil; return end
+    if event ~= "UNIT_SPELLCAST_START" or not st then return end
+    local p = self.pending
+    if p and GetTime() - p.t < 5 then
+        self.batch = { total = p.total, index = 1, spellID = st.spellID, dur = st.e - st.s, name = st.name, icon = st.icon }
+    elseif b and b.spellID == st.spellID and b.index < b.total then
+        b.index = b.index + 1
+        b.dur = st.e - st.s
+    else
+        self.batch = nil
+    end
+    self.pending = nil
 end
 
 function M:OnCastEvent(event, unit)
     if unit ~= "player" then return end
     local prev = self.state
     self:Sync()
+    self:TrackBatch(event)
     -- a stop right at the end of the cast is a completion; earlier stops are cancels
     if prev and not self.state and GetTime() >= prev.e - 0.25
         and (event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP") then
@@ -187,6 +228,9 @@ end
 -- Keeps the full bar on screen for the length of the flash.
 function M:Complete(st)
     if not self.db.flash or not self.frame then return end
+    -- inside a multi-craft only the last cast fills the bar and flashes
+    local b = self.batch
+    if b and b.spellID == st.spellID and b.index < b.total then return end
     if self.doneS == st.s and self.doneE == st.e then return end
     self.doneS, self.doneE = st.s, st.e
     self.done = { name = st.name, icon = st.icon, channel = st.channel, till = GetTime() + Bar.FLASH_TIME }
@@ -202,7 +246,7 @@ function M:Tick()
     local unlocked = HHT:IsUnlocked(self)
     local bar = f.bar
 
-    local name, icon, progress, remain, color
+    local name, icon, progress, remain, color, total
     if st then
         local dur = st.e - st.s
         local t = now - st.s
@@ -214,6 +258,15 @@ function M:Tick()
         end
     end
     if st and not (self.doneS == st.s and self.doneE == st.e) then self.done = nil end
+    local b = self.batch
+    if b then
+        -- the next cast of a batch starts right after the last one; a longer pause means it ended
+        if st then b.gap = nil
+        else
+            b.gap = b.gap or now
+            if now - b.gap > 1.5 then self.batch, b = nil, nil end
+        end
+    end
     if st then
         local dur = st.e - st.s
         local t = math.min(dur, math.max(0, now - st.s))
@@ -221,9 +274,18 @@ function M:Tick()
         remain = dur - t
         name, icon = st.name, st.icon
         color = st.channel and "channel" or "cast"
+        if b and b.spellID == st.spellID then
+            name = string.format("%s (%d/%d)", name, b.index, b.total)
+            total = remain + (b.total - b.index) * dur
+            -- the bar covers the whole batch and only fills when the last item is done
+            progress = ((b.index - 1) * dur + t) / (b.total * dur)
+        end
     elseif self.done and now < self.done.till then
         progress, remain, name, icon = 1, nil, self.done.name, self.done.icon
         color = self.done.channel and "channel" or "cast"
+    elseif b and b.index < b.total then
+        -- short pause between two casts of a batch
+        progress, name, icon, color = b.index / b.total, string.format("%s (%d/%d)", b.name, b.index, b.total), b.icon, "cast"
     elseif self.failUntil and now < self.failUntil then
         progress, remain, name, color = 1, nil, self.failText, "fail"
         icon = f.icon.tex:GetTexture()
@@ -258,7 +320,9 @@ function M:Tick()
     bar.bar:SetValue(progress)
     bar.bar:SetStatusBarColor(HHT.Col(db, color))
     bar.label:SetText(name or "")
-    bar.time:SetText(remain and string.format("%.1f", remain) or "")
+    local timeText = remain and string.format("%.1f", remain) or ""
+    if total and remain then timeText = timeText .. "  (" .. Clock(total) .. ")" end
+    bar.time:SetText(timeText)
     if icon then f.icon.tex:SetTexture(icon) end
     if db.showSpark and remain then
         bar.spark:ClearAllPoints()
@@ -286,6 +350,7 @@ function M:BuildOptions(form)
     Bar.AddFlash(form, db)
     form:Header(L("Behavior"))
     form:Check(L("Hide the default cast bar"), db, "hideDefault")
+    form:Check(L("Move cast bar to back"), db, "toBack")
     form:Header(L("Colors"))
     form:Color(L("Cast"), db.colors, "cast")
     form:Color(L("Channel"), db.colors, "channel")
