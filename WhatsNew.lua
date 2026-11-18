@@ -15,6 +15,17 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.5.1",
+        en = {
+            "Pet feeder: buff food (for example Tasty Lion Steak) is now reliably recognised and left alone by the automatic pick, even when its tooltip was not fully loaded the first time.",
+            "Pet feeder: the low food warning is now also tracked while the settings page is open, so the count turns red as soon as it is below your limit. The Warnings preview shows the 'Low pet food' icon.",
+        },
+        de = {
+            "Begleiter füttern: Buff-Futter (zum Beispiel Tasty Lion Steak) wird jetzt zuverlässig erkannt und von der automatischen Wahl in Ruhe gelassen, auch wenn der Tooltip beim ersten Mal noch nicht ganz geladen war.",
+            "Begleiter füttern: Die Warnung bei wenig Futter wird jetzt auch bei geöffneter Einstellungsseite erfasst, die Zahl wird also rot, sobald sie unter deinem Grenzwert liegt. Die Vorschau der Warnungen zeigt das Symbol 'Wenig Futter'.",
+        },
+    },
+    {
         v = "1.5.0",
         en = {
             "Quick install (the in-game installer) now shows the same rows as the settings, so what you set there is what you get later. Modules on one page are separated by a coloured header, and the window can be made taller or shorter by dragging its bottom edge. /hht setup starts it any time.",

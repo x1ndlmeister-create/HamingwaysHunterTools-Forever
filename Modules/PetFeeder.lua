@@ -350,7 +350,8 @@ local function UseLineNumbers(lines)
             return n
         end
     end
-    return 0
+    -- no Use line: the spell text is probably not loaded yet
+    return nil
 end
 
 local function IsBuffFood(id)
@@ -360,8 +361,9 @@ local function IsBuffFood(id)
     if buffTried[id] and now - buffTried[id] < 5 then return BUFF_FOOD[id] and true or false end
     buffTried[id] = now
     local ok, lines = pcall(TooltipLines, id)
-    if ok and lines and #lines >= 2 then
-        c = UseLineNumbers(lines) >= 4
+    local n = ok and lines and UseLineNumbers(lines)
+    if n then
+        c = n >= 4
         buffCache[id] = c
         return c
     end
@@ -472,14 +474,15 @@ end
 -- Hunger and supply warnings run even while the icon is hidden.
 function M:CheckAlerts(exists, dead, happy, unlocked)
     local db = self.db
-    if unlocked or not exists or dead then
+    if not exists or dead then
         self.lastHappy, self.hungry, self.supplyLow = nil, false, false
         return false
     end
+    -- While the module is unlocked or its settings page is open, the state is tracked but nothing is announced.
     if happy then
         local limit = db.hungerContent and 2 or 1
         local hungry = happy <= limit
-        if hungry and db.hungerWarn and (not self.hungry or happy < (self.lastHappy or 3)) then
+        if hungry and db.hungerWarn and not unlocked and (not self.hungry or happy < (self.lastHappy or 3)) then
             self:Alert(happy == 1 and L("Your pet is unhappy: time to feed it.") or L("Your pet is only content: feed it for full damage."))
             if db.hungerSound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
         end
@@ -494,8 +497,8 @@ function M:CheckAlerts(exists, dead, happy, unlocked)
     self.supplyCount = supply
     local low = supply < db.supplyBelow
     -- the chat message comes once per drop below the threshold, not again when the pet is called anew
-    if low and not self.supplyWarned then self:Alert(string.format(L("Low on pet food: %d left."), supply)) end
-    self.supplyWarned = low
+    if low and not self.supplyWarned and not unlocked then self:Alert(string.format(L("Low on pet food: %d left."), supply)) end
+    if not unlocked then self.supplyWarned = low end
     self.supplyLow = low
     return low
 end

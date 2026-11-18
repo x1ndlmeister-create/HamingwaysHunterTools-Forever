@@ -380,6 +380,7 @@ function M:Collect()
         Add(list, "growl", S.Resolve("@growl").icon, L("Growl on"), true)
         Add(list, "pack", S.Resolve("@aspectPack").icon, L("Pack in dungeon"), true)
         Add(list, "hungry", S.Resolve("@feedPet").icon, L("Pet hungry"), true)
+        Add(list, "foodlow", S.Resolve("@feedPet").icon, L("Low pet food"), true)
         return list
     end
 
