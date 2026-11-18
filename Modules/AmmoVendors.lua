@@ -289,12 +289,27 @@ function AV.Gap()
     return AV.gap or 6
 end
 
+-- Space between the vendor's own button row and the buyback slot as Blizzard lays it out (without our shift).
+function AV.Room()
+    local bb = _G.MerchantBuyBackItem
+    if not (bb and bb:IsShown() and bb:GetLeft()) then return nil end
+    local right, applied = nil, 0
+    for _, f in ipairs(NativeButtons()) do
+        local r = f:GetRight()
+        if r and (not right or r > right) then right = r end
+        local m, pts = AV.moved[f], Points(f)
+        if m and pts[1] and pts[1][2] == m.rel and math.abs((pts[1][4] or 0) - m.x) < 0.05 then applied = m.dx or 0 end
+    end
+    if not right then return nil end
+    return bb:GetLeft() - right + applied
+end
+
 -- Slides the vendor's own bottom-row buttons left so the restock button sits in the row as a fourth one.
-function AV.ShiftNative(on)
+function AV.ShiftNative(on, extra)
     local list = NativeButtons()
     local inList = {}
     for _, f in ipairs(list) do inList[f] = true end
-    local dx = on and -((AV.button and AV.button:GetWidth() or 36) + AV.Gap()) / 2 or 0
+    local dx = on and -((AV.button and AV.button:GetWidth() or 36) + AV.Gap()) / 2 - (extra or 0) or 0
     for _, f in ipairs(list) do
         local pts = Points(f)
         -- buttons chained to another button follow it
@@ -302,8 +317,11 @@ function AV.ShiftNative(on)
             local m = AV.moved[f]
             local function Near(a, b) return math.abs((a or 0) - (b or 0)) < 0.05 end
             local intact = m and pts[1][2] == m.rel and Near(pts[1][4], m.x) and Near(pts[1][5], m.y)
-            if on and not intact then
-                AV.moved[f] = { orig = pts, x = (pts[1][4] or 0) + dx, y = pts[1][5] or 0, rel = pts[1][2] }
+            if on and intact and not Near(m.dx, dx) then
+                SetPoints(f, m.orig, dx)
+                m.x, m.dx = (m.orig[1][4] or 0) + dx, dx
+            elseif on and not intact then
+                AV.moved[f] = { orig = pts, x = (pts[1][4] or 0) + dx, y = pts[1][5] or 0, rel = pts[1][2], dx = dx }
                 SetPoints(f, pts, dx)
             elseif not on and intact then
                 SetPoints(f, m.orig, 0)
@@ -395,28 +413,73 @@ function AV.PlaceButton()
     end
 end
 
-function AV.RefreshButton()
-    local b = AV.button
-    if not (b and MerchantFrame and MerchantFrame:IsShown()) then return end
+-- BetterBags Next swaps Blizzard's merchant window for its own vendor panel; returns that panel while it is in use.
+local function BetterBagsPanel()
+    local lib = _G.LibStub and _G.LibStub("AceAddon-3.0", true)
+    local ok, panel = pcall(function()
+        local bb = lib and lib:GetAddon("BetterBags", true)
+        local mod = bb and bb:GetModule("NextVendor", true)
+        return mod and mod.panel
+    end)
+    if ok and panel and not panel.off and panel.frame then return panel end
+end
+
+function AV.PlaceBetterBags(panel)
+    local b = AV.bbButton
     local db = HHT.modules.ammovendors.db
+    b:ClearAllPoints()
+    b:SetPoint("BOTTOMLEFT", panel.body or panel.frame, "BOTTOMLEFT", 16 + (db.restockX or 0), 6 + (db.restockY or 0))
+    local base = (panel.overlay or panel.frame):GetFrameLevel()
+    b:SetFrameLevel(base + 5)
+end
+
+function AV.RefreshButton()
+    local db = HHT.modules.ammovendors.db
+    local panel = BetterBagsPanel()
+    local b
+    if panel then
+        AV.MakeBetterBagsButton(panel)
+        b = AV.bbButton
+        if AV.button then AV.button:Hide(); pcall(AV.ShiftNative, false) end
+    else
+        b = AV.button
+        if AV.bbButton then AV.bbButton:Hide() end
+    end
+    if not (b and MerchantFrame and MerchantFrame:IsShown()) then return end
     local ok, plan, why = pcall(AV.Plan)
-    if not ok or MerchantFrame.selectedTab == 2 or not db.restockButton then plan, why = nil, nil end
+    local away = panel and (panel.tab or 1) ~= 1 or (not panel and MerchantFrame.selectedTab == 2)
+    if not ok or away or not db.restockButton then plan, why = nil, nil end
     b.plan, b.why = plan, why
     local show = plan ~= nil or why ~= nil
     b:SetShown(show)
     b.icon:SetTexture(plan and plan.tex or "Interface\\Icons\\INV_Ammo_Arrow_02")
     b.icon:SetDesaturated(plan == nil)
     b:SetAlpha(plan and 1 or 0.6)
-    pcall(AV.ShiftNative, show and db.shiftButtons ~= false)
+    if panel then
+        AV.PlaceBetterBags(panel)
+        return
+    end
+    local shift = show and db.shiftButtons ~= false
+    pcall(AV.ShiftNative, shift)
     AV.PlaceButton()
+    if shift then
+        -- Natives are centred by default, but with few of them the row would end against the buyback slot:
+        -- keep the space they had to it (up to 16) and take the rest from the left.
+        local total = b:GetWidth() + AV.Gap()
+        local ok2, room = pcall(AV.Room)
+        if ok2 and room then
+            local need = math.max(total / 2, total - math.max(room - 16, 0))
+            if need - total / 2 > 0.5 then
+                pcall(AV.ShiftNative, true, need - total / 2)
+                AV.PlaceButton()
+            end
+        end
+    end
 end
 
-function AV.MakeButton()
-    if AV.button or not MerchantFrame then return end
-    local b = CreateFrame("Button", nil, MerchantFrame)
+local function BuildButton(parent, plain)
+    local b = CreateFrame("Button", nil, parent)
     b:SetSize(36, 36)
-    AV.button = b
-    AV.PlaceButton()
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
     local src
@@ -424,10 +487,11 @@ function AV.MakeButton()
         if _G[n] then src = _G[n]; break end
     end
     local cloned = false
-    if src then
+    if src and not plain then
         b:SetSize(src:GetSize())
         cloned = select(2, pcall(CloneLook, src, b, b.icon)) == true
     end
+    if plain then b:SetSize(28, 28) end
     if not cloned then
         local edge = b:CreateTexture(nil, "BACKGROUND")
         edge:SetAllPoints()
@@ -461,14 +525,44 @@ function AV.MakeButton()
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    return b
+end
+
+function AV.MakeButton()
+    if AV.button or not MerchantFrame then return end
+    AV.button = BuildButton(MerchantFrame, false)
+    AV.PlaceButton()
+end
+
+function AV.MakeBetterBagsButton(panel)
+    if AV.bbButton then
+        if AV.bbButton:GetParent() ~= panel.frame then AV.bbButton:SetParent(panel.frame) end
+        return
+    end
+    AV.bbButton = BuildButton(panel.frame, true)
+    -- tab changes redraw the panel, which is when the button must follow
+    if hooksecurefunc and not AV.bbHooked then
+        AV.bbHooked = true
+        pcall(hooksecurefunc, panel, "Draw", function()
+            if M.enabled then AV.RefreshButton() end
+        end)
+    end
 end
 
 function M:OnInit()
-    if hooksecurefunc and _G.MerchantFrame_UpdateRepairButtons then
+    if hooksecurefunc then
         -- Blizzard re-anchors its buttons here, so ours are shifted again afterwards
-        hooksecurefunc("MerchantFrame_UpdateRepairButtons", function()
-            if M.enabled and AV.button then AV.RefreshButton() end
-        end)
+        if _G.MerchantFrame_UpdateRepairButtons then
+            hooksecurefunc("MerchantFrame_UpdateRepairButtons", function()
+                if M.enabled and AV.button then AV.RefreshButton() end
+            end)
+        end
+        -- switching between the Merchant and Buyback tabs does not fire a merchant event
+        if _G.MerchantFrame_Update then
+            hooksecurefunc("MerchantFrame_Update", function()
+                if M.enabled and AV.button then AV.RefreshButton() end
+            end)
+        end
     end
     for _, ev in ipairs({ "MERCHANT_SHOW", "MERCHANT_UPDATE", "BAG_UPDATE_DELAYED", "PLAYER_MONEY" }) do
         HHT:Listen(self, ev, function(m)
@@ -485,6 +579,7 @@ end
 
 function M:OnDisable()
     if AV.button then AV.button:Hide(); pcall(AV.ShiftNative, false) end
+    if AV.bbButton then AV.bbButton:Hide() end
     if HHT.PetMap then HHT.PetMap:ClearWaypoint(); HHT.PetMap:Update() end
 end
 

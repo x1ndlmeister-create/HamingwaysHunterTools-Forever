@@ -15,6 +15,19 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.5.3",
+        en = {
+            "Restock ammo now also works with BetterBags' vendor window: the button sits at the bottom left of its Buy tab.",
+            "Restock ammo: with only one vendor button (e.g. only Sell Junk) the row is now laid out so the new button no longer sits against the buyback slot.",
+            "Restock ammo: the button now hides when you switch to the Buyback tab.",
+        },
+        de = {
+            "Munition auffüllen funktioniert jetzt auch mit dem Händlerfenster von BetterBags: Der Knopf sitzt unten links im Kaufen-Tab.",
+            "Munition auffüllen: Hat der Händler nur einen eigenen Knopf (z. B. nur 'Müll verkaufen'), wird die Reihe jetzt so angeordnet, dass der neue Knopf nicht mehr am Rückkauf-Slot klebt.",
+            "Munition auffüllen: Der Knopf verschwindet jetzt, wenn du auf den Rückkauf-Tab wechselst.",
+        },
+    },
+    {
         v = "1.5.2",
         en = {
             "Ammo vendors: a new Restock ammo icon appears in the vendor window's button row. One click fills your quiver or ammo pouch with the ammo your weapon uses (the equipped kind, otherwise the best the vendor sells). The tooltip shows amount and price, and a prompt asks before buying. Position, spacing and the shifting of the vendor's own buttons can be set under Ammo vendors > Vendor window (Advanced).",
