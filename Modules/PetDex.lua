@@ -671,17 +671,57 @@ local function StableSlot(i)
     end
 end
 
+-- The active pet is in slot 1 on this client (slot 0 stays empty); a client that fills slot 0 uses that one instead.
+local function ActiveIndex()
+    local n0 = StableSlot(0)
+    if type(n0) == "string" and n0 ~= "" and not HHT.IsSecret(n0) then return 0 end
+    return 1
+end
+
+-- Name of the active pet; the client answers this outside the stable window too. nil when there is none.
+function PD.ActiveSlotName()
+    local name = StableSlot(ActiveIndex())
+    if type(name) == "string" and name ~= "" and not HHT.IsSecret(name) then return name end
+end
+
+-- Pets owned in total (active slot plus stable): the live slots when the client answers them, or the last remembered stable list.
+function PD.PetCount()
+    local live = 0
+    for i = 0, 9 do
+        local name = StableSlot(i)
+        if type(name) == "string" and name ~= "" and not HHT.IsSecret(name) then live = live + 1 end
+    end
+    local st = M.db and M.db.stable
+    return math.max(live, type(st) == "table" and #st or 0)
+end
+
+function PD.DebugStable()
+    local parts = {}
+    for i = 0, 4 do
+        local name, family = StableSlot(i)
+        parts[#parts + 1] = i .. "=" .. (HHT.IsSecret(name) and "secret" or tostring(name)) .. (family and ("/" .. tostring(family)) or "")
+    end
+    HHT.Print("pet slots now: " .. table.concat(parts, "  "))
+    local mem = {}
+    for _, e in ipairs(M.db and M.db.stable or {}) do mem[#mem + 1] = e.name .. (e.slot0 and "*" or "") end
+    HHT.Print("remembered (* = active slot): " .. (#mem > 0 and table.concat(mem, ", ") or "none"))
+    HHT.Print(string.format("scanned %s s ago, pet unit exists: %s", PD.stableScanAt and string.format("%.0f", GetTime() - PD.stableScanAt) or "never this session",
+        tostring(HHT.SafeBool(UnitExists, "pet"))))
+end
+
 function PD.ScanStable()
     if not M.db then return false end
     local out = {}
+    local active = ActiveIndex()
     for i = 0, 19 do
         local name, family, level = StableSlot(i)
         if type(name) == "string" and name ~= "" and not HHT.IsSecret(name) then
-            out[#out + 1] = { name = name, fam = PD.EnglishFamily(family), level = HHT.SafeNumber(level), slot0 = (i == 0) or nil }
+            out[#out + 1] = { name = name, fam = PD.EnglishFamily(family), level = HHT.SafeNumber(level), slot0 = (i == active) or nil }
         end
     end
     if #out == 0 then return false end
     M.db.stable = out
+    PD.stableScanAt = GetTime()
     -- The stable master's list is authoritative: forget remembered pets that are gone (released).
     local names = {}
     for _, e in ipairs(out) do names[e.name] = true end
@@ -1786,11 +1826,14 @@ function M:OnInit()
     HHT:Listen(self, "CRAFT_UPDATE", "OnCraft")
     HHT:Listen(self, "PET_STABLE_SHOW", "OnStable")
     HHT:Listen(self, "PET_STABLE_UPDATE", "OnStable")
+    HHT:Listen(self, "PET_STABLE_CLOSED", "OnStable")
 end
 
 function M:OnStable()
-    -- the slots load a moment after the window opens
-    if C_Timer and C_Timer.After then C_Timer.After(0.5, function() if M.enabled then PD.ScanStable() end end)
+    -- the slots load a moment after the window opens or a swap, so scan again a little later too
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0.5, function() if M.enabled then PD.ScanStable() end end)
+        C_Timer.After(2, function() if M.enabled then PD.ScanStable() end end)
     else PD.ScanStable() end
 end
 

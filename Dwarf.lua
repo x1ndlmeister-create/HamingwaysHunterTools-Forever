@@ -135,6 +135,8 @@ D.LINES = {
             de = "Dein Begleiter: Gesundheit und Zufriedenheit auf einen Blick. Ein froher Begleiter beißt härter. Einfache Zwergenrechnung." },
     feeder = { en = "One click and the beast be fed. Ye choose the food for each pet, and bad food goes on the blacklist.",
                de = "Ein Klick und das Tier ist satt. Du wählst das Futter für jeden Begleiter, schlechtes kommt auf die schwarze Liste." },
+    easytame = { en = "A beast ye can tame stands in range and ye have no pet out? I show a button: first click lays the Freezing Trap, then it tames. Works in combat too.",
+                 de = "Steht ein zähmbares Tier in Reichweite und du hast keinen Begleiter draußen? Dann zeige ich einen Knopf: Erst legt er die Eisfalle, dann zähmt er. Geht auch im Kampf." },
     ammo = { en = "Yer ammo. Never run dry in the middle of a fight! I'll also tell ye when there be better ammo or a better quiver to be had.",
              de = "Deine Munition. Geh niemals mitten im Kampf leer aus! Ich sage dir auch Bescheid, wenn es bessere Munition oder einen besseren Köcher gibt." },
     petwatch = { en = "I keep an eye out for rare beasts and the ones on yer wishlist, and point the way with an arrow.",

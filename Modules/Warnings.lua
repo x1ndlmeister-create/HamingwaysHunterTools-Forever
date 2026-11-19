@@ -37,6 +37,8 @@ HHT:AddGerman({
     ["Low health below (%)"] = "Niedrige Gesundheit unter (%)",
     ["Warn when the hurt pet is out of Mend Pet range"] = "Warnen wenn der verletzte Begleiter außerhalb der Reichweite von Tier heilen ist",
     ["Pet low health"] = "Begleiter verletzt",
+    ["Not with Lone Wolf"] = "Nicht mit Einzelgänger",
+    ["Not without a callable pet"] = "Nicht ohne rufbaren Begleiter",
     ["Pet out of heal range"] = "Begleiter außer Heilreichweite",
     ["Growl"] = "Knurren",
     ["Warn when the pet's Growl autocast is on"] = "Warnen wenn Knurren des Begleiters auf Autocast steht",
@@ -64,7 +66,7 @@ local M = HHT:NewModule("warnings", {
         aspectWarn = true, aspectWrong = false, aspectShow = false, aspectMain = "aspectHawk",
         trueshotWarn = true,
         markWarn = true, markTargets = "elite",
-        petWarn = true,
+        petWarn = true, loneWolfQuiet = true, callableQuiet = true,
         petLowWarn = true, petLowPct = 35, petRangeWarn = true,
         growlWarn = true, growlInstanceOnly = true,
         packWarn = true, packInstanceOnly = true,
@@ -84,7 +86,7 @@ function M:OnInit()
     self.icons = {}
     self.sig = false
     self.currentAspect = false
-    self.lastWarnCount = 0
+    self.warnKeys, self.soundAt = {}, {}
     HHT:Every(self, 0.25, M.Tick)
 end
 
@@ -127,6 +129,28 @@ local function Quiet()
     return false
 end
 M.Quiet = Quiet
+
+-- The talent teaches a passive; while the pet is away its buff is also on the player.
+local function HasLoneWolf()
+    if S.Resolve("@loneWolf").known then return true end
+    return S.AuraByName("player", S.CatalogName("loneWolf"), "HELPFUL") == true
+end
+
+-- false only when nothing says a pet can be called: the remembered stable list (last stable master visit) has no pet
+-- in the active slot, the client reports none right now, and no pet was seen out since that list was read.
+local lastPetSeen
+local function HasCallablePet()
+    local pd = HHT.modules and HHT.modules.petdex
+    local st = pd and pd.enabled and pd.db and pd.db.stable
+    if type(st) ~= "table" or #st == 0 then return nil end
+    for _, e in ipairs(st) do
+        if e.slot0 then return true end
+    end
+    local PD = HHT.PetDex
+    if PD and PD.ActiveSlotName and PD.ActiveSlotName() then return true end
+    if lastPetSeen and (not (PD and PD.stableScanAt) or lastPetSeen > PD.stableScanAt) then return true end
+    return false
+end
 
 function M:PollAspect()
     local result = false
@@ -455,6 +479,7 @@ function M:Collect()
             if ok and not HHT.IsSecret(ex) then exists = ex and true or false end
             local rev = S.Resolve("@revivePet")
             if exists == true then
+                lastPetSeen = GetTime()
                 self.petDied = HHT.SafeBool(UnitIsDead, "pet") == true
                 if self.petDied then
                     if db.petWarn then Add(list, "pet", rev.icon, L("Pet dead"), true, rev.name) end
@@ -483,6 +508,10 @@ function M:Collect()
                 -- A dead pet can vanish as a unit: keep offering Revive Pet until a living pet is back.
                 if self.petDied and rev.known then
                     Add(list, "pet", rev.icon, L("Pet dead"), true, rev.name)
+                elseif db.loneWolfQuiet and HasLoneWolf() then
+                    -- playing without a pet on purpose
+                elseif db.callableQuiet and HasCallablePet() == false then
+                    -- every pet is in the stable, so there is nothing to call
                 else
                     Add(list, "pet", callPet.icon, L("No pet"), true, callPet.name)
                 end
@@ -594,12 +623,23 @@ function M:Tick()
         if combat then ic:SetAlpha(0) else ic:Hide() end
     end
 
-    local warns = 0
-    for _, e in ipairs(list) do if e.warn and not e.lowCheck then warns = warns + 1 end end
-    if db.sound and warns > self.lastWarnCount and not HHT:IsUnlocked(self) then
+    -- One sound per warning that newly appears, and the same warning stays quiet for 30 s afterwards,
+    -- so a warning that flickers on and off (for example while shooting) does not beep again and again.
+    local now, ring = GetTime(), false
+    local warnNow = {}
+    for _, e in ipairs(list) do
+        if e.warn and not e.lowCheck then
+            warnNow[e.key] = true
+            if not self.warnKeys[e.key] and now - (self.soundAt[e.key] or -1000) >= 30 then
+                ring = true
+                self.soundAt[e.key] = now
+            end
+        end
+    end
+    self.warnKeys = warnNow
+    if db.sound and ring and not HHT:IsUnlocked(self) then
         pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
     end
-    self.lastWarnCount = warns
 end
 
 function M:BuildOptions(form)
@@ -638,6 +678,8 @@ function M:BuildOptions(form)
         { "elite", L("Elites and bosses only") }, { "all", L("Every enemy") } })
     form:Header(L("Pet"))
     form:Check(L("Warn when the pet is missing or dead"), db, "petWarn")
+    form:Check(L("Not with Lone Wolf"), db, "loneWolfQuiet")
+    form:Check(L("Not without a callable pet"), db, "callableQuiet")
     form:Check(L("Warn when the pet's health is low"), db, "petLowWarn")
     form:Stepper(L("Low health below (%)"), db, "petLowPct", 5, 90, 5)
     form:Check(L("Warn when the hurt pet is out of Mend Pet range"), db, "petRangeWarn")

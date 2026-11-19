@@ -1,4 +1,4 @@
--- Distance: shows how far the target is (bands up to 35 yd), melee and dead zone, in three layouts.
+-- Distance: shows how far the target is (bands up to 35 yd), melee and dead zone, as segments, an arc, a badge or text.
 local ADDON, HHT = ...
 local L, UI, Icon, Range, S = HHT.L, HHT.UI, HHT.Icon, HHT.Range, HHT.Spells
 
@@ -9,6 +9,14 @@ HHT:AddGerman({
     ["Segments"] = "Segmente",
     ["Text only"] = "Nur Text",
     ["Badge"] = "Symbol",
+    ["Arc (narrow)"] = "Bogen (schmal)",
+    ["Arc (wide)"] = "Bogen (breit)",
+    ["Direction"] = "Richtung",
+    ["Left to right"] = "Links nach rechts",
+    ["Right to left"] = "Rechts nach links",
+    ["Bottom to top"] = "Unten nach oben",
+    ["Top to bottom"] = "Oben nach unten",
+    ["Distance shown as segments"] = "Entfernung als Segmente",
     ["Size"] = "Größe",
     ["Show text"] = "Text zeigen",
     ["Pulse in the dead zone"] = "Pulsieren im toten Winkel",
@@ -31,7 +39,7 @@ local M = HHT:NewModule("distance", {
     desc = "Target distance in bands, melee and dead zone.",
     positions = { main = { "CENTER", "CENTER", 0, -60 } },
     defaults = {
-        layout = "segments", size = 48, shape = "round", visibility = "target",
+        layout = "segments", direction = "ltr", size = 48, shape = "round", visibility = "target",
         showText = true, pulse = true, sound = false,
         colors = {
             melee = { 0.95, 0.35, 0.30 },
@@ -47,7 +55,10 @@ local M = HHT:NewModule("distance", {
 
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local SKULL = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8"
+local ARC_DIR = "Interface\\AddOns\\" .. ADDON .. "\\Media\\DistArc"
 local SEGMENTS = 7
+-- width / height of each arc texture, and its height relative to the size setting
+local ARCS = { arcn = { "N", 1, 2.5 }, arcw = { "W", 2, 1.5 } }
 
 local COLOR_OF = {
     MELEE = "melee", DEAD = "dead", Y10 = "near", Y15 = "near", Y20 = "mid", Y25 = "mid",
@@ -83,6 +94,15 @@ function M:Build()
         t:SetTexture(WHITE)
         f.segs[i] = t
     end
+    -- the arcs are rings of a fan standing on its tip, one texture per range band (inner ring = closest)
+    for key, a in pairs(ARCS) do
+        f[key] = {}
+        for i = 1, SEGMENTS do
+            local t = body:CreateTexture(nil, "ARTWORK")
+            t:SetTexture(ARC_DIR .. a[1] .. i)
+            f[key][i] = t
+        end
+    end
     f.badge = Icon.New(body)
     f.text = UI.Text(body, "", 14)
     HHT:MakeMovable(f, self, "main", L("Distance"))
@@ -102,7 +122,11 @@ function M:Layout()
     local textH = textSize + 4
 
     for _, t in ipairs(f.segs) do t:Hide() end
+    for key in pairs(ARCS) do
+        for _, t in ipairs(f[key]) do t:Hide() end
+    end
     f.badge:Hide()
+    f.active = nil
 
     if db.layout == "text" then
         f:SetSize(math.max(120, size * 3), textH)
@@ -114,16 +138,48 @@ function M:Layout()
         f.badge:Show()
         f:SetSize(math.max(size, 110), size + (showText and textH + 2 or 0))
         f.text:SetPoint("TOP", f.badge, "BOTTOM", 0, -4)
+    elseif ARCS[db.layout] then
+        local a = ARCS[db.layout]
+        local h = math.floor(size * a[3])
+        local w = h * a[2]
+        local set = f[db.layout]
+        for _, t in ipairs(set) do
+            t:SetSize(w, h)
+            t:ClearAllPoints()
+            t:SetPoint("TOP", f, "TOP", 0, 0)
+            t:Show()
+        end
+        f.active = set
+        f:SetSize(w, h + (showText and textH + 2 or 0))
+        f.text:SetPoint("TOP", f, "TOP", 0, -(h + 2))
     else
         local w, h, gap = math.max(8, math.floor(size / 3)), math.max(6, math.floor(size / 4)), 2
+        local dir = db.direction
+        local vertical = dir == "btt" or dir == "ttb"
         for i, t in ipairs(f.segs) do
             t:SetSize(w, h)
             t:ClearAllPoints()
-            t:SetPoint("TOPLEFT", f, "TOPLEFT", (i - 1) * (w + gap), 0)
+            local step = i - 1
+            if dir == "rtl" then
+                t:SetPoint("TOPRIGHT", f, "TOPRIGHT", -step * (w + gap), 0)
+            elseif dir == "btt" then
+                t:SetPoint("TOP", f, "TOP", 0, -(SEGMENTS - 1 - step) * (h + gap))
+            elseif dir == "ttb" then
+                t:SetPoint("TOP", f, "TOP", 0, -step * (h + gap))
+            else
+                t:SetPoint("TOPLEFT", f, "TOPLEFT", step * (w + gap), 0)
+            end
             t:Show()
         end
-        f:SetSize(SEGMENTS * w + (SEGMENTS - 1) * gap, h + (showText and textH + 2 or 0))
-        f.text:SetPoint("TOP", f, "TOP", 0, -(h + 4))
+        f.active = f.segs
+        local rowW, colH = SEGMENTS * w + (SEGMENTS - 1) * gap, SEGMENTS * h + (SEGMENTS - 1) * gap
+        if vertical then
+            f:SetSize(math.max(w, showText and 60 or 0), colH + (showText and textH + 2 or 0))
+            f.text:SetPoint("TOP", f, "TOP", 0, -(colH + 4))
+        else
+            f:SetSize(rowW, h + (showText and textH + 2 or 0))
+            f.text:SetPoint("TOP", f, "TOP", 0, -(h + 4))
+        end
     end
     HHT:ApplyGlobalLook(f)
     self.band = nil
@@ -162,14 +218,14 @@ function M:Paint(band)
             ic.tex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
         end
         ic:SetBorderColor(r, g, b)
-    elseif db.layout == "segments" then
+    elseif f.active then
         local lit = LIT_OF[band] or 0
-        for i, t in ipairs(f.segs) do
+        for i, t in ipairs(f.active) do
             t:SetVertexColor(r, g, b, i <= lit and 1 or 0.22)
         end
         -- melee and dead zone have no range ladder: light the whole row
         if band == "MELEE" or band == "DEAD" or band == "FAR" then
-            for _, t in ipairs(f.segs) do t:SetVertexColor(r, g, b, 0.9) end
+            for _, t in ipairs(f.active) do t:SetVertexColor(r, g, b, 0.9) end
         end
     end
 end
@@ -217,7 +273,12 @@ function M:BuildOptions(form)
     local db = self.db
     form:Header(L("Appearance"))
     form:Cycle(L("Layout"), db, "layout", {
-        { "segments", L("Segments") }, { "badge", L("Badge") }, { "text", L("Text only") } })
+        { "segments", L("Segments") }, { "arcn", L("Arc (narrow)") }, { "arcw", L("Arc (wide)") },
+        { "badge", L("Badge") }, { "text", L("Text only") } })
+    form:Cond("Distance shown as segments", function() return db.layout == "segments" end)
+    form:Cycle(L("Direction"), db, "direction", {
+        { "ltr", L("Left to right") }, { "rtl", L("Right to left") },
+        { "btt", L("Bottom to top") }, { "ttb", L("Top to bottom") } })
     form:Stepper(L("Size"), db, "size", 20, 120, 2)
     form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
     form:Check(L("Show text"), db, "showText")

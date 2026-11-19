@@ -121,13 +121,15 @@ local GROUPS = {
     { key = "tracking", title = "Tracking", list = S.Trackings, read = ReadTracking, btn = "HamingwaysHunterToolsTrackingButton", fallback = "trackBeasts" },
 }
 
--- Toggle: the sequence starts with the spell that is not active, so the next press switches.
+-- Toggle: the next press casts the spell that is not active; with no aspect active it is the main spell.
+-- Out of combat the text is rebuilt from the real state, so it is a plain cast. In combat the text cannot change,
+-- so a sequence (reset after each fight, so it always starts with the spell chosen here) does the switching.
 local function MacroText(gd, slot, cur)
     local a, b = Known(gd[slot]), Known(gd[slot .. "Alt"])
     if a and b and a.name ~= b.name then
         local first, second = a, b
         if cur == gd[slot] then first, second = b, a end
-        return "/castsequence " .. first.name .. ", " .. second.name
+        return "/cast [nocombat] " .. first.name .. "\n/castsequence [combat] reset=combat " .. first.name .. ", " .. second.name
     end
     local x = a or b
     return x and ("/cast " .. x.name) or ""
@@ -295,7 +297,8 @@ function M:PaintGroup(g)
     local db, gd = self.db, self.db[g.key]
     local ic = g.icon
     local sig = table.concat({ db.size, db.shape, db.borderSize, db.borderAlpha, HHT.GlowSig() }, ",")
-    if g.styleSig ~= sig then
+    -- The frame holds a secure button, so it cannot be resized in combat; this is repeated right after the fight.
+    if g.styleSig ~= sig and not InCombatLockdown() then
         g.styleSig = sig
         g.frame:SetSize(db.size, db.size)
         ic:Style(db.size, db.shape, db.borderSize, db.borderAlpha, false)

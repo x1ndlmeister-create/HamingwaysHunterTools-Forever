@@ -27,7 +27,7 @@ local CATS = {
     { id = "alerts", name = "Alerts & buffs", icon = "bell-ring",
       keys = { "warnings", "aspects", "summons", "raidbuffs", "consumables" } },
     { id = "pets", name = "Pets", icon = "paw-print",
-      keys = { "pet", "feeder", "petdex", "petnearby", "pettrain", "petwatch", "petguide" } },
+      keys = { "pet", "feeder", "petdex", "petnearby", "easytame", "pettrain", "petwatch", "petguide" } },
     { id = "ammo", name = "Ammo & map", icon = "map",
       keys = { "ammo", "ammovendors", "foodvendors", "stablemasters", "trainers", "mapbutton" } },
     { id = "tools", name = "Tools", icon = "wrench", keys = { "macros" } },
@@ -41,6 +41,7 @@ local ICONS = {
     threat = "shield-alert", distance = "ruler", pet = "heart-pulse", feeder = "drumstick", ammo = "crosshair",
     tranq = "moon", macros = "scroll-text", petdex = "book-open", petwatch = "binoculars", petnearby = "radar",
     pettrain = "graduation-cap", ammovendors = "store", stablemasters = "house", foodvendors = "utensils",
+    easytame = "crosshair",
     trainers = "book-open-check", mapbutton = "map-pin", petguide = "compass",
 }
 
@@ -52,7 +53,7 @@ end
 local PREVIEW = {
     swing = true, castbar = true, distance = true, threat = true, warnings = true, debuffs = true, procs = true,
     summons = true, ammo = true, pet = true, feeder = true, petnearby = true, petwatch = true, pettrain = true,
-    cooldowns = true, tranq = true, petguide = true, aspects = true,
+    cooldowns = true, tranq = true, petguide = true, aspects = true, easytame = true,
 }
 
 function HHT.CommonOptions(m, form)
@@ -202,7 +203,7 @@ function C:BuildGeneral(form)
         GameTooltip:Show()
     end)
     gear:HookScript("OnLeave", function() GameTooltip:Hide() end)
-    form:Check(L("Snap frames to each other while moving (Shift = off)"), g, "snap")
+    form:Check(L("Snap frames to each other while moving"), g, "snap")
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
     form:Check(L("Tell me about new versions"), g, "versionNotice")

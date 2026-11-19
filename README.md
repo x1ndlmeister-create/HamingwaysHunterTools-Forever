@@ -10,13 +10,13 @@
 
 <br clear="left">
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 25 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 26 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
 
 **New: the in-game installer.** On first start Hamingway walks you through every tool, one page at a time: on or off, position, size and look, with a live preview and the same rows as the settings. Skipping changes nothing, and `/hht setup` starts it again any time.
 
 ![In-game installer: welcome page](images/install_welcome.png) ![In-game installer: swing timer page](images/install_step.png)
 
-**Version 1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+**Version 1.6.0:** the new Easy tame module (click the trap icon, then Tame Beast, in combat too), a Hide default swing timer option, distance segments in any direction and two arc layouts, the missing pet warning stays quiet with Lone Wolf or without a callable pet, and the aspect toggle starts with your primary aspect. **1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
 
 A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
@@ -30,7 +30,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 | --- | --- |
 | Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Aspect and tracking, Cooldowns, Target debuffs, Proc overlay, Summons |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq rotation |
-| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide |
+| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide, Easy tame |
 | Map | Stable masters, Ammo vendors, Food vendors, Trainers, Map button |
 
 ### Combat
@@ -43,10 +43,12 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 - Ranged bar turns red in the dead zone
 - Fill or drain mode, spark, border, background opacity
 - Width, height, spacing and every colour adjustable
+- Can hide the game's own swing timer
 
 **Distance**
 - Target distance in bands: melee, dead zone, near, middle, far, max range, out of range
 - Three layouts: segments, badge or text only
+- Segments fill in any direction; two arc layouts (narrow and wide) for a radar-like look
 - Pulse and sound when entering the dead zone
 - Square or round icon, size, a colour for every band
 
@@ -70,7 +72,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 - No aspect active, or not your preferred aspect
 - Trueshot Aura missing
 - Hunter's Mark missing: elites and bosses only, or every enemy
-- Pet missing or dead, with the matching spell as icon; click to revive, the key shows on the icon
+- Pet missing or dead, with the matching spell as icon; click to revive, the key shows on the icon. Stays quiet with Lone Wolf, and without a callable pet (both options)
 - Pet hurt (threshold adjustable): click casts Mend Pet; own warning when out of Mend Pet range
 - Pet hungry: click feeds. Food low: tooltip with the count, right-click hides it, it returns when food drops below the limit again
 - Growl on autocast: click switches it off. Aspect of the Pack in a dungeon or raid: click switches to your preferred aspect
@@ -78,7 +80,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 
 **Aspect and tracking**
 - One button and one key each for aspect and tracking
-- Toggles between two spells you choose
+- Toggles between two spells you choose; with no aspect active it always starts with the first
 - Shift, Ctrl and Alt pick other variants, for both the click and the key
 - Right-click opens a list of every aspect or tracking type you know
 - Tracking also covers Find Herbs, Find Minerals, Find Fish and Find Treasure; a small X turns it off
@@ -196,6 +198,14 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 - One-time popup when a character reaches level 10, with buttons for the trainer on the map, a waypoint and the Guide tab
 - Test with `/hht test guide`, open the tab with `/hht guide`
 
+**Easy tame**
+- A click icon appears when you have no pet out and the target is a tameable beast in range
+- First click lays your Freezing Trap, second click casts Tame Beast; works in combat too
+- Cancelled the tame? The trap step comes back
+- Skips steps you cannot do yet (no trap, or Tame Beast not learned)
+- Shows the trap cooldown and your action bar key; an own key can be set
+- Position, size, shape and colours adjustable
+
 ### Map
 
 ![World map](images/map.png)
@@ -272,7 +282,7 @@ Learned automatically:
 | --- | --- |
 | Kampf | Swing-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Aspekt und Aufspüren, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Tranq-Rotation |
-| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber |
+| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber, Easy Tame |
 | Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
 
 ### Kampf
@@ -283,10 +293,12 @@ Learned automatically:
 - Fernkampfbalken wird in der toten Zone rot
 - Füllen oder Leeren, Funke, Rand, Hintergrundtransparenz
 - Breite, Höhe, Abstand und jede Farbe einstellbar
+- Kann den Swing-Timer des Spiels ausblenden
 
 **Distanz**
 - Zieldistanz in Stufen: Nahkampf, tote Zone, nah, mittel, fern, maximale Reichweite, außer Reichweite
 - Drei Darstellungen: Segmente, Symbol-Abzeichen oder nur Text
+- Segmente füllen sich in jede Richtung; zwei Bogen-Layouts (schmal und breit) für einen Radar-Look
 - Pulsieren und Ton beim Betreten der toten Zone
 - Quadratisches oder rundes Symbol, Größe, Farben je Stufe
 
@@ -306,7 +318,7 @@ Learned automatically:
 - Kein Aspekt aktiv oder nicht der bevorzugte Aspekt
 - Aura des Volltreffers fehlt
 - Mal des Jägers fehlt: nur bei Elite und Bossen oder bei jedem Gegner
-- Tier fehlt oder ist tot, mit dem passenden Zauber als Symbol; Klick belebt wieder, die Taste steht auf dem Symbol
+- Tier fehlt oder ist tot, mit dem passenden Zauber als Symbol; Klick belebt wieder, die Taste steht auf dem Symbol. Bleibt still mit Einzelgänger und ohne rufbaren Begleiter (beides Optionen)
 - Tier verletzt (Schwelle einstellbar): Klick wirkt Tier heilen; außerhalb der Heilreichweite eigene Warnung
 - Tier hungrig: Klick füttert. Futter knapp: Tooltip mit Anzahl, Rechtsklick blendet aus, kommt wieder, wenn das Futter erneut unter die Schwelle fällt
 - Knurren auf Autocast: Klick schaltet es aus. Aspekt des Rudels im Dungeon oder Schlachtzug: Klick wechselt zum bevorzugten Aspekt
@@ -314,7 +326,7 @@ Learned automatically:
 
 **Aspekt und Aufspüren**
 - Je ein Knopf und eine Taste für Aspekt und Aufspüren
-- Wechselt zwischen zwei Zaubern, die du festlegst
+- Wechselt zwischen zwei Zaubern, die du festlegst; ist kein Aspekt aktiv, beginnt es immer mit dem ersten
 - Shift, Strg und Alt wählen andere Varianten, sowohl beim Klick als auch bei der Taste
 - Rechtsklick öffnet eine Liste aller Aspekte oder Aufspüren-Arten, die du kennst
 - Aufspüren kennt auch Kräuter, Erz, Fische und Schätze finden; ein kleines X schaltet es aus
@@ -413,6 +425,14 @@ Learned automatically:
 **Tierratgeber**
 - Einmaliges Popup, wenn ein Charakter Stufe 10 erreicht, mit Knöpfen für den Lehrer auf der Karte, einen Wegpunkt und den Ratgeber-Reiter
 - Testen mit `/hht test guide`, Reiter öffnen mit `/hht guide`
+
+**Easy Tame**
+- Ein Klick-Symbol erscheint, wenn du kein Tier draußen hast und das Ziel ein zähmbares Tier in Reichweite ist
+- Erster Klick legt deine Eisfalle, zweiter Klick wirkt Wildtier zähmen; funktioniert auch im Kampf
+- Zähmen abgebrochen? Der Fallen-Schritt kommt wieder
+- Überspringt Schritte, die du noch nicht kannst (keine Falle oder Wildtier zähmen nicht gelernt)
+- Zeigt die Abklingzeit der Falle und deine Aktionsleisten-Taste; eine eigene Taste ist einstellbar
+- Position, Größe, Form und Farben einstellbar
 
 ### Karte
 

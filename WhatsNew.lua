@@ -15,6 +15,31 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.6.0",
+        en = {
+            "New module Easy tame: with no pet and a tameable beast in range, a click-icon appears. The first click lays your Freezing Trap, the second casts Tame Beast, in combat too. If you cancel the tame, the trap step comes back. It skips steps you cannot do yet (no trap or no Tame Beast learned), stays hidden while you have a pet in the active slot or all 3 pets, shows the trap cooldown and your action bar key, and can have its own key. It is on by default and part of the quick install.",
+            "Warnings: new Advanced options for the missing pet warning, both on by default: 'Not with Lone Wolf' and 'Not without a callable pet' (needs Pet Dex).",
+            "Warnings: the missing pet warning now also appears right after you take your pet out of the stable, before you call it for the first time.",
+            "Warnings: the warning sound plays once per new warning and stays quiet for 30 seconds for the same one, so a flickering warning no longer beeps on every shot.",
+            "Swing timer: new option 'Hide the default swing timer' (on by default) hides the game's own swing timer, like the cast bar option does. Your original setting comes back when you switch it off.",
+            "Distance: segments can now run left to right, right to left, bottom to top or top to bottom ('Direction'), and there are two new layouts, 'Arc (narrow)' and 'Arc (wide)'.",
+            "Aspects and tracking: the toggle key now starts with the primary spell whenever no aspect is active, for example after dismounting. The settings no longer trigger a blocked-action error when combat starts.",
+            "Ammo vendors: the Restock ammo button keeps a minimum gap to its neighbour icons.",
+            "The label 'Snap frames to each other while moving' is shorter.",
+        },
+        de = {
+            "Neues Modul Easy tame: Ohne Begleiter und mit einem zähmbaren Tier in Reichweite erscheint ein Klick-Symbol. Der erste Klick legt deine Eisfalle, der zweite wirkt Wildtier zähmen, auch im Kampf. Brichst du das Zähmen ab, kommt wieder der Fallen-Schritt. Schritte, die du noch nicht kannst (keine Falle oder kein Wildtier zähmen gelernt), werden übersprungen. Es bleibt verborgen, solange im aktiven Slot ein Begleiter steht oder du alle 3 Begleiter hast. Es zeigt die Fallen-Abklingzeit und deine Aktionsleisten-Taste und kann eine eigene Taste haben. Es ist standardmäßig an und Teil der Schnellinstallation.",
+            "Warnungen: Zwei neue Erweitert-Optionen für die Warnung bei fehlendem Tier, beide standardmäßig an: 'Nicht mit Einzelgänger' und 'Nicht ohne rufbaren Begleiter' (braucht die Tierdatenbank).",
+            "Warnungen: Die Warnung bei fehlendem Tier erscheint jetzt auch direkt, nachdem du dein Tier aus dem Stall geholt hast, noch bevor du es zum ersten Mal rufst.",
+            "Warnungen: Der Warnton kommt einmal pro neuer Warnung und schweigt für dieselbe 30 Sekunden lang, damit eine flackernde Warnung nicht bei jedem Schuss piept.",
+            "Swing-Timer: Die neue Option 'Standard-Schwung-Timer ausblenden' (standardmäßig an) blendet den Schwung-Timer des Spiels aus, wie bei der Zauberleiste. Dein ursprünglicher Wert kommt zurück, wenn du sie ausschaltest.",
+            "Distanz: Die Segmente laufen jetzt wahlweise von links nach rechts, rechts nach links, unten nach oben oder oben nach unten ('Richtung'), dazu gibt es zwei neue Layouts, 'Bogen (schmal)' und 'Bogen (breit)'.",
+            "Aspekt und Aufspüren: Die Umschalt-Taste beginnt jetzt immer mit dem Hauptzauber, wenn kein Aspekt aktiv ist, zum Beispiel nach dem Absteigen. Die Einstellungen lösen beim Kampfbeginn keinen Blockiert-Fehler mehr aus.",
+            "Munitionshändler: Der Knopf 'Munition auffüllen' hält einen Mindestabstand zu den Nachbarsymbolen.",
+            "Die Beschriftung 'Frames beim Verschieben aneinander einrasten' ist kürzer.",
+        },
+    },
+    {
         v = "1.5.4",
         en = {
             "Cast bar: it now stays on top of other windows (for example the profession window). The new Advanced option 'Move cast bar to back' puts it behind them again.",

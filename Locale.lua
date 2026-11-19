@@ -119,7 +119,7 @@ HHT:AddGerman({
     ["Show for everyone"] = "Für alle einblenden",
     ["Hide for everyone"] = "Für alle ausblenden",
     ["You are raid leader or assist"] = "Du bist Raidleiter oder Assistent",
-    ["Snap frames to each other while moving (Shift = off)"] = "Frames beim Verschieben aneinander einrasten (Shift = aus)",
+    ["Snap frames to each other while moving"] = "Frames beim Verschieben aneinander einrasten",
     ["Live preview"] = "Live-Vorschau",
     ["Unlock this module (move with mouse)"] = "Dieses Modul entsperren (mit Maus verschieben)",
     ["The colour theme applies after /reload."] = "Das Farbthema gilt nach /reload.",

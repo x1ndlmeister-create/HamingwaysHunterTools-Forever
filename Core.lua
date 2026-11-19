@@ -902,18 +902,23 @@ function HHT:TraceProtectedCalls()
         if index[name] then
             pcall(hooksecurefunc, index, name, function(f)
                 if not InCombatLockdown() then return end
-                local ok2, prot = pcall(f.IsProtected, f)
-                if not (ok2 and prot) then return end
-                local lines = {}
-                for line in tostring(debugstack(2, 12, 0)):gmatch("[^\n]+") do
-                    if line:find(ADDON, 1, true) then lines[#lines + 1] = line end
-                    if #lines >= 3 then break end
-                end
-                if #lines == 0 then return end
-                local key = name .. lines[1]
-                if seen[key] then return end
-                seen[key] = true
-                HHT.Print("Protected call " .. name .. " in combat: " .. table.concat(lines, " <- "))
+                -- Anything unreadable (secret values) ends the trace for this call instead of raising an error.
+                pcall(function()
+                    local ok2, prot = pcall(f.IsProtected, f)
+                    if not (ok2 and prot) then return end
+                    local stack = debugstack(2, 12, 0)
+                    if HHT.IsSecret(stack) then return end
+                    local lines = {}
+                    for line in tostring(stack):gmatch("[^\n]+") do
+                        if line:find(ADDON, 1, true) then lines[#lines + 1] = line end
+                        if #lines >= 3 then break end
+                    end
+                    if #lines == 0 then return end
+                    local key = name .. lines[1]
+                    if seen[key] then return end
+                    seen[key] = true
+                    HHT.Print("Protected call " .. name .. " in combat: " .. table.concat(lines, " <- "))
+                end)
             end)
         end
     end
@@ -1058,7 +1063,7 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         HHT.Print("aurasSecret=" .. tostring(S.AurasSecret()) .. " combat=" .. tostring(HHT.InCombat()))
         local keys = {}
         for _, k in ipairs(S.Aspects) do keys[#keys + 1] = k end
-        keys[#keys + 1] = "trueshotAura"; keys[#keys + 1] = "hunterMark"; keys[#keys + 1] = "callPet"
+        keys[#keys + 1] = "trueshotAura"; keys[#keys + 1] = "hunterMark"; keys[#keys + 1] = "callPet"; keys[#keys + 1] = "loneWolf"
         for _, k in ipairs(keys) do
             local rs = S.Resolve("@" .. k)
             local found = rs.known and S.AuraByName("player", rs.name, "HELPFUL")
@@ -1085,6 +1090,11 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     elseif msg == "cd" then
         local cm = HHT.modules.cooldowns
         if cm and cm.Debug then cm:Debug() end
+    elseif msg == "pet" then
+        if HHT.PetDex and HHT.PetDex.DebugStable then HHT.PetDex.DebugStable() end
+    elseif msg == "tame" then
+        local tm = HHT.modules.easytame
+        if tm and tm.Debug then tm:Debug() end
     elseif msg == "key" then
         HHT.KeyTest()
     elseif msg == "blocked" then

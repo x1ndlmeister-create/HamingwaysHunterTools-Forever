@@ -278,7 +278,7 @@ end
 
 AV.moved = {}
 
--- Gap the vendor's own buttons leave between each other, so ours lines up with them.
+-- Gap the vendor's own buttons leave between each other, so ours lines up with them (never tighter than 8 so the icons do not touch).
 function AV.Gap()
     local list = NativeButtons()
     table.sort(list, function(a, b) return (a:GetLeft() or 0) < (b:GetLeft() or 0) end)
@@ -286,7 +286,7 @@ function AV.Gap()
         local r, l = list[i - 1]:GetRight(), list[i]:GetLeft()
         if r and l and l - r >= 0 and l - r < 40 then AV.gap = l - r; break end
     end
-    return AV.gap or 6
+    return math.max(AV.gap or 6, 8)
 end
 
 -- Space between the vendor's own button row and the buyback slot as Blizzard lays it out (without our shift).

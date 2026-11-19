@@ -35,6 +35,7 @@ HHT:AddGerman({
     ["Mark 0.5 s before the shot"] = "Markierung 0,5 s vor dem Schuss",
     ["Color the bar for the last 0.5 s"] = "Leiste in den letzten 0,5 s einfärben",
     ["Last 0.5 s of the shot"] = "Letzte 0,5 s vor dem Schuss",
+    ["Hide the default swing timer"] = "Standard-Schwung-Timer ausblenden",
 })
 
 local M = HHT:NewModule("swing", {
@@ -45,7 +46,7 @@ local M = HHT:NewModule("swing", {
         showRanged = true, showMelee = true, showRange = true,
         showTime = true, showLabel = true, showSpark = true, colorByRange = true,
         border = true, borderSize = 1, barTexture = "blizzard", barShape = "square", bevel = 0.6, flash = true, flashGlow = 1, flashGlowSize = 8,
-        showMark = true, colorMark = true,
+        showMark = true, colorMark = true, hideDefault = true,
         width = 220, height = 16, spacing = 3, bgAlpha = 0.85,
         visibility = "combattarget",
         colors = {
@@ -97,13 +98,31 @@ function M:Build()
     self:Layout()
 end
 
+-- WoW: Forever draws its own swing timer, controlled by the showSwingTimer CVar. The player's original value is kept so it can be restored.
+function M:SetDefaultTimer(hidden)
+    local get = (C_CVar and C_CVar.GetCVar) or GetCVar
+    local set = (C_CVar and C_CVar.SetCVar) or SetCVar
+    local ok, cur = pcall(get, "showSwingTimer")
+    if not ok or cur == nil then return end
+    local db = self.db
+    if hidden then
+        if db.savedSwingCVar == nil and cur ~= "0" then db.savedSwingCVar = cur end
+        if cur ~= "0" then pcall(set, "showSwingTimer", "0") end
+    elseif db.savedSwingCVar ~= nil then
+        pcall(set, "showSwingTimer", db.savedSwingCVar)
+        db.savedSwingCVar = nil
+    end
+end
+
 function M:OnEnable()
     self:Build()
     self.frame:Show()
+    self:SetDefaultTimer(self.db.hideDefault)
 end
 
 function M:OnDisable()
     if self.frame then self.frame:Hide() end
+    self:SetDefaultTimer(false)
 end
 
 function M:OnLockChanged()
@@ -144,6 +163,7 @@ end
 
 function M:Refresh()
     self:Layout()
+    self:SetDefaultTimer(self.db.hideDefault)
 end
 
 function M:OnSwing(_, duration, swingType)
@@ -285,6 +305,7 @@ function M:BuildOptions(form)
     form:Check(L("Color the bar for the last 0.5 s"), db, "colorMark")
     HHT.Bar.AddBorder(form, db)
     form:Check(L("Ranged bar turns red in the dead zone"), db, "colorByRange")
+    form:Check(L("Hide the default swing timer"), db, "hideDefault")
     form:Stepper(L("Bar width"), db, "width", 80, 600, 10)
     form:Stepper(L("Bar height"), db, "height", 6, 40, 1)
     form:Stepper(L("Spacing"), db, "spacing", 0, 12, 1)

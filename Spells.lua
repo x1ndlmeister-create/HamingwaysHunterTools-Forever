@@ -54,6 +54,7 @@ S.Catalog = {
     dismissPet    = { en = "Dismiss Pet",        ids = { 2641 } },
     revivePet     = { en = "Revive Pet",         ids = { 982 } },
     feedPet       = { en = "Feed Pet",           ids = { 6991 } },
+    loneWolf      = { en = "Lone Wolf",          ids = { 409979, 155228 } },
     hunterMark    = { en = "Hunter's Mark",      ids = { 14325, 14324, 14323, 1130 } },
     serpentSting  = { en = "Serpent Sting",      ids = { 27016, 25295, 13555, 13554, 13553, 13552, 13551, 13550, 13549, 1978 } },
     trueshotAura  = { en = "Trueshot Aura",      ids = { 20906, 20905, 19506 } },
