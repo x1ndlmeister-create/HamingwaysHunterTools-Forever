@@ -133,6 +133,14 @@ function M:Shown(kind)
     return self.counts[kind] or 0, nil
 end
 
+-- Low state of the ammo the weapon uses, for the Warnings module: low, count, icon.
+function M:LowStatus()
+    local kind = self.needs
+    if not kind then return false end
+    local n, icon = self:Shown(kind)
+    return n < self.db.low, n, icon or ICONS[kind]
+end
+
 function M:Build()
     if self.frame then return end
     local f = CreateFrame("Frame", "HamingwaysHunterToolsAmmo", UIParent)

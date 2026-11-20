@@ -137,6 +137,8 @@ D.LINES = {
                de = "Ein Klick und das Tier ist satt. Du wählst das Futter für jeden Begleiter, schlechtes kommt auf die schwarze Liste." },
     easytame = { en = "A beast ye can tame stands in range and ye have no pet out? I show a button: first click lays the Freezing Trap, then it tames. Works in combat too.",
                  de = "Steht ein zähmbares Tier in Reichweite und du hast keinen Begleiter draußen? Dann zeige ich einen Knopf: Erst legt er die Eisfalle, dann zähmt er. Geht auch im Kampf." },
+    petstance = { en = "One button for yer pet's stance. Pick a main stance and one to toggle with, give Shift, Ctrl and Alt their own, and bind a key. Works in combat too. A right-click picks the main stance.",
+                  de = "Ein Knopf für die Haltung deines Begleiters. Wähle eine Haupthaltung und eine zum Umschalten, gib Shift, Strg und Alt eigene und binde eine Taste. Geht auch im Kampf. Ein Rechtsklick wählt die Haupthaltung." },
     ammo = { en = "Yer ammo. Never run dry in the middle of a fight! I'll also tell ye when there be better ammo or a better quiver to be had.",
              de = "Deine Munition. Geh niemals mitten im Kampf leer aus! Ich sage dir auch Bescheid, wenn es bessere Munition oder einen besseren Köcher gibt." },
     petwatch = { en = "I keep an eye out for rare beasts and the ones on yer wishlist, and point the way with an arrow.",
