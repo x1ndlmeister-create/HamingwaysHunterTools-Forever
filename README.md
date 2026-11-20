@@ -10,13 +10,13 @@
 
 <br clear="left">
 
-**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 26 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
+**The hunter's Swiss army knife.** Swing timer, warnings, ammo, pets, macros and map in one addon for WoW Forever. 27 modules, 18 ready-made macros, English and German. Every module can be switched off, shown only in combat or with a target, and adjusted. No screen clutter. Type `/hht` to open the settings.
 
 **New: the in-game installer.** On first start Hamingway walks you through every tool, one page at a time: on or off, position, size and look, with a live preview and the same rows as the settings. Skipping changes nothing, and `/hht setup` starts it again any time.
 
 ![In-game installer: welcome page](images/install_welcome.png) ![In-game installer: swing timer page](images/install_step.png)
 
-**Version 1.6.1:** a bug report window (`/hht report`), the Pet feeder learns your pet's food (Shift+click the feeder icon scans your bags), the beast alert starts as a small "possible" hint and opens on a click, and the pet training hint no longer offers ranks your pet cannot pay for. **1.6.0:** the new Easy tame module (click the trap icon, then Tame Beast, in combat too), a Hide default swing timer option, distance segments in any direction and two arc layouts, the missing pet warning stays quiet with Lone Wolf or without a callable pet, and the aspect toggle starts with your primary aspect. **1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+**Version 1.7.0:** the new Pet stance module (one button and key for Aggressive, Defensive, Assist and Passive, with toggle and Shift, Ctrl and Alt variants, also in combat), an optional low ammo warning, a Hide default summon timers option, and the addon now sorts under Hunter in the AddOns list. **1.6.1:** a bug report window (`/hht report`), the Pet feeder learns your pet's food (Shift+click the feeder icon scans your bags), the beast alert starts as a small "possible" hint and opens on a click, and the pet training hint no longer offers ranks your pet cannot pay for. **1.6.0:** the new Easy tame module (click the trap icon, then Tame Beast, in combat too), a Hide default swing timer option, distance segments in any direction and two arc layouts, the missing pet warning stays quiet with Lone Wolf or without a callable pet, and the aspect toggle starts with your primary aspect. **1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
 
 A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
@@ -30,7 +30,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 | --- | --- |
 | Combat | Swing timer, Distance, Cast bar, Threat, Warnings, Aspect and tracking, Cooldowns, Target debuffs, Proc overlay, Summons |
 | Gear and tools | Ammo, Pet feeder, Macros, Tranq rotation |
-| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide, Easy tame |
+| Pets | Pet status, Pet database, Beast watch, Pet ability alerts, Pet training hint, Pet guide, Easy tame, Pet stance |
 | Map | Stable masters, Ammo vendors, Food vendors, Trainers, Map button |
 
 ### Combat
@@ -206,6 +206,12 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 - Shows the trap cooldown and your action bar key; an own key can be set
 - Position, size, shape and colours adjustable
 
+**Pet stance**
+- One button and key that switches your pet between Aggressive, Defensive, Assist and Passive; works in combat too
+- A main stance, a second one to toggle with, and Shift, Ctrl and Alt variants on the same key
+- Right-click lists the four stances; the icon shows the active one and your key, or the key of the pet bar button
+- Stances that are not on the pet bar are placed once on an unused action slot (115-120, or a slot you choose in the advanced settings); a slot in use is never replaced
+
 ### Map
 
 ![World map](images/map.png)
@@ -282,7 +288,7 @@ Learned automatically:
 | --- | --- |
 | Kampf | Swing-Timer, Distanz, Zauberleiste, Bedrohung, Warnungen, Aspekt und Aufspüren, Abklingzeiten, Ziel-Debuffs, Proc-Anzeige, Beschwörungen |
 | Ausrüstung und Werkzeuge | Munition, Tier füttern, Makros, Tranq-Rotation |
-| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber, Easy Tame |
+| Tiere | Tierstatus, Tierdatenbank, Tierbeobachtung, Fähigkeits-Hinweise, Begleiter-Training-Hinweis, Tierratgeber, Easy Tame, Begleiter-Haltung |
 | Karte | Stallmeister, Munitionshändler, Futterhändler, Lehrer, Kartenknopf |
 
 ### Kampf
@@ -433,6 +439,12 @@ Learned automatically:
 - Überspringt Schritte, die du noch nicht kannst (keine Falle oder Wildtier zähmen nicht gelernt)
 - Zeigt die Abklingzeit der Falle und deine Aktionsleisten-Taste; eine eigene Taste ist einstellbar
 - Position, Größe, Form und Farben einstellbar
+
+**Begleiter-Haltung**
+- Ein Knopf und eine Taste, die deinen Begleiter zwischen Aggressiv, Defensiv, Assistieren und Passiv wechseln; funktioniert auch im Kampf
+- Eine Haupthaltung, eine zweite zum Umschalten sowie Shift-, Strg- und Alt-Varianten auf derselben Taste
+- Rechtsklick listet die vier Haltungen; das Symbol zeigt die aktive Haltung und deine Taste oder die Taste des Knopfs auf der Begleiter-Leiste
+- Haltungen, die nicht auf der Begleiter-Leiste liegen, werden einmalig auf einen unbenutzten Aktionsslot gelegt (115-120 oder ein Slot deiner Wahl in den erweiterten Einstellungen); ein belegter Slot wird nie ersetzt
 
 ### Karte
 

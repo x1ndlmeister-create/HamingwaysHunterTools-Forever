@@ -10,6 +10,8 @@ HHT:AddGerman({
     ["Show names"] = "Namen zeigen",
     ["Border colour"] = "Rahmenfarbe",
     ["Show remaining time numbers"] = "Restzeit-Zahlen zeigen",
+    ["Hide the default summon timers"] = "Standard-Beschwörungsanzeige ausblenden",
+    ["Hides the summon icons the game shows under the player frame so only this one shows"] = "Blendet die Beschwörungs-Symbole des Spiels unter dem Spielerrahmen aus, damit nur diese Anzeige bleibt",
 })
 
 local M = HHT:NewModule("summons", {
@@ -18,7 +20,7 @@ local M = HHT:NewModule("summons", {
     positions = { main = { "CENTER", "CENTER", -200, -205 } },
     defaults = {
         size = 36, shape = "round", borderSize = 2, borderAlpha = 1, spacing = 4, perRow = 4,
-        grow = "right", visibility = "always", numbers = true, names = false,
+        grow = "right", visibility = "always", numbers = true, names = false, hideDefault = true,
         colors = { border = { 0.67, 0.83, 0.45 } },
     },
 })
@@ -86,14 +88,38 @@ function M:OnEnable()
     self:Build()
     self.frame:Show()
     self.styled = false
+    self:SetDefaultFrame(self.db.hideDefault)
 end
 
 function M:OnDisable()
     if self.frame then self.frame:Hide() end
+    self:SetDefaultFrame(false)
+end
+
+-- Blizzard shows the totem frame again on every update, so the hidden state is enforced by hooks.
+function M:SetDefaultFrame(hidden)
+    local b = _G.TotemFrame
+    if not b then return end
+    M.defaultHidden = hidden and true or false
+    b:SetAlpha(hidden and 0 or 1)
+    if M.defaultHooked then return end
+    M.defaultHooked = true
+    local busy = false
+    local function Enforce(f)
+        if not M.defaultHidden or busy then return end
+        busy = true
+        f:SetAlpha(0)
+        busy = false
+    end
+    for _, fn in ipairs({ "SetAlpha", "Show", "SetShown" }) do
+        if b[fn] then pcall(hooksecurefunc, b, fn, Enforce) end
+    end
+    pcall(b.HookScript, b, "OnShow", Enforce)
 end
 
 function M:Refresh()
     self.styled = false
+    self:SetDefaultFrame(self.db.hideDefault)
     local f = self.frame
     if f then
         f:SetSize(self.db.size, self.db.size)
@@ -240,4 +266,5 @@ function M:BuildOptions(form)
     form:Cycle(L("Grow direction"), db, "grow", {
         { "right", L("Right") }, { "left", L("Left") }, { "up", L("Up") }, { "down", L("Down") } })
     form:Stepper(L("Icons per row"), db, "perRow", 1, 4, 1)
+    form:Check(L("Hide the default summon timers"), db, "hideDefault")
 end

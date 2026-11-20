@@ -54,6 +54,9 @@ HHT:AddGerman({
     ["Low pet food"] = "Wenig Futter",
     ["Click: feed the pet"] = "Klick: Begleiter füttern",
     ["Pet food"] = "Begleiter-Futter",
+    ["Warn when ammo is low"] = "Warnen wenn die Munition knapp wird",
+    ["Low ammo"] = "Wenig Munition",
+    ["Low on ammo: %d left."] = "Wenig Munition: noch %d.",
 })
 
 local M = HHT:NewModule("warnings", {
@@ -70,7 +73,7 @@ local M = HHT:NewModule("warnings", {
         petLowWarn = true, petLowPct = 35, petRangeWarn = true,
         growlWarn = true, growlInstanceOnly = true,
         packWarn = true, packInstanceOnly = true,
-        foodWarn = true,
+        foodWarn = true, ammoWarn = false,
         showKeys = true, keySize = 14, keyPos = "TOPRIGHT",
         colors = {
             warn = { 0.95, 0.25, 0.20 },
@@ -80,6 +83,7 @@ local M = HHT:NewModule("warnings", {
     },
 })
 
+local AMMO_ICON = "Interface\\Icons\\INV_Ammo_Arrow_02"
 local PREFERRED = { "aspectHawk", "aspectMonkey", "aspectCheetah", "aspectPack", "aspectWild", "aspectBeast", "aspectViper", "aspectDragonhawk" }
 
 function M:OnInit()
@@ -380,6 +384,9 @@ function M:ShotList()
         foodlow = function()
             Add(list, "foodlow", R("feedPet").icon, L("Low pet food"), true, nil, "", string.format(L("Low on pet food: %d left."), 7), "shotNop")
         end,
+        ammolow = function()
+            Add(list, "ammolow", AMMO_ICON, L("Low ammo"), true, nil, "", string.format(L("Low on ammo: %d left."), 40), "shotNop")
+        end,
     }
     for _, k in ipairs(self.shot) do
         if builders[k] then builders[k]() end
@@ -405,6 +412,7 @@ function M:Collect()
         Add(list, "pack", S.Resolve("@aspectPack").icon, L("Pack in dungeon"), true)
         Add(list, "hungry", S.Resolve("@feedPet").icon, L("Pet hungry"), true)
         Add(list, "foodlow", S.Resolve("@feedPet").icon, L("Low pet food"), true)
+        Add(list, "ammolow", AMMO_ICON, L("Low ammo"), true)
         return list
     end
 
@@ -539,6 +547,23 @@ function M:Collect()
                 self.foodDismissed = false
             end
         end
+    end
+
+    -- Shooting changes the ammo count in combat, but the icons cannot be rebuilt then: judged out of combat only.
+    local am = HHT.modules.ammo
+    if db.ammoWarn and am and am.enabled and am.LowStatus then
+        if not inCombat and not InCombatLockdown() then
+            local low, n, icon = am:LowStatus()
+            self.ammoState = low and { n = n or 0, icon = icon } or nil
+            if not low then self.ammoDismissed = false end
+        end
+        local st = self.ammoState
+        if st and not self.ammoDismissed then
+            Add(list, "ammolow", st.icon or AMMO_ICON, L("Low ammo"), true, nil, "",
+                string.format(L("Low on ammo: %d left."), st.n), "ammoDismissed")
+        end
+    else
+        self.ammoState = nil
     end
 
     if db.growlWarn and not inCombat and not InCombatLockdown() and not self.growlDismissed
@@ -685,6 +710,8 @@ function M:BuildOptions(form)
     form:Check(L("Warn when the hurt pet is out of Mend Pet range"), db, "petRangeWarn")
     form:Header(L("Pet food"))
     form:Check(L("Warn when the pet is hungry or food is low"), db, "foodWarn")
+    form:Header(L("Ammo"))
+    form:Check(L("Warn when ammo is low"), db, "ammoWarn")
     form:Header(L("Growl"))
     form:Check(L("Warn when the pet's Growl autocast is on"), db, "growlWarn")
     form:Check(L("Only in dungeons and raids"), db, "growlInstanceOnly")

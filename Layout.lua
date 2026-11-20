@@ -494,6 +494,51 @@ HHT.Layout = {
             "+Reset this module",
         } },
     },
+    petstance = {
+        { "Display", {
+            "+Unlock frame",
+            "+Reset position",
+            "Show when",
+            "+Scale",
+            "Opacity",
+            "+Icon shape",
+            "+Border size",
+            "+Border alpha",
+        } },
+        { "Size & layout", {
+            "Icon size",
+        } },
+        { "Content", {
+            "Show the stance under the icon",
+        } },
+        { "Keys", {
+            "*stance key notes",
+        } },
+        { "Pet stance", {
+            "stance: set key",
+            "stance: clear key",
+            "*stance: main spell",
+            "+*stance: more spells",
+            "+*stance: slots",
+        } },
+        { "Colors", {
+            "+Border",
+            "+Border: Aggressive",
+            "+Border: Assist",
+            "+Border: Defensive",
+            "+Border: Passive",
+            "+Reset stance colors",
+            "+Keybind color >> Show keybinds on the icons",
+        } },
+        { "Keybinds", {
+            "+Show keybinds on the icons",
+            "+Keybind text size >> Show keybinds on the icons",
+            "+Keybind position >> Show keybinds on the icons",
+        } },
+        { "General", {
+            "+Reset this module",
+        } },
+    },
     easytame = {
         { "Display", {
             "+Unlock frame",
@@ -642,6 +687,9 @@ HHT.Layout = {
         { "Content", {
             "Show remaining time numbers",
             "+Show names",
+        } },
+        { "Behavior", {
+            "Hide the default summon timers",
         } },
         { "Colors", {
             "+Border colour",
@@ -846,6 +894,9 @@ HHT.Layout = {
         { "Pet food", {
             "Warn when the pet is hungry or food is low",
         } },
+        { "Ammo", {
+            "Warn when ammo is low",
+        } },
         { "Growl", {
             "Warn when the pet's Growl autocast is on",
             "+Only in dungeons and raids",
@@ -954,6 +1005,7 @@ HHT.Tips = {
     ["Health color"] = "Click to change this color",
     ["Hide loyalty at max"] = "Hides the loyalty bar when your pet has reached maximum loyalty",
     ["Hide the default cast bar"] = "Hides the Blizzard cast bar so only this one shows",
+    ["Hide the default summon timers"] = "Hides the summon icons the game shows under the player frame so only this one shows",
     ["Hide the default swing timer"] = "Turns off the swing timer built into WoW: Forever so only this one shows. Your original setting is restored when you untick this",
     ["Hide the default pet frame"] = "Hides the pet frame of the game",
     ["Hide warnings in combat"] = "Hides all warnings while you are in combat",
@@ -1143,6 +1195,7 @@ HHT.Tips = {
     ["Warn when the hurt pet is out of Mend Pet range"] = "Shows a warning when a hurt pet is too far away for Mend Pet",
     ["Warn when the pet gets unhappy"] = "Shows a warning icon when the pet is no longer happy",
     ["Warn when the pet is hungry or food is low"] = "Shows a warning when the pet is hungry or the food runs low. Needs the Pet feeder module",
+    ["Warn when ammo is low"] = "Also shows a warning icon here when your ammo is below the limit set in the Ammo module. Needs the Ammo module. Off by default",
     ["Warn when the pet is missing or dead"] = "Shows a warning when you have no pet or it is dead",
     ["Set tame key"] = "Click, then press a key. The key does the next step: lays the Freezing Trap, then tames. It replaces the normal function of that key",
     ["Clear tame key"] = "Removes the tame key again",
@@ -1444,6 +1497,7 @@ HHT:AddGerman({
     ["Warns when your supply of the chosen food is almost gone"] = "Warnt, wenn dein Vorrat des gewählten Futters fast aufgebraucht ist",
     ["Shows a warning when a hurt pet is too far away for Mend Pet"] = "Zeigt eine Warnung, wenn ein verletzter Begleiter zu weit für Tier heilen entfernt ist",
     ["Shows a warning icon when the pet is no longer happy"] = "Zeigt ein Warn-Icon, wenn der Begleiter nicht mehr zufrieden ist",
+    ["Also shows a warning icon here when your ammo is below the limit set in the Ammo module. Needs the Ammo module. Off by default"] = "Zeigt hier ebenfalls ein Warnsymbol, wenn deine Munition unter dem im Munitions-Modul eingestellten Wert liegt. Braucht das Munitions-Modul. Standardmäßig aus",
     ["Shows a warning when the pet is hungry or the food runs low. Needs the Pet feeder module"] = "Zeigt eine Warnung, wenn der Begleiter hungrig ist oder das Futter knapp wird. Braucht das Modul Begleiter füttern",
     ["Shows a warning when you have no pet or it is dead"] = "Zeigt eine Warnung, wenn du keinen Begleiter hast oder er tot ist",
     ["Click, then press a key. The key does the next step: lays the Freezing Trap, then tames. It replaces the normal function of that key"] = "Klicken, dann eine Taste drücken. Die Taste macht den nächsten Schritt: erst Eisfalle legen, dann zähmen. Sie ersetzt die normale Funktion der Taste",
