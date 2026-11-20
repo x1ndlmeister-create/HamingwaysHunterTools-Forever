@@ -35,7 +35,21 @@
       radial-gradient(ellipse 50% 60% at 85% 30%, rgba(184,134,70,.18), transparent 70%); }
   .hero .herowrap { position:relative; max-width:1100px; margin:0 auto; }
   .hero .herowrap img { display:block; }
-  .hero .herowrap .badge { position:absolute; top:16px; right:18px; margin:0; background:rgba(15,17,19,.78); }
+  .hero .herowrap .badge { margin:16px 0 0; }
+
+  /* screenshot slider */
+  .slider { position:relative; aspect-ratio:16/9; overflow:hidden; border-radius:14px; background:#14161a; box-shadow:0 18px 60px rgba(0,0,0,.7), 0 0 0 1px var(--line); touch-action:pan-y; }
+  .hero .slider img { position:absolute; inset:0; width:100%; height:100%; max-width:none; object-fit:cover; border-radius:0; box-shadow:none; opacity:0; transition:opacity .7s ease; }
+  .hero .slider img.on { opacity:1; }
+  .slider .nav { position:absolute; top:50%; transform:translateY(-50%); z-index:2; width:44px; height:44px; border-radius:50%; border:1px solid var(--bronze); background:rgba(15,17,19,.62); color:var(--text); font-size:1.15em; line-height:1; cursor:pointer; opacity:0; transition:opacity .25s, background .2s; }
+  .slider .nav:hover, .slider .nav:focus-visible { background:rgba(184,134,70,.85); color:#111; }
+  .slider:hover .nav, .slider:focus-within .nav { opacity:1; }
+  .slider .prev { left:14px; } .slider .next { right:14px; }
+  .slider .dots { position:absolute; left:0; right:0; bottom:12px; z-index:2; display:flex; justify-content:center; gap:8px; }
+  .slider .dots button { width:10px; height:10px; padding:0; border-radius:50%; border:1px solid var(--bronze); background:rgba(15,17,19,.6); cursor:pointer; }
+  .slider .dots button.on { background:var(--gold); border-color:var(--gold); }
+  @media (hover:none) { .slider .nav { opacity:.85; } }
+  @media (max-width:520px) { .slider .nav { width:34px; height:34px; } .slider .prev { left:6px; } .slider .next { right:6px; } }
   .hero img { width:100%; max-width:1100px; border-radius:14px; box-shadow:0 18px 60px rgba(0,0,0,.7), 0 0 0 1px var(--line); }
   .hero h1 { margin:26px 0 4px; font-size:clamp(1.9em,5vw,3.2em); letter-spacing:.5px; }
   .hero h1 b { color:var(--green); }
@@ -153,6 +167,7 @@
   @media (prefers-reduced-motion:reduce) {
     html { scroll-behavior:auto; }
     .hero, .hero > * { animation:none !important; }
+    .hero .slider img { transition:none; }
     .js .reveal { opacity:1; transform:none; transition:none; }
     .tile, .newitem, .cta, .coffee, .btn, .shot img { transition:none; }
     .tile:hover, .newitem:hover, .cta:hover, .coffee:hover, .btn:hover, .shot:hover img { transform:none; }
@@ -178,8 +193,24 @@
 
 <header class="hero">
   <div class="herowrap">
-    <img src="images/hero.png" alt="Hamingway's HunterTools">
-    <div class="badge">VERSION 1.5.4 &middot; WOW FOREVER</div>
+    <div class="slider" id="slider" role="region" aria-roledescription="carousel" aria-label="Screenshots" tabindex="0">
+      <div class="slides">
+      <img class="on" src="images/slides/01.webp" alt="Overview: everything a hunter needs" width="1600" height="900">
+      <img src="images/slides/02.webp" alt="Swing timer, threat and cast bar" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/03.webp" alt="Warnings you can click" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/04.webp" alt="Pet database and guide" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/05.webp" alt="Pet care" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/06.webp" alt="Ammo and quiver" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/07.webp" alt="Map pins" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/08.webp" alt="Quick install with Hamingway" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/09.webp" alt="Make it yours" width="1600" height="900" loading="lazy" decoding="async">
+      <img src="images/slides/10.webp" alt="18 ready-made macros" width="1600" height="900" loading="lazy" decoding="async">
+      </div>
+      <button class="nav prev" type="button" aria-label="Previous">&#10094;</button>
+      <button class="nav next" type="button" aria-label="Next">&#10095;</button>
+      <div class="dots"></div>
+    </div>
+    <div class="badge">VERSION 1.7.0 &middot; WOW FOREVER</div>
   </div>
   <h1>Hamingway's <b>HunterTools</b></h1>
   <p class="tag" data-de="Das Schweizer Taschenmesser des Jägers">The hunter's Swiss army knife</p>
@@ -768,6 +799,39 @@
   bEn.onclick = function () { set('en'); }; bDe.onclick = function () { set('de'); };
   var saved = null; try { saved = localStorage.getItem('hhtlang'); } catch (x) {}
   set(saved || ((navigator.language || '').indexOf('de') === 0 ? 'de' : 'en'));
+
+  // screenshot slider: fades, arrows, dots, swipe, pauses on hover and without motion
+  var sl = document.getElementById('slider');
+  if (sl) {
+    var slides = Array.prototype.slice.call(sl.querySelectorAll('.slides img')), dots = sl.querySelector('.dots'), cur = 0, timer = null;
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    slides.forEach(function (s, i) {
+      var d = document.createElement('button'); d.type = 'button'; d.setAttribute('aria-label', 'Slide ' + (i + 1));
+      d.onclick = function () { go(i); restart(); }; dots.appendChild(d);
+    });
+    function go(i) {
+      cur = (i + slides.length) % slides.length;
+      slides.forEach(function (s, k) { s.classList.toggle('on', k === cur); });
+      Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === cur); });
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function restart() { stop(); if (!calm && !document.hidden) timer = setInterval(function () { go(cur + 1); }, 5500); }
+    sl.querySelector('.prev').onclick = function () { go(cur - 1); restart(); };
+    sl.querySelector('.next').onclick = function () { go(cur + 1); restart(); };
+    sl.addEventListener('mouseenter', stop); sl.addEventListener('mouseleave', restart);
+    sl.addEventListener('focusin', stop); sl.addEventListener('focusout', restart);
+    sl.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { go(cur - 1); restart(); } else if (e.key === 'ArrowRight') { go(cur + 1); restart(); }
+    });
+    var x0 = null;
+    sl.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; stop(); }, { passive: true });
+    sl.addEventListener('touchend', function (e) {
+      if (x0 !== null) { var dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1)); }
+      x0 = null; restart();
+    });
+    document.addEventListener('visibilitychange', restart);
+    go(0); restart();
+  }
 
   // scroll reveal, skipped without IntersectionObserver
   if ('IntersectionObserver' in window) {
