@@ -904,7 +904,7 @@ function HHT:TraceProtectedCalls()
             pcall(hooksecurefunc, index, name, function(f)
                 if not InCombatLockdown() then return end
                 -- This hook's own frame is left out, so only real callers inside the addon are reported.
-                local okS, mine = pcall(debugstack, 1, 1, 0)
+                local okS, mine = pcall(debugstack, 1, 3, 0)
                 local own = okS and not HHT.IsSecret(mine) and tostring(mine):match("in function <(.-)>") or nil
                 -- Anything unreadable (secret values) ends the trace for this call instead of raising an error.
                 pcall(function()
