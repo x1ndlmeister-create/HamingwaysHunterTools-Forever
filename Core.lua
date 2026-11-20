@@ -1105,9 +1105,6 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     elseif msg == "tame" then
         local tm = HHT.modules.easytame
         if tm and tm.Debug then tm:Debug() end
-    elseif msg == "stance" then
-        local sm = HHT.modules.petstance
-        if sm and sm.Debug then sm:Debug() end
     elseif msg == "key" then
         HHT.KeyTest()
     elseif msg == "blocked" then

@@ -18,7 +18,7 @@ HHT:AddGerman({
 
 local DEMO = { "swing", "castbar", "distance", "threat", "cooldowns", "debuffs", "procs", "summons", "pet", "feeder" }
 local WARN_DEFAULT = { "hungry", "foodlow", "pet", "growl", "pack" }
-local WARN_KEYS = { "aspect", "trueshot", "mark", "pet", "nopet", "petlow", "petfar", "growl", "pack", "hungry", "foodlow", "ammolow" }
+local WARN_KEYS = { "aspect", "trueshot", "mark", "pet", "nopet", "petlow", "petfar", "growl", "pack", "hungry", "foodlow" }
 
 local function Words(text)
     local out = {}

@@ -15,23 +15,6 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
-        v = "1.7.0",
-        en = {
-            "New module Pet stance: one button and key that switches your pet between Aggressive, Defensive, Assist and Passive, also in combat. Pick a main stance and a second one to toggle with, and give Shift, Ctrl and Alt their own stances on the same key. A right-click on the icon lists the four stances. The icon shows the active stance, your key, or the key of the pet bar button. It is on by default and part of the quick install (page 'Aspect, tracking and pet stance').",
-            "Pet stance: the game's own commands for Aggressive and Defensive do nothing in this client, so stances that are not on the pet bar are placed once on an unused action slot (115-120). The advanced settings let you choose the slot yourself. A slot in use is never replaced, and if something else is put on a slot the addon placed, it leaves it alone and picks another.",
-            "Warnings: new option 'Warn when ammo is low' (off by default) shows a Low ammo warning icon when the ammo of your weapon drops below the limit set in the Ammo module.",
-            "Summons: new option 'Hide the default summon timers' (on by default) hides the game's own summon icons under the player frame, like the cast bar option does.",
-            "The addon now sorts under 'Hunter' in the AddOns list.",
-        },
-        de = {
-            "Neues Modul Begleiter-Haltung: ein Knopf und eine Taste, die deinen Begleiter zwischen Aggressiv, Defensiv, Assistieren und Passiv wechseln, auch im Kampf. Wähle eine Haupthaltung und eine zweite zum Umschalten und gib Shift, Strg und Alt eigene Haltungen auf derselben Taste. Ein Rechtsklick auf das Symbol listet die vier Haltungen. Das Symbol zeigt die aktive Haltung, deine Taste oder die Taste des Knopfs auf der Begleiter-Leiste. Es ist standardmäßig an und Teil der Schnellinstallation (Seite 'Aspekt, Aufspüren und Begleiter-Haltung').",
-            "Begleiter-Haltung: Die Befehle des Spiels für Aggressiv und Defensiv tun in diesem Client nichts. Haltungen, die nicht auf der Begleiter-Leiste liegen, werden deshalb einmalig auf einen unbenutzten Aktionsslot (115-120) gelegt. In den erweiterten Einstellungen kannst du den Slot selbst wählen. Ein belegter Slot wird nie ersetzt, und wenn etwas anderes auf einen vom Addon gesetzten Slot gelegt wird, lässt das Addon ihn in Ruhe und wählt einen anderen.",
-            "Warnungen: Neue Option 'Warnen wenn die Munition knapp wird' (standardmäßig aus) zeigt ein Symbol 'Wenig Munition', wenn die Munition deiner Waffe unter die im Munitions-Modul gesetzte Grenze fällt.",
-            "Beschwörungen: Neue Option 'Standard-Beschwörungsanzeige ausblenden' (standardmäßig an) blendet die Beschwörungs-Symbole des Spiels unter dem Spielerrahmen aus, wie bei der Zauberleiste.",
-            "Das Addon wird in der Addon-Liste jetzt unter 'Jäger' einsortiert.",
-        },
-    },
-    {
         v = "1.6.1",
         en = {
             "New bug report: /hht report (or Settings, Bug report) opens a window with a compact, postable line holding your settings and debug info, ready to copy into a bug report.",
