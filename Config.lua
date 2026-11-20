@@ -249,7 +249,11 @@ function C:BuildSupport(form)
     box:SetScript("OnTextChanged", function(self, user) if user then self:SetText(url); self:HighlightText() end end)
     form:Place(box, 20, 4, 6)
 
-    form:Note("v" .. HHT.version .. "  |  /hht  |  /hht unlock  |  /hht lock  |  /hht reset", 0.55, 0.52, 0.45)
+    form:Header(L("Bug report"))
+    form:Note(L("Something not working? Create a report and paste the line into your bug report. It holds settings and debug data, no character name."))
+    form:Button(L("Create bug report"), function() if HHT.Report then HHT.Report.Open() end end, 220)
+
+    form:Note("v" .. HHT.version .. "  |  /hht  |  /hht unlock  |  /hht lock  |  /hht reset  |  /hht report", 0.55, 0.52, 0.45)
 end
 
 local function PageName(key)

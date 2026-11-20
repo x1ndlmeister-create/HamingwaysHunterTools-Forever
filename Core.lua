@@ -369,7 +369,8 @@ function HHT:ApplyPosition(frame)
         return
     end
     frame:ClearAllPoints()
-    frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4])
+    local dy = frame.hhtYShift and frame.hhtYShift(pos[1]) or 0
+    frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4] + dy)
 end
 
 function HHT:ApplyAllPositions()
@@ -993,7 +994,10 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     local testWhat = msg:match("^test%s*(.*)$")
     local petSearch = msg:match("^pets%s*(.*)$")
     local shotWhat = msg:match("^shot%s*(.*)$")
-    if shotWhat then
+    local trainPts = msg:match("^trainpoints%s*(.*)$")
+    if trainPts then
+        if HHT.modules.pettrain and HHT.modules.pettrain.TestPoints then HHT.modules.pettrain:TestPoints(trainPts) end
+    elseif shotWhat then
         if HHT.RunShot then HHT.RunShot(shotWhat) end
     elseif petSearch then
         if HHT.PetDex then HHT.PetDex:Toggle(petSearch ~= "" and petSearch or nil) end
@@ -1045,6 +1049,12 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         end
     elseif msg == "proctex" then
         if HHT.Procs then HHT.Procs:TexPreview() end
+    elseif msg == "report" then
+        if HHT.Report then HHT.Report.Open() end
+    elseif msg == "feedprobe" then
+        if HHT.modules.feeder and HHT.modules.feeder.Probe then HHT.modules.feeder:Probe() end
+    elseif msg == "feedforget" then
+        if HHT.modules.feeder and HHT.modules.feeder.Forget then HHT.modules.feeder:Forget() end
     elseif msg == "petinfo" then
         if HHT.PetDex and HHT.PetDex.Inspect then HHT.PetDex.Inspect() end
     elseif msg == "tranq" then

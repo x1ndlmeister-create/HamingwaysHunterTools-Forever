@@ -42,6 +42,12 @@ HHT:AddGerman({
     ["Also warn when the pet is only content (not green)"] = "Auch warnen wenn der Begleiter nur zufrieden ist (nicht grün)",
     ["Low on pet food: %d left."] = "Wenig Begleiter-Futter: noch %d.",
     ["Buff food"] = "Buff-Futter",
+    ["Learned pet food: %s"] = "Neues Begleiter-Futter gelernt: %s",
+    ["Shift+click the icon: scan your bags for food your pet accepts."] = "Umschalt+Klick auf das Symbol: Taschen nach Futter durchsuchen, das dein Begleiter frisst.",
+    ["Could not start Feed Pet. Is your pet out and not busy?"] = "Füttern konnte nicht gestartet werden. Ist dein Begleiter draußen und nicht beschäftigt?",
+    ["Food scan needs the default bags (bag addons like Baganator cannot be read)."] = "Der Futter-Scan braucht die Standard-Taschen (Taschen-Addons wie Baganator sind nicht lesbar).",
+    ["Food scan: nothing new found."] = "Futter-Scan: nichts Neues gefunden.",
+    ["Press Esc to cancel the Feed Pet cursor."] = "Esc drücken, um den Füttern-Cursor abzubrechen.",
 })
 
 local M = HHT:NewModule("feeder", {
@@ -53,6 +59,7 @@ local M = HHT:NewModule("feeder", {
         showText = true, showName = false, mode = "always", key = "",
         hungerWarn = true, hungerContent = true, hungerSound = false, supplyWarn = true, supplyBelow = 10, protectBuff = true,
         selected = {}, blacklist = {},
+        learned = {}, learnedSet = {},
         colors = {
             happy = { 0.40, 0.80, 0.30 },
             content = { 0.95, 0.60, 0.15 },
@@ -65,8 +72,8 @@ local M = HHT:NewModule("feeder", {
 -- Item ids by diet (classic food database).
 local FOODS = {
     fungus = { 4607, 8948, 4604, 4608, 4605, 3448, 4606 },
-    fish = { 13889, 19996, 13933, 13888, 13935, 13546, 6290, 4593, 5503, 16971, 2682, 13927, 2675, 13930, 5476, 4655, 6038, 13928, 13929, 13893, 4592, 8364, 13932, 5095, 6291, 6308, 13754, 6317, 6289, 8365, 6361, 13758, 6362, 6303, 8959, 4603, 13756, 13760, 4594, 787, 5468, 15924, 12216, 8957, 6887, 5504, 12206, 13755, 7974 },
-    meat = { 21235, 19995, 4457, 3173, 2888, 3730, 3726, 3220, 2677, 3404, 12213, 2679, 769, 2673, 2684, 1081, 12224, 5479, 2924, 3662, 4599, 17119, 5478, 5051, 12217, 2687, 9681, 2287, 12204, 3727, 13851, 12212, 5472, 5467, 5480, 1015, 12209, 3731, 12223, 3770, 12037, 4739, 12184, 13759, 12203, 12210, 2681, 5474, 8952, 1017, 5465, 6890, 3712, 3729, 2680, 17222, 5471, 5469, 5477, 2672, 2685, 3728, 3667, 12208, 18045, 5470, 12202, 117, 12205, 3771 },
+    fish = { 13889, 19996, 13933, 13888, 13935, 13546, 6290, 4593, 5503, 16971, 2682, 13927, 2675, 13930, 5476, 4655, 6038, 13928, 13929, 13893, 4592, 8364, 13932, 5095, 6291, 6308, 13754, 6317, 6289, 8365, 6361, 13758, 6362, 6303, 8959, 4603, 13756, 13760, 4594, 787, 5468, 15924, 12216, 8957, 6887, 5504, 12206, 13755, 7974, 6299 },
+    meat = { 21235, 19995, 4457, 3173, 2888, 3730, 3726, 3220, 2677, 3404, 12213, 2679, 769, 2673, 2684, 1081, 12224, 5479, 2924, 3662, 4599, 17119, 5478, 5051, 12217, 2687, 9681, 2287, 12204, 3727, 13851, 12212, 5472, 5467, 5480, 1015, 12209, 3731, 12223, 3770, 12037, 4739, 12184, 13759, 12203, 12210, 2681, 5474, 8952, 1017, 5465, 6890, 3712, 3729, 2680, 17222, 5471, 5469, 5477, 2672, 2685, 3728, 3667, 12208, 18045, 5470, 12202, 117, 12205, 3771, 252022 },
     bread = { 1113, 5349, 1487, 1114, 8075, 8076, 22895, 19696, 21254, 2683, 4541, 17197, 3666, 8950, 4542, 4544, 4601, 4540, 16169 },
     cheese = { 8932, 414, 2070, 422, 3927, 1707 },
     fruit = { 19994, 8953, 4539, 16168, 4602, 4536, 4538, 4537, 11950 },
@@ -113,13 +120,33 @@ local function AddDiets(set, ...)
     end
 end
 
+-- Last resort when the client reports no diet: the family table of the addon.
+local function FamilyDiets(set)
+    local pd = HHT.PetDex
+    local okF, raw = pcall(UnitCreatureFamily, "pet")
+    if not (pd and pd.EnglishFamily and okF and type(raw) == "string" and not HHT.IsSecret(raw)) then return end
+    local fam = pd.EnglishFamily(raw)
+    for _, e in ipairs(HHT.PetFamilyData or {}) do
+        if e.n == fam then AddDiets(set, e.diet) return end
+    end
+end
+
 local function PetDiets()
     local set = {}
     if GetPetFoodTypes then pcall(function() AddDiets(set, GetPetFoodTypes()) end) end
     if not next(set) and C_PetInfo and C_PetInfo.GetPetFoodTypes then
         pcall(function() AddDiets(set, C_PetInfo.GetPetFoodTypes()) end)
     end
+    if not next(set) then pcall(FamilyDiets, set) end
     return set
+end
+
+-- Stable key of a diet set, e.g. "fish,meat".
+local function DietKey(diets)
+    local t = {}
+    for d in pairs(diets) do t[#t + 1] = d end
+    table.sort(t)
+    return table.concat(t, ",")
 end
 
 -- Shared with the food vendor module.
@@ -153,6 +180,8 @@ function M:OnInit()
     self.macroId = false
     self.petKey = "default"
     self.startAt = GetTime()
+    for id, diet in pairs(self.db.learned) do ITEM_DIET[id] = diet end
+    HHT:Every(self, 0.25, M.LearnTick)
     HHT:Listen(self, "BAG_UPDATE_DELAYED", "MarkDirty")
     HHT:Listen(self, "UNIT_PET", "MarkDirty")
     HHT:Listen(self, "PLAYER_ENTERING_WORLD", "MarkDirty")
@@ -195,7 +224,8 @@ function M:Build()
     b:SetAttribute("type1", "macro")
     b:SetAttribute("macrotext1", "")
     b:HookScript("PostClick", function(_, button)
-        if button == "RightButton" then M:OpenMenu(b) end
+        if button == "RightButton" then M:OpenMenu(b)
+        elseif button == "LeftButton" and IsShiftKeyDown() then M:ScanBags() end
     end)
     b:SetScript("OnEnter", function(self)
         if not GameTooltip then return end
@@ -204,6 +234,7 @@ function M:Build()
         local cur = M.current
         GameTooltip:AddLine(cur and cur.name or L("No food"), 1, 1, 1)
         GameTooltip:AddLine(L("Click: feed. Right-click: choose food. Shift+click in the menu: blacklist or allow a food."), 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine(L("Shift+click the icon: scan your bags for food your pet accepts."), 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
     end)
     b:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -277,6 +308,7 @@ function M:Scan()
     local diets = PetDiets()
     self.diets = diets
     local byId, list = {}, {}
+    local learnedSet = self.db.learnedSet[DietKey(diets)]
     if next(diets) and C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemInfo then
         for bag = 0, (NUM_BAG_SLOTS or 4) do
             local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
@@ -286,7 +318,7 @@ function M:Scan()
                 if okI and type(info) == "table" and not HHT.IsSecret(info) then
                     local id, c = HHT.SafeNumber(info.itemID), HHT.SafeNumber(info.stackCount)
                     local diet = id and ITEM_DIET[id]
-                    if diet and diets[diet] and c then
+                    if c and ((diet and diets[diet]) or (id and learnedSet and learnedSet[id])) then
                         local e = byId[id]
                         if not e then
                             e = { id = id, count = 0, name = ItemName(id, info.hyperlink) or tostring(id),
@@ -455,6 +487,11 @@ end
 -- Update
 -- ---------------------------------------------------------------------------
 function M:SyncSecure()
+    if not self.shiftSet and not (InCombatLockdown and InCombatLockdown()) then
+        self.button:SetAttribute("shift-type1", "macro")
+        self.button:SetAttribute("shift-macrotext1", "/cast " .. S.CatalogName("feedPet"))
+        self.shiftSet = true
+    end
     local cur = self.current
     local text = ""
     if cur then text = string.format("/cast %s\n/use %s", S.CatalogName("feedPet"), cur.name) end
@@ -588,6 +625,308 @@ function M:Debug()
         if IsBuffFood(e.id) then buff[#buff + 1] = e.name end
     end
     HHT.Print("feeder: buff food = " .. (#buff > 0 and table.concat(buff, ", ") or "none"))
+    local unknown = {}
+    for _, id in ipairs(self:UnknownFoods()) do
+        local lines = TooltipLines(id)
+        unknown[#unknown + 1] = string.format("%d %s [%s]", id, tostring(ItemName(id) or "?"), lines and table.concat(lines, "/") or "no tooltip")
+    end
+    HHT.Print("feeder: unknown food = " .. (#unknown > 0 and table.concat(unknown, "; ") or "none"))
+    local single, sets = 0, 0
+    for _ in pairs(self.db.learned) do single = single + 1 end
+    for _, s in pairs(self.db.learnedSet) do for _ in pairs(s) do sets = sets + 1 end end
+    HHT.Print(string.format("feeder: learned = %d single-diet, %d multi-diet", single, sets))
+end
+
+-- Bag items the game files under Food & Drink that our id list does not know.
+function M:UnknownFoods()
+    local out, seen = {}, {}
+    if not (C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemInfo) then return out end
+    local instant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+    for bag = 0, (NUM_BAG_SLOTS or 4) do
+        local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
+        n = okN and HHT.SafeNumber(n) or 0
+        for slot = 1, n do
+            local okI, info = pcall(C_Container.GetContainerItemInfo, bag, slot)
+            local id = okI and type(info) == "table" and not HHT.IsSecret(info) and HHT.SafeNumber(info.itemID)
+            if id and not seen[id] and not ITEM_DIET[id] and instant then
+                seen[id] = true
+                local okF, _, _, _, _, _, classID, subClassID = pcall(instant, id)
+                if okF and classID == 0 and subClassID == 5 then out[#out + 1] = id end
+            end
+        end
+    end
+    return out
+end
+
+-- /hht feedforget: test helper. Drops learned food and the built-in list until /reload, so Shift+click has something to learn.
+function M:Forget()
+    wipe(self.db.learned)
+    wipe(self.db.learnedSet)
+    wipe(ITEM_DIET)
+    self.dirty = true
+    HHT.Print("feeder: all known food forgotten until /reload. Shift+click the icon to learn it again.")
+end
+
+-- /hht feedprobe: asks the game which bag items Feed Pet accepts, while the spell waits for a target.
+function M:Probe()
+    local api = string.format("SpellIsTargeting=%s SpellCanTargetItemID=%s SpellCanTargetItem=%s",
+        tostring(SpellIsTargeting ~= nil), tostring(SpellCanTargetItemID ~= nil), tostring(SpellCanTargetItem ~= nil))
+    HHT.Print("feedprobe: " .. api)
+    if not (SpellIsTargeting and SpellCanTargetItemID and C_Container) then return end
+    HHT.Print("feedprobe: click Feed Pet now (30 s), the bags are read as soon as it waits for a target.")
+    local f = self.probeFrame
+    if not f then
+        f = CreateFrame("Frame")
+        self.probeFrame = f
+    end
+    local stopAt, acc = GetTime() + 30, 0
+    f:SetScript("OnUpdate", function(frame, dt)
+        acc = acc + dt
+        if acc < 0.1 then return end
+        acc = 0
+        if GetTime() > stopAt then
+            frame:SetScript("OnUpdate", nil)
+            HHT.Print("feedprobe: timed out, Feed Pet was not clicked.")
+        elseif SpellIsTargeting() then
+            frame:SetScript("OnUpdate", nil)
+            if C_Timer and C_Timer.After then
+                C_Timer.After(0.4, function() M:ProbeScan(api) end)
+            else
+                M:ProbeScan(api)
+            end
+        end
+    end)
+end
+
+-- Visible state of a Blizzard bag button (dimmed or bright), for items the game highlights while Feed Pet waits.
+local function ButtonState(b)
+    local icon = b.icon or b.Icon or (b.GetName and b:GetName() and _G[b:GetName() .. "IconTexture"])
+    local p = {}
+    if icon then
+        p[#p + 1] = "desat=" .. tostring(icon:IsDesaturated())
+        local r, g, bl = icon:GetVertexColor()
+        p[#p + 1] = string.format("rgb=%.1f/%.1f/%.1f", r or 0, g or 0, bl or 0)
+        p[#p + 1] = string.format("a=%.1f", icon:GetAlpha() or 0)
+    end
+    for _, k in ipairs({ "ItemContextOverlay", "searchOverlay", "SearchOverlay" }) do
+        if b[k] and b[k].IsShown then p[#p + 1] = k .. "=" .. tostring(b[k]:IsShown()) end
+    end
+    return table.concat(p, " ")
+end
+
+local function BagButtons()
+    local list = {}
+    for i = 1, 13 do
+        for j = 1, 40 do
+            local b = _G["ContainerFrame" .. i .. "Item" .. j]
+            if b then list[#list + 1] = b end
+        end
+    end
+    local cb = _G.ContainerFrameCombinedBags
+    if cb then
+        if cb.EnumerateValidItems then
+            for _, b in cb:EnumerateValidItems() do list[#list + 1] = b end
+        else
+            for _, b in ipairs({ cb:GetChildren() }) do
+                if b.GetBagID then list[#list + 1] = b end
+            end
+        end
+    end
+    return list
+end
+
+local function ButtonItemId(b)
+    local okB, bag = pcall(b.GetBagID, b)
+    if not okB or not bag then
+        local par = b.GetParent and b:GetParent()
+        okB, bag = par ~= nil, par and par.GetID and par:GetID()
+    end
+    local okS, slot = pcall(b.GetID, b)
+    return okB and okS and bag and slot and C_Container.GetContainerItemID and C_Container.GetContainerItemID(bag, slot) or nil
+end
+
+-- While Feed Pet waits for a target, the game dims every bag item the spell cannot take (ItemContextOverlay shown).
+-- Returns the ids of the items left bright, or nil when no Blizzard bag buttons can be read.
+local function FeedableIds()
+    local ids, dimmed, n = {}, 0, 0
+    for _, b in ipairs(BagButtons()) do
+        local id = ButtonItemId(b)
+        local ov = b.ItemContextOverlay
+        if id and ov and ov.IsShown then
+            n = n + 1
+            if ov:IsShown() then dimmed = dimmed + 1 else ids[id] = true end
+        end
+    end
+    if n == 0 or dimmed == 0 then return nil end
+    return ids
+end
+
+-- Remembers which items Feed Pet accepted for the current pet's diet, so the menu also lists items missing from the built-in list.
+function M:Learn()
+    local ids = FeedableIds()
+    if not ids then return end
+    local diets = PetDiets()
+    local key = DietKey(diets)
+    if key == "" then return end
+    local single = next(diets) and not next(diets, next(diets)) and next(diets)
+    local set = self.db.learnedSet[key]
+    local added = {}
+    for id in pairs(ids) do
+        local known = ITEM_DIET[id] or (set and set[id])
+        if not known then
+            if single then
+                self.db.learned[id] = single
+                ITEM_DIET[id] = single
+            else
+                set = set or {}
+                set[id] = true
+                self.db.learnedSet[key] = set
+            end
+            added[#added + 1] = tostring(ItemName(id) or id)
+        end
+    end
+    if #added > 0 then
+        self.dirty = true
+        HHT.Print(string.format(L("Learned pet food: %s"), table.concat(added, ", ")))
+    end
+    return #added
+end
+
+-- Shift+click on the icon: Feed Pet starts waiting for a target (secure macro) and the bags are read.
+function M:ScanBags()
+    self.scanning, self.scanStart, self.openedBags = true, GetTime(), false
+    local cb = _G.ContainerFrameCombinedBags
+    local open = (cb and cb:IsShown()) or (_G.ContainerFrame1 and _G.ContainerFrame1:IsShown())
+    if not open and OpenAllBags then
+        pcall(OpenAllBags)
+        self.openedBags = true
+    end
+end
+
+function M:EndScan(text)
+    self.scanning = false
+    if self.openedBags and CloseAllBags then pcall(CloseAllBags) end
+    self.openedBags = false
+    if text then HHT.Print(text) end
+    -- SpellStopTargeting is protected, so the cursor is left for the player to cancel
+    if SpellIsTargeting and SpellIsTargeting() then HHT.Print(L("Press Esc to cancel the Feed Pet cursor.")) end
+end
+
+-- Reads the bags once per Feed Pet targeting, after the game has updated the dimming.
+function M:LearnTick()
+    local now = GetTime()
+    if not (SpellIsTargeting and SpellIsTargeting() and C_Spell and C_Spell.GetTargetSpellID) then
+        self.targetSince, self.learnedNow = nil, nil
+        if self.scanning and now - (self.scanStart or 0) > 2 then
+            self:EndScan(L("Could not start Feed Pet. Is your pet out and not busy?"))
+        end
+        return
+    end
+    local okS, spell = pcall(C_Spell.GetTargetSpellID)
+    if not okS or spell ~= 6991 then return end
+    if not self.targetSince then self.targetSince = now end
+    if not self.learnedNow and now - self.targetSince > (self.scanning and 0.8 or 0.4) then
+        self.learnedNow = true
+        local ok, n = pcall(self.Learn, self)
+        if self.scanning then
+            if not ok or n == nil then
+                self:EndScan(L("Food scan needs the default bags (bag addons like Baganator cannot be read)."))
+            elseif n == 0 then
+                self:EndScan(L("Food scan: nothing new found."))
+            else
+                self:EndScan()
+            end
+        end
+    end
+end
+
+function M:ProbeScan(api)
+    local diets = self.diets or PetDiets()
+    local items = {}
+    local seen = {}
+    for bag = 0, (NUM_BAG_SLOTS or 4) do
+        local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
+        n = okN and HHT.SafeNumber(n) or 0
+        for slot = 1, n do
+            local okI, info = pcall(C_Container.GetContainerItemInfo, bag, slot)
+            local id = okI and type(info) == "table" and not HHT.IsSecret(info) and HHT.SafeNumber(info.itemID)
+            if id and not seen[id] then
+                seen[id] = true
+                items[#items + 1] = { id = id, bag = bag, slot = slot, link = info.hyperlink,
+                                      label = id .. " " .. tostring(ItemName(id, info.hyperlink) or "?"),
+                                      ours = ITEM_DIET[id] and diets[ITEM_DIET[id]] and true or false }
+            end
+        end
+    end
+
+    local lines = { api }
+    local function Hover(tip, e)
+        tip:SetOwner(UIParent, "ANCHOR_NONE")
+        tip:SetBagItem(e.bag, e.slot)
+        return SpellCanTargetItem()
+    end
+    if not scanTip then
+        scanTip = CreateFrame("GameTooltip", "HHTFeedScanTip", UIParent, "GameTooltipTemplate")
+    end
+    local forms = {
+        { "CanItemID(id)", function(e) return SpellCanTargetItemID(e.id) end },
+        { "CanItem() after GameTooltip:SetBagItem", function(e) return Hover(GameTooltip, e) end },
+        { "CanItem() after own tooltip SetBagItem", function(e) return Hover(scanTip, e) end },
+    }
+    for _, form in ipairs(forms) do
+        local yes = {}
+        local errs = 0
+        for _, e in ipairs(items) do
+            local ok, r = pcall(form[2], e)
+            if not ok then errs = errs + 1 elseif r then yes[#yes + 1] = e.label end
+        end
+        lines[#lines + 1] = string.format("%s: yes=%d/%d err=%d %s", form[1], #yes, #items, errs, table.concat(yes, "; ", 1, math.min(#yes, 6)))
+    end
+
+    GameTooltip:Hide()
+    local function Try(label, fn, ...)
+        local ok, a, b = pcall(fn, ...)
+        lines[#lines + 1] = label .. " -> " .. (ok and (tostring(a) .. (b ~= nil and (", " .. tostring(b)) or "")) or ("error " .. tostring(a)))
+    end
+    if C_Spell and C_Spell.GetTargetSpellID then Try("C_Spell.GetTargetSpellID()", C_Spell.GetTargetSpellID) end
+    if C_Spell and C_Spell.TargetSpellChecksItemCondition then
+        Try("C_Spell.TargetSpellChecksItemCondition()", C_Spell.TargetSpellChecksItemCondition)
+        if items[1] then Try("C_Spell.TargetSpellChecksItemCondition(link)", C_Spell.TargetSpellChecksItemCondition, items[1].link) end
+    end
+    local cb = _G.ContainerFrameCombinedBags
+    lines[#lines + 1] = "combined bags: exists=" .. tostring(cb ~= nil) .. " shown=" .. tostring(cb and cb:IsShown())
+
+    local byState = {}
+    local order = {}
+    for _, b in ipairs(BagButtons()) do
+        local id = ButtonItemId(b)
+        if id then
+            local st = ButtonState(b)
+            if not byState[st] then byState[st] = {}; order[#order + 1] = st end
+            local t = byState[st]
+            t[#t + 1] = tostring(id)
+        end
+    end
+    if #order == 0 then lines[#lines + 1] = "bag buttons: none found" end
+    for _, st in ipairs(order) do
+        local t = byState[st]
+        lines[#lines + 1] = string.format("bag buttons [%s]: %d items, e.g. %s", st, #t, table.concat(t, ",", 1, math.min(#t, 8)))
+    end
+
+    local names = {}
+    for k, v in pairs(_G) do
+        if type(v) == "function" and type(k) == "string" and (k:find("TargetItem") or k:find("^SpellCan") or k:find("ItemTarget")) then names[#names + 1] = k end
+    end
+    for _, tn in ipairs({ "C_Item", "C_Spell", "C_Container", "C_PetInfo" }) do
+        for k, v in pairs(_G[tn] or {}) do
+            if type(v) == "function" and (k:find("Target") or k:find("Feed")) then names[#names + 1] = tn .. "." .. k end
+        end
+    end
+    table.sort(names)
+    lines[#lines + 1] = "api names: " .. table.concat(names, ",")
+
+    self.lastProbe = table.concat(lines, "\n")
+    for _, ln in ipairs(lines) do HHT.Print("feedprobe: " .. ln) end
 end
 
 function M:BuildOptions(form)

@@ -15,6 +15,33 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.6.1",
+        en = {
+            "New bug report: /hht report (or Settings, Bug report) opens a window with a compact, postable line holding your settings and debug info, ready to copy into a bug report.",
+            "Pet feeder: the menu no longer says 'Nothing to choose from' when your pet's food is missing from the list. Shift+click the feeder icon to scan your bags once: the addon opens them, casts Feed Pet and learns which food your pet eats. It also learns when you click Feed Pet yourself, and works with bag addons. Press Esc afterwards to drop the Feed Pet cursor.",
+            "Pet feeder: added Sickly Looking Fish and Galestrider Jerky, and a fallback diet by pet family when the game does not report one.",
+            "Beast watch: the alert now starts as a small hint and a click on it opens the full window (another click folds it back). The close button closes it completely.",
+            "Beast watch: the title says 'Possible ... beast' until you really see the beast, then 'Rare beast found' / 'Wishlist beast found' with a soft flash of the frame. Only the small 'possible' hint closes by itself, a found beast stays until you close it.",
+            "Beast watch: the sound only plays when a beast is found. Wishlist beasts get a green frame.",
+            "Beast watch: new option 'Show 'possible' hints near a known spawn' (off by default). Off means the alert only appears when you really see the beast.",
+            "Pet training hint: ranks your pet cannot pay for with its free training points are no longer offered. The costs of the pet trainer abilities are read from Beast Training the first time you open it.",
+            "Pet training hint: a tooltip on each row shows the spell, the needed pet level and training points, and your free points. The hint checks again when your points or your pet's loyalty change.",
+            "New test commands: /hht trainpoints [number|off], /hht feedforget and /hht feedprobe.",
+        },
+        de = {
+            "Neuer Fehlerbericht: /hht report (oder Einstellungen, Fehlerbericht) öffnet ein Fenster mit einer kompakten, postbaren Zeile mit deinen Einstellungen und Debug-Infos, bereit zum Kopieren in einen Fehlerbericht.",
+            "Tier füttern: Das Menü sagt nicht mehr 'Nothing to choose from', wenn das Futter deines Tiers in der Liste fehlt. Shift+Klick aufs Futter-Symbol scannt einmal deine Taschen: Das Addon öffnet sie, wirkt Tier füttern und lernt, was dein Tier frisst. Es lernt auch, wenn du selbst auf Tier füttern klickst, und funktioniert mit Taschen-Addons. Drücke danach Esc, um den Futter-Cursor zu beenden.",
+            "Tier füttern: Sickly Looking Fish und Galestrider Jerky ergänzt, dazu eine Ersatz-Nahrung nach Tierfamilie, wenn das Spiel keine meldet.",
+            "Tierbeobachtung: Der Hinweis startet jetzt als kleines Fenster, ein Klick öffnet das volle Fenster (ein weiterer Klick klappt es wieder ein). Der Schließen-Knopf schließt alles.",
+            "Tierbeobachtung: Der Titel lautet 'Mögliches ... Tier', bis du das Tier wirklich siehst, dann 'Seltenes Tier gefunden' / 'Wunschlisten-Tier gefunden' mit einem weichen Aufleuchten des Rahmens. Nur der kleine 'möglich'-Hinweis schließt sich selbst, ein gefundenes Tier bleibt, bis du es schließt.",
+            "Tierbeobachtung: Der Ton kommt nur, wenn ein Tier gefunden wird. Wunschlisten-Tiere haben einen grünen Rahmen.",
+            "Tierbeobachtung: Neue Option '\"Möglich\"-Hinweis nahe bekannter Spawnpunkte' (standardmäßig aus). Aus heißt, der Hinweis erscheint erst, wenn du das Tier wirklich siehst.",
+            "Begleiter-Training-Hinweis: Ränge, die dein Tier mit seinen freien Trainingspunkten nicht bezahlen kann, werden nicht mehr angeboten. Die Kosten der Tiertrainer-Fähigkeiten werden beim ersten Öffnen des Tiertrainings gelesen.",
+            "Begleiter-Training-Hinweis: Ein Tooltip an jeder Zeile zeigt den Zauber, das nötige Begleiter-Level und die Trainingspunkte sowie deine freien Punkte. Der Hinweis prüft neu, wenn sich Punkte oder Loyalität des Tiers ändern.",
+            "Neue Testbefehle: /hht trainpoints [Zahl|off], /hht feedforget und /hht feedprobe.",
+        },
+    },
+    {
         v = "1.6.0",
         en = {
             "New module Easy tame: with no pet and a tameable beast in range, a click-icon appears. The first click lays your Freezing Trap, the second casts Tame Beast, in combat too. If you cancel the tame, the trap step comes back. It skips steps you cannot do yet (no trap or no Tame Beast learned), stays hidden while you have a pet in the active slot or all 3 pets, shows the trap cooldown and your action bar key, and can have its own key. It is on by default and part of the quick install.",

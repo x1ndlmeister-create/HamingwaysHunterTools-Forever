@@ -557,7 +557,9 @@ function PD.PetInfo()
         local total, spent = HHT.PetCall("GetPetTrainingPoints")
         total, spent = HHT.SafeNumber(total), HHT.SafeNumber(spent)
         if total then info.points = total - (spent or 0) end
+        info.realPoints = info.points
     end
+    if PD.testPoints then info.points = PD.testPoints end
     return info
 end
 

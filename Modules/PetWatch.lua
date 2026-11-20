@@ -12,7 +12,7 @@ HHT:AddGerman({
     ["Alerts"] = "Hinweise",
     ["Alert for rare beasts"] = "Hinweis bei seltenen Tieren",
     ["Alert for wishlist beasts"] = "Hinweis bei Wunschlisten-Tieren",
-    ["Alert when close to a known spawn"] = "Hinweis nahe bekannter Spawnpunkte",
+    ["Show 'possible' hints near a known spawn"] = "\"Möglich\"-Hinweis nahe bekannter Spawnpunkte",
     ["Spawn distance (yards)"] = "Spawn-Entfernung (Meter)",
     ["Only beasts up to my level"] = "Nur Tiere bis zu meinem Level",
     ["Direction arrow"] = "Richtungspfeil",
@@ -21,10 +21,12 @@ HHT:AddGerman({
     ["Arrow size"] = "Pfeilgröße",
     ["Rare arrow"] = "Seltenen-Pfeil",
     ["Beast alert"] = "Tier-Hinweis",
-    ["RARE BEAST"] = "SELTENES TIER",
-    ["WISHLIST BEAST"] = "WUNSCHLISTEN-TIER",
-    ["POSSIBLE RARE NEARBY"] = "SELTENES TIER MÖGLICH",
-    ["POSSIBLE WISHLIST BEAST NEARBY"] = "WUNSCHLISTEN-TIER MÖGLICH",
+    ["RARE BEAST FOUND"] = "SELTENES TIER GEFUNDEN",
+    ["WISHLIST BEAST FOUND"] = "WUNSCHLISTEN-TIER GEFUNDEN",
+    ["POSSIBLE RARE BEAST"] = "MÖGLICHES SELTENES TIER",
+    ["POSSIBLE WISHLIST BEAST"] = "MÖGLICHES WUNSCHLISTEN-TIER",
+    ["Click for details"] = "Klick für Details",
+    ["Click to collapse"] = "Klick zum Einklappen",
     ["Arrow"] = "Pfeil",
     ["Arrow off"] = "Pfeil aus",
     ["Wishlist"] = "Wunschliste",
@@ -49,8 +51,8 @@ HHT:AddGerman({
     ["Other zone: %s"] = "Andere Zone: %s",
     ["Show test alert"] = "Test-Hinweis zeigen",
     ["Also inside dungeons"] = "Auch in Instanzen",
-    ["Play a sound"] = "Ton abspielen",
-    ["Show for (seconds, 0 = until closed)"] = "Anzeigedauer (Sekunden, 0 = bis geschlossen)",
+    ["Play a sound when a beast is found"] = "Ton abspielen, wenn ein Tier gefunden wird",
+    ["Close a 'possible' hint after (seconds, 0 = until closed)"] = "Hinweis \"möglich\" schließen nach (Sekunden, 0 = bis geschlossen)",
     ["Repeat for the same beast after (minutes)"] = "Wiederholung für dasselbe Tier nach (Minuten)",
     ["Alert border"] = "Rahmen Hinweis",
     ["Example Beast"] = "Beispiel-Tier",
@@ -72,7 +74,7 @@ local M = HHT:NewModule("petwatch", {
     positions = { main = { "TOP", "TOP", 0, -250 }, arrow = { "CENTER", "CENTER", 0, 160 } },
     defaults = {
         tooltip = true, markSeen = true,
-        rareAlert = true, wishAlert = true, nearAlert = true, nearYards = 150, onlyMyLevel = true,
+        rareAlert = true, wishAlert = true, nearHint = false, nearYards = 150, onlyMyLevel = true,
         sound = true, duration = 20, repeatMinutes = 10, inInstances = false, showModel = false,
         arrow = true, arrowAuto = false, arrowSize = 64,
         colors = { border = { 0.75, 0.55, 1 } },
@@ -83,6 +85,7 @@ local PW = {}
 HHT.PetWatch = PW
 
 local W, H = 440, 150
+local SMALL_H = 84
 local BODY, FOOT = 90, 52
 local MODEL_W = 150
 local ARROW_TEX = "Interface\\Minimap\\ROTATING-MINIMAPARROW"
@@ -90,6 +93,7 @@ local snoozeUntil, alerted = 0, {}
 local tameId, tameAt
 local mapBeasts = {}
 local RARE_COLOR = { rare = { 0.45, 0.75, 1 }, rareelite = { 0.75, 0.55, 1 }, elite = { 1, 0.82, 0.3 } }
+local WISH_COLOR = { 0.45, 0.85, 0.45 }
 
 local function PD() return HHT.PetDex end
 local function PM() return HHT.PetMap end
@@ -213,6 +217,50 @@ local function CloseAlert()
     if M.trackAuto then PW.Track(nil) end
 end
 
+-- Two stages: a small header-only hint and the full alert. Only a small "possible" hint closes by itself.
+local function ApplyStage(f)
+    if InCombatLockdown() then return end
+    local big = f.big and true or false
+    f.body:SetShown(big)
+    f.cardLayer:SetShown(big)
+    f.div:SetShown(big)
+    for _, w in ipairs({ f.target, f.map, f.arrowBtn, f.wishBtn, f.snooze }) do w:SetShown(big) end
+    local model = (big and f.withModel) and true or false
+    f.modelBg:SetShown(model)
+    f.model:SetShown(model)
+    f:SetHeight(big and f.bigH or SMALL_H)
+    HHT:ApplyPosition(f)
+end
+
+local function SetTimer(f)
+    local d = M.db.duration
+    if f.preview or f.found or f.big or d <= 0 then f.hideAt = nil else f.hideAt = GetTime() + d end
+end
+
+local function ToggleStage()
+    local f = M.frame
+    if not f or f.preview or HHT:IsUnlocked(M) or InCombatLockdown() then return end
+    f.big = not f.big
+    ApplyStage(f)
+    SetTimer(f)
+    if GameTooltip:GetOwner() == f.toggle then f.toggle:GetScript("OnEnter")(f.toggle) end
+end
+
+-- Soft pulse of the border when a beast is really found.
+local function Flash(f)
+    local c, t0 = f.baseColor, GetTime()
+    f.flasher:SetScript("OnUpdate", function(self)
+        local t = GetTime() - t0
+        if t >= 1.6 then
+            self:SetScript("OnUpdate", nil)
+            f.border:SetColor(c[1], c[2], c[3], 0.9)
+            return
+        end
+        local k = math.sin(t * math.pi / 0.8) ^ 2 * (1 - t / 1.6) * 0.85
+        f.border:SetColor(c[1] + (1 - c[1]) * k, c[2] + (1 - c[2]) * k, c[3] + (1 - c[3]) * k, 0.9 + 0.1 * k)
+    end)
+end
+
 function M:Build()
     if self.frame then return end
     local f = CreateFrame("Frame", "HamingwaysHunterToolsPetWatch", UIParent)
@@ -222,6 +270,20 @@ function M:Build()
     f.border = UI.Panel(f, 0.75, 0.55, 1)
     UI.PopupHead(f, W, { icon = true, onClose = CloseAlert })
     HHT.Icon.Attach(f.icon, true)
+    -- A click on the free area switches between the small hint and the full alert.
+    f.toggle = CreateFrame("Button", nil, f)
+    f.toggle:SetAllPoints(f)
+    f.toggle:SetFrameLevel(f:GetFrameLevel())
+    f.toggle:SetScript("OnClick", ToggleStage)
+    f.toggle:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(L(f.big and "Click to collapse" or "Click for details"))
+        GameTooltip:Show()
+    end)
+    f.toggle:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    f.close:SetFrameLevel(f:GetFrameLevel() + 6)
+    f.flasher = CreateFrame("Frame", nil, f)
+    f.big = true
     -- Body columns: the rows are created on demand in Body().
     f.cells, f.arows, f.foods, f.heads, f.hits, f.cards = {}, {}, {}, {}, {}, {}
     f.cardLayer = CreateFrame("Frame", nil, f)
@@ -276,9 +338,19 @@ function M:Build()
         CloseAlert()
     end)
     f.snooze:SetPoint("LEFT", f.wishBtn, "RIGHT", 8, 0)
+    for _, w in ipairs({ f.target, f.map, f.arrowBtn, f.wishBtn, f.snooze }) do w:SetFrameLevel(f:GetFrameLevel() + 8) end
 
     f:Hide()
     HHT:MakeMovable(f, self, "main", L("Beast alert"))
+    -- The saved position belongs to the big window: the small one keeps the same top edge whatever the anchor point is.
+    f.hhtYShift = function(point)
+        local delta = (f.bigH or H) - (f.big and (f.bigH or H) or SMALL_H)
+        if delta <= 0 then return 0 end
+        if point:find("TOP") then return 0 end
+        if point:find("BOTTOM") then return delta end
+        return delta / 2
+    end
+    f.toggle:EnableMouse(not HHT:IsUnlocked(self))
 end
 
 local function BuildArrow()
@@ -392,7 +464,10 @@ function M:Refresh()
     if HHT:IsUnlocked(self) then self:Preview() elseif f.preview then HHT.HideSecure(f); f.preview = nil end
 end
 
-function M:OnLockChanged() self:Refresh() end
+function M:OnLockChanged()
+    if self.frame then self.frame.toggle:EnableMouse(not HHT:IsUnlocked(self)) end
+    self:Refresh()
+end
 
 function M:OnCombat()
     local f = self.frame
@@ -766,11 +841,18 @@ function M:Show(data, preview)
     local pd = PD()
     if not f or not pd then return end
     local b, db = data.beast, self.db
+    local found = data.kind == "rare" or data.kind == "wish"
+    local same = f:IsShown() and not f.hhtFaded and not f.preview and f.beast == b
+    local wasFound = f.found
+    if preview or HHT:IsUnlocked(self) then f.big = true elseif not same then f.big = false end
+    f.found = found
     local eyebrow = ({
-        rare = "RARE BEAST", wish = "WISHLIST BEAST",
-        nearrare = "POSSIBLE RARE NEARBY", nearwish = "POSSIBLE WISHLIST BEAST NEARBY",
-    })[data.kind] or "RARE BEAST"
-    local c = RARE_COLOR[b.r] or db.colors.border
+        rare = "RARE BEAST FOUND", wish = "WISHLIST BEAST FOUND",
+        nearrare = "POSSIBLE RARE BEAST", nearwish = "POSSIBLE WISHLIST BEAST",
+    })[data.kind] or "RARE BEAST FOUND"
+    local c = (data.kind == "wish" or data.kind == "nearwish") and WISH_COLOR or RARE_COLOR[b.r] or db.colors.border
+    f.flasher:SetScript("OnUpdate", nil)
+    f.baseColor = c
     f.border:SetColor(c[1], c[2], c[3], 0.9)
     UI.SetPrimary(f.target, c[1], c[2], c[3])
     f.eyebrow:SetText(L(eyebrow))
@@ -786,22 +868,23 @@ function M:Show(data, preview)
     local w = W
     if not InCombatLockdown() then w = UI.PopupFit(f, need, 400, 600) else w = f:GetWidth() end
     local y = place(w)
-    f.modelBg:SetShown(withModel)
-    f.model:SetShown(withModel)
+    f.withModel = withModel
     if withModel then
         LoadModel(f, b)
     else
         f.modelKey = nil
     end
-    if not InCombatLockdown() then f:SetHeight(math.max(H, y + FOOT - 4)) end
+    f.bigH = math.max(H, y + FOOT - 4)
     f.beast, f.preview = b, preview
-    f.hideAt = (not preview and db.duration > 0) and (GetTime() + db.duration) or nil
+    SetTimer(f)
     if not InCombatLockdown() then
         f.target:SetAttribute("type", "macro")
         f.target:SetAttribute("macrotext", "/targetexact " .. b.n)
     end
     UpdateButtons()
     HHT.ShowSecure(f)
+    ApplyStage(f)
+    if found and not preview and not (same and wasFound) then Flash(f) end
 end
 
 function M:Preview()
@@ -899,7 +982,7 @@ end
 function M:NearTick()
     local db = self.db
     local pd = PD()
-    if not db.nearAlert or not pd or not pd.module.enabled or not PM() then return end
+    if not db.nearHint or not pd or not pd.module.enabled or not PM() then return end
     if not (db.rareAlert or db.wishAlert) or not Allowed(db) then return end
     if HHT.InCombat() or InCombatLockdown() then return end
     if self.frame and self.frame:IsShown() then return end
@@ -921,7 +1004,6 @@ function M:NearTick()
     if not best then return end
     alerted["near" .. best.id] = now
     self:Show({ kind = bestKind, beast = best, at = now })
-    if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
     if db.arrow and db.arrowAuto and not self.track then PW.Track(best, true, true) end
 end
 
@@ -1011,13 +1093,13 @@ function M:BuildOptions(form)
     form:Header(L("Alerts"))
     form:Check(L("Alert for rare beasts"), db, "rareAlert")
     form:Check(L("Alert for wishlist beasts"), db, "wishAlert")
-    form:Check(L("Alert when close to a known spawn"), db, "nearAlert")
+    form:Check(L("Show 'possible' hints near a known spawn"), db, "nearHint")
     form:Stepper(L("Spawn distance (yards)"), db, "nearYards", 50, 500, 25)
     form:Check(L("Only beasts up to my level"), db, "onlyMyLevel")
-    form:Check(L("Play a sound"), db, "sound")
+    form:Check(L("Play a sound when a beast is found"), db, "sound")
     form:Check(L("Show a 3D model of the beast"), db, "showModel")
     form:Check(L("Also inside dungeons"), db, "inInstances")
-    form:Stepper(L("Show for (seconds, 0 = until closed)"), db, "duration", 0, 60, 1)
+    form:Stepper(L("Close a 'possible' hint after (seconds, 0 = until closed)"), db, "duration", 0, 60, 1)
     form:Stepper(L("Repeat for the same beast after (minutes)"), db, "repeatMinutes", 1, 60, 1)
     form:Button(L("Show test alert"), function()
         if M.frame then

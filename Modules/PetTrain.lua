@@ -11,6 +11,8 @@ HHT:AddGerman({
     ["Learn"] = "Lernen",
     ["(now rank %d)"] = "(jetzt Rang %d)",
     ["(new)"] = "(neu)",
+    ["Needs pet level %d and %d training points."] = "Braucht Begleiter-Level %d und %d Trainingspunkte.",
+    ["Free training points: %s"] = "Freie Trainingspunkte: %s",
     ["%s is not offered in Beast Training right now."] = "%s wird in der Tierausbildung gerade nicht angeboten.",
     ["Your pet needs level %d for %s."] = "Dein Begleiter braucht Stufe %d für %s.",
     ["Not enough training points for %s (%d needed)."] = "Nicht genug Trainingspunkte für %s (%d nötig).",
@@ -32,8 +34,33 @@ local M = HHT:NewModule("pettrain", {
     name = "Pet training hint",
     desc = "Popup when your pet can learn ability ranks you already know, with a button to train each one.",
     positions = { main = { "TOP", "TOP", 0, -300 } },
-    defaults = { duration = 0, sound = true, alertFor = alertFor, colors = { border = { 0.67, 0.83, 0.45 } } },
+    defaults = { duration = 0, sound = true, alertFor = alertFor, costs = {}, colors = { border = { 0.67, 0.83, 0.45 } } },
 })
+
+-- Training point costs of the pet trainer abilities are not in the data: they are read from Beast Training once.
+local SEED_COSTS = { greatstamina = { [7] = 25 } }
+local function CostOf(a, rank, d)
+    if d and d.cost then return d.cost end
+    local db = M.db
+    return (db and db.costs and db.costs[a.key] and db.costs[a.key][rank]) or (SEED_COSTS[a.key] and SEED_COSTS[a.key][rank])
+end
+
+function M:LearnCosts()
+    local PD = HHT.PetDex
+    if not PD or not PD.CraftIsBeast() then return end
+    local keys = PD.NameKeys()
+    self.db.costs = self.db.costs or {}
+    for i = 1, (GetNumCrafts() or 0) do
+        local name, sub, kind, _, _, cost = GetCraftInfo(i)
+        local key = type(name) == "string" and kind ~= "header" and keys[PD.Fold(name)]
+        cost = tonumber(cost)
+        if key and cost and cost > 0 then
+            local t = self.db.costs[key] or {}
+            self.db.costs[key] = t
+            t[PD.RankFrom(sub) or 1] = cost
+        end
+    end
+end
 
 local W, ROW_H, MAXROWS = 440, 30, 5
 local ROW_TOP = 82
@@ -70,6 +97,9 @@ function M:Build()
         r.text:SetPoint("LEFT", r.icon, "RIGHT", 10, 0)
         r.text:SetJustifyH("LEFT")
         r.text:SetWordWrap(false)
+        r:EnableMouse(true)
+        r:SetScript("OnEnter", function(self) M:RowTip(self) end)
+        r:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
         r.ignore = UI.Button(r, 60, 24, L("Ignore"), function()
             local it = r.item
             if not it or f.preview then return end
@@ -112,6 +142,31 @@ function M:SetButtons()
             r.btn:SetAttribute("macrotext", "/cast " .. spell)
         end
     end
+end
+
+-- Tooltip of a row: the game's spell text (when it can show it) plus level, cost and the pet's free training points.
+function M:RowTip(row)
+    local it = row.item
+    if not it or not GameTooltip then return end
+    local PD = HHT.PetDex
+    local d = it.a.byRank[it.rank]
+    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+    local shown = false
+    if d and d.spell and GameTooltip.SetSpellByID then shown = pcall(GameTooltip.SetSpellByID, GameTooltip, d.spell) end
+    if not shown then
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine(string.format("%s %d", PD.AbilityName(it.a), it.rank), 0.67, 0.83, 0.45)
+    end
+    if d then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine(string.format(L("Needs pet level %d and %d training points."), d.level or 0, CostOf(it.a, it.rank, d) or 0), 1, 1, 1)
+    end
+    local info = PD.PetInfo()
+    if info and info.points then
+        local enough = not d or (CostOf(it.a, it.rank, d) or 0) <= info.points
+        GameTooltip:AddLine(string.format(L("Free training points: %s"), tostring(info.points)), enough and 0.45 or 0.95, enough and 0.9 or 0.85, enough and 0.45 or 0.3)
+    end
+    GameTooltip:Show()
 end
 
 function M:Fill(list, preview)
@@ -170,6 +225,7 @@ function M:Missing()
     local book = PD.ScanBook()
     local off = self.db.alertFor
     local list = { petName = info.name }
+    local points = info.points
     local cand = PD.FamilyAbilities(info.family)
     for _, a in ipairs(PD.trainerAbilities) do cand[#cand + 1] = a end
     for _, a in ipairs(cand) do
@@ -177,7 +233,8 @@ function M:Missing()
         if off[a.key] ~= false then
             for r = PD.KnownRank(a.key), 1, -1 do
                 local d = a.byRank[r]
-                if d and (d.level or 0) <= info.level then want = r; break end
+                -- a rank the pet cannot pay for with its free training points is not offered
+                if d and (d.level or 0) <= info.level and (not points or (CostOf(a, r, d) or 0) <= points) then want = r; break end
             end
             if want and want > have then list[#list + 1] = { a = a, rank = want, have = have } end
         end
@@ -280,7 +337,11 @@ function M:OnCraftShow()
     local PD = HHT.PetDex
     craftOpen = PD and PD.CraftIsBeast() or false
     self:SetButtons()
-    if craftOpen then self:Queue(0.5) end
+    if craftOpen then
+        self:LearnCosts()
+        C_Timer.After(0.6, function() if craftOpen then M:LearnCosts() end end)
+        self:Queue(0.5)
+    end
     if not craftOpen and pending then HHT.Print("PetTrain: craft window opened but is not Beast Training (" .. CraftInfo() .. ")") end
     if craftOpen and pending and GetTime() - pending.t < 5 then
         local p = pending
@@ -295,10 +356,11 @@ function M:OnCraftClose()
 end
 
 function M:OnPetEvent(_, unit)
-    if unit == "player" or unit == "pet" then self:Queue(1.5) end
+    if unit == "player" or unit == "pet" then loyMax, lastState = false, nil; self:Queue(1.5) end
 end
 
 function M:OnSpells()
+    loyMax, lastState = false, nil
     HHT.FlushHidden(self.frame)
     self:Queue(1.5)
 end
@@ -308,9 +370,28 @@ function M:OnCombat()
     if f and f:IsShown() and not f.preview then HHT.HideSecure(f); lastSig = nil end
 end
 
+-- Free training points or loyalty changed: look again (level-ups are covered by UNIT_LEVEL).
+-- At max loyalty (6) only a level-up can change the points, so the polling stops until the pet changes.
+local lastState, stateAt, loyMax = nil, 0, false
+local function StateSig()
+    local PD = HHT.PetDex
+    local info = PD and PD.PetInfo()
+    if not info then return nil end
+    local loy = HHT.PetCall and HHT.PetCall("GetPetLoyalty")
+    local level
+    if type(loy) == "string" and not HHT.IsSecret(loy) then level = tonumber(loy:match("(%d+)")) end
+    return tostring(info.points) .. ":" .. tostring(level or "?"), level and level >= 6
+end
+
 function M:Tick()
     local f = self.frame
     if dueAt and GetTime() >= dueAt then self:Check() end
+    if not loyMax and GetTime() - stateAt > 2 then
+        stateAt = GetTime()
+        local sig, atMax = StateSig()
+        if sig and lastState and sig ~= lastState then self:Queue(0.5) end
+        lastState, loyMax = sig, atMax or false
+    end
     if f and f:IsShown() and f.hideAt and not f.preview and GetTime() > f.hideAt then HHT.HideSecure(f); f.hideAt = nil end
 end
 
@@ -363,6 +444,25 @@ function M:Refresh()
 end
 
 function M:OnLockChanged() self:Refresh() end
+
+-- /hht trainpoints [N|off]: shows the pet's training points; with a number it pretends the pet has that many (until /reload).
+function M:TestPoints(arg)
+    local PD = HHT.PetDex
+    if not PD then return end
+    if arg == "off" or arg == "reset" then
+        PD.testPoints = nil
+    elseif arg ~= "" then
+        local n = tonumber(arg)
+        if not n then HHT.Print("PetTrain: use /hht trainpoints, /hht trainpoints <number> or /hht trainpoints off"); return end
+        PD.testPoints = math.floor(n)
+    end
+    local info = PD.PetInfo()
+    if not info then HHT.Print("PetTrain: no pet out."); return end
+    HHT.Print(string.format("PetTrain: %s level %s, real free points: %s%s", tostring(info.name), tostring(info.level),
+        tostring(info.realPoints), PD.testPoints and (", TEST value: " .. PD.testPoints .. " (/hht trainpoints off to end)") or ""))
+    lastSig, lastState = nil, nil
+    self:Queue(0)
+end
 
 -- /hht train: forget what was shown and look again.
 function M:Recheck()

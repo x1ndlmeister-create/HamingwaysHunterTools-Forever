@@ -16,7 +16,7 @@
 
 ![In-game installer: welcome page](images/install_welcome.png) ![In-game installer: swing timer page](images/install_step.png)
 
-**Version 1.6.0:** the new Easy tame module (click the trap icon, then Tame Beast, in combat too), a Hide default swing timer option, distance segments in any direction and two arc layouts, the missing pet warning stays quiet with Lone Wolf or without a callable pet, and the aspect toggle starts with your primary aspect. **1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
+**Version 1.6.1:** a bug report window (`/hht report`), the Pet feeder learns your pet's food (Shift+click the feeder icon scans your bags), the beast alert starts as a small "possible" hint and opens on a click, and the pet training hint no longer offers ranks your pet cannot pay for. **1.6.0:** the new Easy tame module (click the trap icon, then Tame Beast, in combat too), a Hide default swing timer option, distance segments in any direction and two arc layouts, the missing pet warning stays quiet with Lone Wolf or without a callable pet, and the aspect toggle starts with your primary aspect. **1.5.4:** the cast bar stays on top of other windows (with an option to move it back) and shows the whole batch when you craft several items at once, and the summon timer greys out as it runs down. **1.5.3:** the Restock ammo button also works with BetterBags' vendor window, sits correctly in the vendor window with only one vendor button, and hides on the Buyback tab. **1.5.2:** a Restock ammo button in the vendor window that fills your quiver or ammo pouch, ammo and food vendors appear on the map by themselves while the low warning is active, a "Show bar" choice for the Threat bar, separate Active and Missing colours for the target debuffs, and fixes for the flashing debuff icon. **1.5.1:** buff food is recognised reliably by the Pet feeder, and the low food warning works while the settings are open. **1.5.0:** the in-game installer shows the same rows as the settings and can be resized, the settings have a Simple and an Advanced view per section, one look (icon shape, borders, border glow, bar texture, rounded bars) for all modules, and a cast bar icon shape and spacing. **1.4.3:** click the rare pet arrow to target the beast, a pet menu on the pet bar (Rename, Dismiss, Release), and fixes for blocked-action errors. **1.4.2:** hide the default cast bar and pet frame, proc icons, and sharper proc graphics. **1.4.1:** fixes blocked-action errors in combat. **1.4.0:** the quick install with Hamingway the Hambringer (skippable, every tool on its own page), profiles with export and import, taking over settings from another character, a colour mark for the last 0.5 s of the Auto Shot, and "Show when" for the swing timer and cast bar. Download on [CurseForge](https://www.curseforge.com/wow/addons/hamingways-hunter-tools).
 
 A richer overview with all pictures is in [Overview.html](Overview.html). The screenshots use sample data from the test mode (`/hht shot`, `/hht test`), such as test beasts and frozen values.
 
@@ -139,7 +139,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 - Food choice and blacklist per pet
 - Always show, or only when the pet is not happy
 - Keeps the HHT Feed macro up to date
-
+- Shift-click the icon (or click Feed Pet yourself) to learn your pet's food from your bags; unknown food is learned and remembered
 ### Pets
 
 ![Pet status](images/petstatus.png)
@@ -173,7 +173,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 **Beast watch**
 - Tooltip shows tameable info, family, level, speed and taught abilities
 - Marks beasts as seen and, after taming, as tamed
-- Popup for rare and wishlist beasts; also close to known spawns
+- Popup for rare and wishlist beasts; also close to known spawns. It starts as a small "Possible rare beast" hint, a click opens the details (and back), and it turns into "Rare beast found" with a flash and a sound once you really see the beast
 - Buttons: target, map, arrow, wishlist, pause
 - Direction arrow to the rare beast, adjustable size
 - The popup shows family, level and zone, the family role with health, armor and damage modifiers, attack speed, diet, the abilities the beast teaches (ranks you can still learn in green) and the family abilities
@@ -190,7 +190,7 @@ A richer overview with all pictures is in [Overview.html](Overview.html). The sc
 **Pet training hint**
 - Popup when your pet can learn ability ranks you already know
 - A Learn button per ability trains the rank right away
-- Abilities can be ignored; display time, sound, test hint and border colour adjustable
+- Only ranks your pet can pay for with its free training points are offered; a tooltip on each row shows level, cost and free points- Abilities can be ignored; display time, sound, test hint and border colour adjustable
 
 ![Pet guide](images/guide.png)
 
@@ -501,7 +501,9 @@ Automatisch gelernt:
 | `/hht setup` | Start the in-game installer |
 | `/hht unlock` / `/hht lock` | Unlock or lock the frames |
 | `/hht reset` | Reset the positions |
-| `/hht petinfo` | Print the active pet's abilities |
+| `/hht report` | Create a bug report: one copyable line with settings and debug data |
+| `/hht trainpoints [number\|off]` | Show your pet's free training points or test with a made-up number |
+| `/hht feedforget` | Test: forget the learned pet food until the next `/reload` || `/hht petinfo` | Print the active pet's abilities |
 | `/hht pets` / `/hht pets name` | Open the pet database or search it |
 | `/hht guide` | Open the pet guide |
 | `/hht ammo` / `/hht ammo go` | Show ammo vendors on the map or set a waypoint to the nearest |
