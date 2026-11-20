@@ -903,6 +903,8 @@ function HHT:TraceProtectedCalls()
         if index[name] then
             pcall(hooksecurefunc, index, name, function(f)
                 if not InCombatLockdown() then return end
+                -- This hook's own frame is left out, so only real callers inside the addon are reported.
+                local own = debugstack(1, 1, 0):match("in function <(.-)>")
                 -- Anything unreadable (secret values) ends the trace for this call instead of raising an error.
                 pcall(function()
                     local ok2, prot = pcall(f.IsProtected, f)
@@ -911,7 +913,7 @@ function HHT:TraceProtectedCalls()
                     if HHT.IsSecret(stack) then return end
                     local lines = {}
                     for line in tostring(stack):gmatch("[^\n]+") do
-                        if line:find(ADDON, 1, true) then lines[#lines + 1] = line end
+                        if line:find(ADDON, 1, true) and not (own and line:find(own, 1, true)) then lines[#lines + 1] = line end
                         if #lines >= 3 then break end
                     end
                     if #lines == 0 then return end
