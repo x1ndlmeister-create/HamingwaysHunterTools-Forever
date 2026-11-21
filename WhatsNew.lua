@@ -15,6 +15,17 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.7.2",
+        en = {
+            "New option 'Mute all sounds (all modules)' in the general settings. It silences every alert sound of the addon at once. Each module still has its own sound option for single sounds.",
+            "The Procs sound is now off by default for new installs. Existing settings are not changed.",
+        },
+        de = {
+            "Neue Option 'Alle Töne stummschalten (alle Module)' in den allgemeinen Einstellungen. Sie schaltet alle Warntöne des Addons auf einmal stumm. Jedes Modul hat weiterhin seine eigene Ton-Option für einzelne Töne.",
+            "Der Procs-Ton ist bei neuen Installationen jetzt standardmäßig aus. Bestehende Einstellungen bleiben unverändert.",
+        },
+    },
+    {
         v = "1.7.1",
         en = {
             "Pet status: new options 'Show portrait' and 'Portrait border' (page Content). Without the portrait the bars move to the left, and the level and upgrade arrow are hidden. The options apply to the addon's own frame, not when it is attached to the default pet frame.",

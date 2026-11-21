@@ -521,7 +521,7 @@ function M:CheckAlerts(exists, dead, happy, unlocked)
         local hungry = happy <= limit
         if hungry and db.hungerWarn and not unlocked and (not self.hungry or happy < (self.lastHappy or 3)) then
             self:Alert(happy == 1 and L("Your pet is unhappy: time to feed it.") or L("Your pet is only content: feed it for full damage."))
-            if db.hungerSound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+            if db.hungerSound then HHT.PlayAlert() end
         end
         self.hungry, self.lastHappy = hungry, happy
     end

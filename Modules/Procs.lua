@@ -80,7 +80,7 @@ local M = HHT:NewModule("procs", {
     desc = "Big art around your character while a proc or buff is active, also in combat.",
     positions = { main = { "CENTER", "CENTER", 0, 0 } },
     defaults = {
-        size = 200, sound = true, drain = true, rising = false, scan = false, iconSize = 48, shape = "round",
+        size = 200, sound = false, drain = true, rising = false, scan = false, iconSize = 48, shape = "round",
         entries = { { ids = { 6150 }, art = ArtIndex(MEDIA .. "Procs\\ArrowStage1") } }, -- Quick Shots
     },
 })
@@ -244,7 +244,7 @@ function M:InitArt(button, key)
         pcall(ag.Play, ag)
         if M.db.sound and GetTime() - M.lastSound > 1 then
             M.lastSound = GetTime()
-            pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+            HHT.PlayAlert()
         end
     end)
 

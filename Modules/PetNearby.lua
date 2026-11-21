@@ -501,7 +501,7 @@ function M:CheckZone()
     if zoneSeen[map] and now - zoneSeen[map] < db.repeatMinutes * 60 then return end
     zoneSeen[map] = now
     self:ShowZone(list, zoneName)
-    if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+    if db.sound then HHT.PlayAlert() end
 end
 
 -- Cached for the upgrade arrow on the pet portrait: rebuilt after zone, level, pet or spell changes.
@@ -572,7 +572,7 @@ function M:OnUnit(event, unit)
         title = string.format(L("%s teaches %s %d"), name, abName, best.rank),
         sub = sub, beast = beast, abilityKey = best.a.key, abilityName = abName, beastName = name,
     })
-    if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+    if db.sound then HHT.PlayAlert() end
 end
 
 function M:Why()

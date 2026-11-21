@@ -36,6 +36,7 @@ HHT:AddGerman({
     ["Show outline on unlocked frames"] = "Rahmen bei entsperrten Fenstern zeigen",
     ["Minimap button"] = "Minimap-Button",
     ["Tell me about new versions"] = "Auf neue Versionen hinweisen",
+    ["Mute all sounds (all modules)"] = "Alle Töne stummschalten (alle Module)",
     ["A newer version (%s) is available on CurseForge. You are using %s."] = "Eine neuere Version (%s) gibt es auf CurseForge. Du nutzt %s.",
     ["Global scale"] = "Globale Größe",
     ["Global opacity"] = "Globale Deckkraft",

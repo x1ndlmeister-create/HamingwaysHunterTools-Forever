@@ -663,7 +663,7 @@ function M:Tick()
     end
     self.warnKeys = warnNow
     if db.sound and ring and not HHT:IsUnlocked(self) then
-        pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+        HHT.PlayAlert()
     end
 end
 

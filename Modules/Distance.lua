@@ -255,7 +255,7 @@ function M:Tick()
 
     if band ~= self.band then
         if band == "DEAD" and self.band ~= "DEAD" and db.sound then
-            pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+            HHT.PlayAlert()
         end
         self.band = band
         self:Paint(band)

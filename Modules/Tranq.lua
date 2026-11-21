@@ -849,7 +849,7 @@ function M:Update()
     local isNext = nxt ~= nil and nxt.name == self.me
     local alertOn = db.alert and (isNext or unlocked) and true or false
     if alertOn and isNext and not self.wasNext and db.sound and not unlocked then
-        pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+        HHT.PlayAlert()
     end
     self.wasNext = isNext
     if self.alertFrame then self.alertFrame:SetShown(alertOn) end

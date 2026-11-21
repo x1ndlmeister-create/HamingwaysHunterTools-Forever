@@ -950,7 +950,7 @@ function M:OnUnit(event, unit)
     end
     alerted[id] = now
     self:Show(data)
-    if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+    if db.sound then HHT.PlayAlert() end
 end
 
 -- ---------------------------------------------------------------------------

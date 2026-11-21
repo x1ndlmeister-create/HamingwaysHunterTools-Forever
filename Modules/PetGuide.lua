@@ -278,7 +278,7 @@ function M:OnLevel(_, level)
     if tonumber(level) ~= 10 or not db.levelHint or db.shown then return end
     db.shown = true
     self:Show(false)
-    if db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+    if db.sound then HHT.PlayAlert() end
 end
 
 function M:Test()

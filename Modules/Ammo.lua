@@ -464,7 +464,7 @@ function M:Tick()
     end
     local signature = table.concat(sig, ",")
     if isLow and not self.wasLow and db.sound and not unlocked and not self.shot then
-        pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+        HHT.PlayAlert()
     end
     self.wasLow = isLow
     if signature == self.signature then return end

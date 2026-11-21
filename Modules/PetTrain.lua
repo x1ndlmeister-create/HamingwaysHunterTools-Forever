@@ -270,7 +270,7 @@ function M:Check()
     end
     lastSig = sig
     self:ShowList(list)
-    if self.db.sound then pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959) end
+    if self.db.sound then HHT.PlayAlert() end
 end
 
 local function CraftInfo()

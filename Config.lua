@@ -206,6 +206,7 @@ function C:BuildGeneral(form)
     form:Check(L("Snap frames to each other while moving"), g, "snap")
     form:Check(L("Show outline on unlocked frames"), g, "outline", function() HHT:ApplyLock() end)
     form:Check(L("Minimap button"), g, "minimap", function() C:UpdateMinimap() end)
+    form:Check(L("Mute all sounds (all modules)"), g, "muteSounds")
     form:Check(L("Tell me about new versions"), g, "versionNotice")
     form:Check(L("Show what's new after an update"), g, "whatsNew")
 end

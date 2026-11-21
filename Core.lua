@@ -37,6 +37,13 @@ function HHT.SafeNumber(v)
     return v
 end
 
+-- The alert sound of every module. The general setting "muteSounds" silences all of them at once.
+function HHT.PlayAlert()
+    local g = HHT.db and HHT.db.general
+    if g and g.muteSounds then return end
+    pcall(PlaySound, (SOUNDKIT and SOUNDKIT.RAID_WARNING) or 8959)
+end
+
 -- ---------------------------------------------------------------------------
 -- Tables
 -- ---------------------------------------------------------------------------
@@ -188,6 +195,7 @@ local GENERAL_DEFAULTS = {
     lang = "auto",
     minimap = true,
     minimapAngle = 215,
+    muteSounds = false,
     versionNotice = true,
     whatsNew = true,
     scale = 1.0,
