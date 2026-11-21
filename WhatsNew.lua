@@ -15,6 +15,17 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.7.1",
+        en = {
+            "Pet status: new options 'Show portrait' and 'Portrait border' (page Content). Without the portrait the bars move to the left, and the level and upgrade arrow are hidden. The options apply to the addon's own frame, not when it is attached to the default pet frame.",
+            "Profiles: the characters of your account are now recognised by their name only. The game client reported an empty realm name after the latest patch, which listed every character twice in the 'take over settings' list. Old entries are cleaned up by themselves.",
+        },
+        de = {
+            "Begleiter-Status: Neue Optionen 'Porträt zeigen' und 'Porträt-Rand' (Seite Inhalt). Ohne Porträt rücken die Balken nach links, Level und Upgrade-Pfeil entfallen. Die Optionen gelten für das eigene Frame des Addons, nicht wenn es am Standard-Begleiterrahmen angeheftet ist.",
+            "Profile: Die Charaktere deines Accounts werden jetzt nur noch am Namen erkannt. Der Spielclient meldete nach dem letzten Patch einen leeren Realm-Namen, wodurch jeder Charakter in der Liste 'Einstellungen übernehmen' doppelt auftauchte. Alte Einträge werden von selbst aufgeräumt.",
+        },
+    },
+    {
         v = "1.7.0",
         en = {
             "New module Pet stance: one button and key that switches your pet between Aggressive, Defensive, Assist and Passive, also in combat. Pick a main stance and a second one to toggle with, and give Shift, Ctrl and Alt their own stances on the same key. A right-click on the icon lists the four stances. The icon shows the active stance, your key, or the key of the pet bar button. It is on by default and part of the quick install (page 'Aspect, tracking and pet stance').",

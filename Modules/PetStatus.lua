@@ -14,6 +14,8 @@ HHT:AddGerman({
     ["Show name"] = "Namen zeigen",
     ["Hide when no pet"] = "Ausblenden wenn kein Begleiter",
     ["Portrait size"] = "Porträtgröße",
+    ["Show portrait"] = "Porträt zeigen",
+    ["Portrait border"] = "Porträt-Rand",
     ["Health"] = "Leben",
     ["Dead"] = "Tot",
     ["Unhappy"] = "Unzufrieden",
@@ -61,7 +63,7 @@ local M = HHT:NewModule("pet", {
     desc = "Pet portrait, health bar and happiness.",
     positions = { main = { "CENTER", "CENTER", -260, -120 } },
     defaults = {
-        shape = "round", iconSize = 34, width = 150, height = 18, bgAlpha = 0.85,
+        shape = "round", iconSize = 34, showPortrait = true, portraitBorder = true, width = 150, height = 18, bgAlpha = 0.85,
         barTexture = "blizzard", barShape = "square", bevel = 0.6, border = true, borderSize = 1, smooth = true,
         showLabel = true, showTime = true, showHappiness = true, hideNoPet = true,
         showLevel = true, showXp = true, showLoyalty = true, showTraining = true, subHeight = 10, barSpacing = 2,
@@ -328,8 +330,10 @@ function M:Layout()
     local db = self:BuildView()
     local docked = db.docked and true or false
     local s = db.iconSize
-    local xoff = docked and 0 or s + 6
-    f.portrait:SetShown(not docked)
+    local noPort = not docked and db.showPortrait == false
+    self.noPortrait = noPort
+    local xoff = (docked or noPort) and 0 or s + 6
+    f.portrait:SetShown(not docked and not noPort)
     f.bar:SetShown(not docked)
     -- docked: level and upgrade arrow are drawn over the Blizzard portrait
     local pp = _G.PetPortrait or (_G.PetFrame and _G.PetFrame.portrait) or f.portrait
@@ -350,7 +354,7 @@ function M:Layout()
         cnt:SetPoint("BOTTOMRIGHT", f.portrait, "BOTTOMRIGHT", -1, 2)
     end
     if not docked then
-        f.portrait:Style(s, db.shape, 2, 1, false)
+        f.portrait:Style(s, db.shape, db.portraitBorder == false and 0 or 2, 1, false)
         f.portrait:SetBorderColor(HHT.Col(db, "edge"))
     end
     f.portrait:ClearAllPoints()
@@ -377,7 +381,7 @@ function M:Layout()
     if db.showXp or db.showTraining then totalH = totalH + gap + db.subHeight end
     local showLoy = db.showLoyalty and not self.loyHidden
     if showLoy then totalH = totalH + gap + db.subHeight end
-    local fh = math.max(s, totalH)
+    local fh = math.max(noPort and 0 or s, totalH)
     f.portrait:SetPoint("TOPLEFT", f, "TOPLEFT", 0, -(fh - s) / 2)
     f.bar:ClearAllPoints()
     f.bar:SetPoint("TOPLEFT", f, "TOPLEFT", xoff, -(fh - totalH) / 2)
@@ -418,7 +422,7 @@ function M:Layout()
     f.happy:ClearAllPoints()
     f.happy:SetPoint("LEFT", f.bar, "RIGHT", 4, 0)
     f.happy:SetShown(db.showHappiness)
-    local w = docked and db.width or (s + 6 + db.width + (db.showHappiness and (db.height + 10) or 0))
+    local w = docked and db.width or (xoff + db.width + (db.showHappiness and (db.height + 10) or 0))
     local fullH = fh
     f.abil:ClearAllPoints()
     f.abil:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -gap)
@@ -514,7 +518,7 @@ end
 function M:UpdateUpgrade(unlocked)
     local up = self.frame.up
     local pn = HHT.modules.petnearby
-    local list = (self.db.showUpgrades and not unlocked and pn and pn.enabled) and pn:ZoneUpgrades() or nil
+    local list = (self.db.showUpgrades and not self.noPortrait and not unlocked and pn and pn.enabled) and pn:ZoneUpgrades() or nil
     local show = list and #list > 0 and true or false
     if up:IsShown() ~= show then up:SetShown(show) end
     if show then
@@ -830,6 +834,8 @@ function M:BuildOptions(form)
     local db = self.db
     form:Header(L("Appearance"))
     form:Cycle(L("Icon shape"), db, "shape", HHT.ShapeChoices())
+    form:Check(L("Show portrait"), db, "showPortrait")
+    form:Check(L("Portrait border"), db, "portraitBorder")
     form:Stepper(L("Portrait size"), db, "iconSize", 20, 80, 2)
     form:Stepper(L("Bar width"), db, "width", 60, 400, 10)
     form:Stepper(L("Bar height"), db, "height", 8, 40, 1)

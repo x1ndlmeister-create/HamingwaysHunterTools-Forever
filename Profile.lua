@@ -75,8 +75,14 @@ local function FullName()
     return first
 end
 
+-- The realm is not part of the key: the client may report it empty, and a name is unique enough for us.
 local function CharKey()
-    return FullName() .. "-" .. (GetRealmName() or "?")
+    return FullName()
+end
+
+-- Older versions stored "Name-Realm"; this returns the plain name of any stored key.
+local function KeyName(key)
+    return key:match("^(.-)%-[^%-]*$") or key
 end
 
 local function Trim(s)
@@ -235,9 +241,9 @@ end
 local function Chars()
     local me, list = CharKey(), {}
     for key, c in pairs(Shared().chars) do
-        if key ~= me and type(c) == "table" and type(c.text) == "string" then
-            local name, realm = key:match("^(.-)%-([^%-]+)$")
-            list[#list + 1] = { key = key, name = name or key, realm = realm, text = c.text, time = c.time or 0, level = c.level }
+        local name = KeyName(key)
+        if name ~= me and type(c) == "table" and type(c.text) == "string" then
+            list[#list + 1] = { key = key, name = name, text = c.text, time = c.time or 0, level = c.level }
         end
     end
     table.sort(list, function(a, b)
@@ -248,7 +254,6 @@ local function Chars()
 end
 
 local function CharLabel(c)
-    if c.realm and c.realm ~= GetRealmName() then return c.name .. " (" .. c.realm .. ")" end
     return c.name
 end
 
@@ -264,7 +269,11 @@ end
 function PR.Publish()
     local g = HHT.db and HHT.db.general
     if not g or (g.setupDone == nil and g.origin ~= "old") then return end
-    Shared().chars[CharKey()] = { text = PR.Export(), time = time(), ver = HHT.version, level = UnitLevel("player") }
+    local chars, me = Shared().chars, CharKey()
+    for key in pairs(chars) do
+        if key ~= me and KeyName(key) == me then chars[key] = nil end
+    end
+    chars[me] = { text = PR.Export(), time = time(), ver = HHT.version, level = UnitLevel("player") }
 end
 
 local function NameTaken(name, except)

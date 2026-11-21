@@ -7,7 +7,7 @@
 ## Category-deDE: Jäger
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.7.0
+## Version: 1.7.1
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 ## SavedVariables: HamingwaysHunterToolsShared
 
