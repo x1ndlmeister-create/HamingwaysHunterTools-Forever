@@ -15,6 +15,19 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.7.3",
+        en = {
+            "Pet training hint: fixed a missing hint for ranks your pet could afford. Beast Training only charges the difference to the rank the pet already has (for example 4 points for Bite rank 7 over rank 6), the hint wrongly counted the full price.",
+            "Warnings: the Hunter's Mark warning can now be limited to 'All targets', 'Elites and bosses' or 'Bosses only', the same as the target debuffs.",
+            "Cooldowns: with 'Show when' set to 'Combat or target', the icons now also appear when you pull without a target. They kept hidden because they never got a place on the bar.",
+        },
+        de = {
+            "Begleiter-Training-Hinweis: Ein fehlender Hinweis für Ränge, die dein Begleiter bezahlen konnte, ist behoben. Das Tiertraining berechnet nur die Differenz zum Rang, den der Begleiter schon hat (zum Beispiel 4 Punkte für Biss Rang 7 über Rang 6), der Hinweis hat fälschlich den vollen Preis gezählt.",
+            "Warnungen: Die Jägermarkierung-Warnung lässt sich jetzt auf 'Alle Ziele', 'Elite und Bosse' oder 'Nur Bosse' beschränken, genau wie bei den Ziel-Debuffs.",
+            "Abklingzeiten: Mit 'Anzeigen wenn' auf 'Kampf oder Ziel' erscheinen die Symbole jetzt auch, wenn du ohne Ziel pullst. Sie blieben versteckt, weil sie nie einen Platz in der Leiste bekamen.",
+        },
+    },
+    {
         v = "1.7.2",
         en = {
             "New option 'Mute all sounds (all modules)' in the general settings. It silences every alert sound of the addon at once. Each module still has its own sound option for single sounds.",

@@ -45,6 +45,16 @@ local function CostOf(a, rank, d)
     return (db and db.costs and db.costs[a.key] and db.costs[a.key][rank]) or (SEED_COSTS[a.key] and SEED_COSTS[a.key][rank])
 end
 
+-- Beast Training only charges the difference to the rank the pet already has (rank 7 at 21 over rank 6 at 17 = 4).
+local function NetCost(a, rank, d, have)
+    local c = CostOf(a, rank, d)
+    if c and d and d.cost and (have or 0) > 0 and have < rank then
+        local h = a.byRank[have]
+        if h and h.cost then c = math.max(c - h.cost, 0) end
+    end
+    return c
+end
+
 function M:LearnCosts()
     local PD = HHT.PetDex
     if not PD or not PD.CraftIsBeast() then return end
@@ -159,11 +169,11 @@ function M:RowTip(row)
     end
     if d then
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(string.format(L("Needs pet level %d and %d training points."), d.level or 0, CostOf(it.a, it.rank, d) or 0), 1, 1, 1)
+        GameTooltip:AddLine(string.format(L("Needs pet level %d and %d training points."), d.level or 0, NetCost(it.a, it.rank, d, it.have) or 0), 1, 1, 1)
     end
     local info = PD.PetInfo()
     if info and info.points then
-        local enough = not d or (CostOf(it.a, it.rank, d) or 0) <= info.points
+        local enough = not d or (NetCost(it.a, it.rank, d, it.have) or 0) <= info.points
         GameTooltip:AddLine(string.format(L("Free training points: %s"), tostring(info.points)), enough and 0.45 or 0.95, enough and 0.9 or 0.85, enough and 0.45 or 0.3)
     end
     GameTooltip:Show()
@@ -234,7 +244,7 @@ function M:Missing()
             for r = PD.KnownRank(a.key), 1, -1 do
                 local d = a.byRank[r]
                 -- a rank the pet cannot pay for with its free training points is not offered
-                if d and (d.level or 0) <= info.level and (not points or (CostOf(a, r, d) or 0) <= points) then want = r; break end
+                if d and (d.level or 0) <= info.level and (not points or (NetCost(a, r, d, have) or 0) <= points) then want = r; break end
             end
             if want and want > have then list[#list + 1] = { a = a, rank = want, have = have } end
         end

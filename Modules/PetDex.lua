@@ -1110,8 +1110,10 @@ local function PetStatus(a, info, petRanks)
     if info.level and nxt.level > info.level then
         return string.format(L("Needs pet level %d"), nxt.level), 0.95, 0.6, 0.2
     end
-    if info.points and nxt.cost > info.points then
-        return string.format(L("Needs %d training points"), nxt.cost), 0.95, 0.85, 0.3
+    local cur = pet > 0 and a.byRank[pet]
+    local need = nxt.cost - ((cur and cur.cost) or 0)
+    if info.points and need > info.points then
+        return string.format(L("Needs %d training points"), need), 0.95, 0.85, 0.3
     end
     return L("Ready to train"), 0.4, 0.95, 0.4
 end

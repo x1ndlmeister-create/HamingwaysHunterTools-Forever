@@ -335,12 +335,15 @@ function M:TickSingle(show)
                         onCd = (idx % 2 == 0), demo = true,
                     }
                 end
-                local vis = show and item ~= nil
-                if vis and not unlocked then
-                    if db.display == "cd" then vis = item.onCd == true
-                    elseif db.display == "ready" then vis = item.onCd ~= true end
+                -- fits: the icon belongs on the bar. It is placed out of combat even while the visibility setting hides it,
+                -- because in combat the game does not let the addon move it anymore.
+                local fits = item ~= nil
+                if fits and not unlocked then
+                    if db.display == "cd" then fits = item.onCd == true
+                    elseif db.display == "ready" then fits = item.onCd ~= true end
                 end
-                if vis then slot = slot + 1 end
+                local vis = show and fits
+                if fits then slot = slot + 1 end
                 if not combat then
                     local sig = base .. ":" .. (bar and 0 or idx)
                     local restyle = s.styleSig ~= sig
@@ -353,7 +356,7 @@ function M:TickSingle(show)
                     end
                     if s.follow ~= bar then SetFollow(s, bar, canMove) end
                     if bar then
-                        if vis and (restyle or s.slot ~= slot) then
+                        if fits and (restyle or s.slot ~= slot) then
                             self:Place(s.holder, slot - 1)
                             s.slot = slot
                         end

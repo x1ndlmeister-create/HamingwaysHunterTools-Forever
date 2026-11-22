@@ -11,8 +11,9 @@ HHT:AddGerman({
     ["Warn when Trueshot Aura is missing"] = "Warnen wenn Trueshot-Aura fehlt",
     ["Warn when Hunter's Mark is missing"] = "Warnen wenn Mal des Jägers fehlt",
     ["Hunter's Mark targets"] = "Mal-des-Jägers Ziele",
-    ["Elites and bosses only"] = "Nur Elite und Bosse",
-    ["Every enemy"] = "Jeder Gegner",
+    ["All targets"] = "Alle Ziele",
+    ["Elites and bosses"] = "Elite und Bosse",
+    ["Bosses only"] = "Nur Bosse",
     ["Warn when the pet is missing or dead"] = "Warnen wenn Begleiter fehlt oder tot ist",
     ["Blink warnings"] = "Warnungen blinken lassen",
     ["Play a sound for new warnings"] = "Ton bei neuen Warnungen",
@@ -468,9 +469,9 @@ function M:Collect()
         local rs = S.Resolve("@hunterMark")
         if rs.known then
             local worth = true
-            if db.markTargets == "elite" then
-                local ok, c = pcall(UnitClassification, "target")
-                worth = ok and not HHT.IsSecret(c) and c ~= "normal" and c ~= "trivial" and c ~= "minus"
+            if db.markTargets == "elite" or db.markTargets == "boss" then
+                local tier = HHT.ReadTier and HHT.ReadTier()
+                worth = tier ~= nil and tier >= (db.markTargets == "boss" and 2 or 1)
             end
             if worth then
                 local found = S.AuraByName("target", rs.name, "HARMFUL|PLAYER")
@@ -700,7 +701,7 @@ function M:BuildOptions(form)
     form:Header(L("Hunter's Mark"))
     form:Check(L("Warn when Hunter's Mark is missing"), db, "markWarn")
     form:Cycle(L("Hunter's Mark targets"), db, "markTargets", {
-        { "elite", L("Elites and bosses only") }, { "all", L("Every enemy") } })
+        { "all", L("All targets") }, { "elite", L("Elites and bosses") }, { "boss", L("Bosses only") } })
     form:Header(L("Pet"))
     form:Check(L("Warn when the pet is missing or dead"), db, "petWarn")
     form:Check(L("Not with Lone Wolf"), db, "loneWolfQuiet")
