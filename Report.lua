@@ -122,13 +122,15 @@ local function Strip(t)
     return ok and r or "<unreadable>"
 end
 
-local COMMANDS = { "debug", "pet", "tame", "cd", "ammo debug", "watch", "debuffs", "procs", "totems", "petmap" }
+local COMMANDS = { "debug", "pet", "tame", "cd", "ammo debug", "watch", "debuffs", "procs", "totems", "petmap", "stance" }
 
 local function Capture(cmd, lines)
     local real = HHT.Print
     local buf = {}
     HHT.Print = function(m) buf[#buf + 1] = Strip(m) end
+    R.capturing = true
     local ok, err = pcall(SlashCmdList["HAMINGWAYSHUNTERTOOLS"], cmd)
+    R.capturing = false
     HHT.Print = real
     if not ok then buf[#buf + 1] = "error: " .. tostring(err) end
     if #buf == 0 then return end

@@ -48,6 +48,7 @@ HHT:AddGerman({
     ["Food scan needs the default bags (bag addons like Baganator cannot be read)."] = "Der Futter-Scan braucht die Standard-Taschen (Taschen-Addons wie Baganator sind nicht lesbar).",
     ["Food scan: nothing new found."] = "Futter-Scan: nichts Neues gefunden.",
     ["Press Esc to cancel the Feed Pet cursor."] = "Esc drücken, um den Füttern-Cursor abzubrechen.",
+    ["Food scan does not work in combat."] = "Der Futter-Scan geht nicht im Kampf.",
 })
 
 local M = HHT:NewModule("feeder", {
@@ -794,6 +795,11 @@ end
 
 -- Shift+click on the icon: Feed Pet starts waiting for a target (secure macro) and the bags are read.
 function M:ScanBags()
+    -- Opening and closing the bags and reading their buttons is not allowed in combat, and Feed Pet does not work there anyway.
+    if InCombatLockdown() or HHT.InCombat() then
+        HHT.Print(L("Food scan does not work in combat."))
+        return
+    end
     self.scanning, self.scanStart, self.openedBags = true, GetTime(), false
     local cb = _G.ContainerFrameCombinedBags
     local open = (cb and cb:IsShown()) or (_G.ContainerFrame1 and _G.ContainerFrame1:IsShown())
@@ -805,7 +811,7 @@ end
 
 function M:EndScan(text)
     self.scanning = false
-    if self.openedBags and CloseAllBags then pcall(CloseAllBags) end
+    if self.openedBags and CloseAllBags and not InCombatLockdown() then pcall(CloseAllBags) end
     self.openedBags = false
     if text then HHT.Print(text) end
     -- SpellStopTargeting is protected, so the cursor is left for the player to cancel
@@ -815,6 +821,11 @@ end
 -- Reads the bags once per Feed Pet targeting, after the game has updated the dimming.
 function M:LearnTick()
     local now = GetTime()
+    if InCombatLockdown() or HHT.InCombat() then
+        if self.scanning then self:EndScan() end
+        self.targetSince, self.learnedNow = nil, nil
+        return
+    end
     if not (SpellIsTargeting and SpellIsTargeting() and C_Spell and C_Spell.GetTargetSpellID) then
         self.targetSince, self.learnedNow = nil, nil
         if self.scanning and now - (self.scanStart or 0) > 2 then

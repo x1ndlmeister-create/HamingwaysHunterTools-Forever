@@ -312,7 +312,7 @@ local function FindBook(s)
         local ok, info = pcall(api.GetSpellBookItemInfo, i, bank)
         if ok and type(info) == "table" and type(info.name) == "string" and not HHT.IsSecret(info.name)
             and (info.name:lower() == want or BY_NAME[info.name] == s or info.name:lower() == s.label:lower()) then
-            return i, bank
+            return i, bank, info
         end
     end
 end
@@ -336,6 +336,19 @@ end
 
 -- Unused action slots for the hidden buttons: 115-120 belong to a class page hunters do not have, so no bar shows them.
 local HIDDEN = { 120, 119, 118, 117, 116, 115 }
+
+-- A slot among the hidden ones that already holds the stance (placed earlier, but no longer remembered) is taken over instead of
+-- placing it again on another slot.
+local function AdoptSlot(db, key, info)
+    local want = {}
+    if info and info.iconID then want[tostring(info.iconID)] = true end
+    if M.tex[key] then want[tostring(M.tex[key])] = true end
+    local used = {}
+    for _, n in pairs(db.hidden) do used[n] = true end
+    for _, c in ipairs(HIDDEN) do
+        if not used[c] and HasAction(c) and want[tostring(GetActionTexture(c))] then return c end
+    end
+end
 
 -- Puts the stances on free action slots, once and out of combat, so the button can use them in combat.
 -- Only stances that are not on the pet bar are placed, only on empty slots (a slot chosen in the
@@ -361,8 +374,13 @@ function M:EnsureActions()
             end
         else
             local onBar = self.slotOf and self.slotOf[key]
-            local i, bank = FindBook(s)
-            if self.pet and not onBar and i and api.PickupSpellBookItem and GetCursorInfo() == nil then
+            local i, bank, info = FindBook(s)
+            local found = self.pet and not onBar and i and AdoptSlot(db, key, info)
+            if found then
+                db.hidden[key] = found
+                local ok, now = pcall(ActionSig, found)
+                db.sig[key] = ok and now or nil
+            elseif self.pet and not onBar and i and api.PickupSpellBookItem and GetCursorInfo() == nil then
                 local free
                 for _, c in ipairs(db.pref[key] and { db.pref[key] } or HIDDEN) do
                     if not HasAction(c) then free = c; break end
@@ -587,14 +605,26 @@ function M:Debug()
         HHT.Print(string.format("  %s: a=%q b=%q", s[1], tostring(self.button:GetAttribute("a" .. s[1])), tostring(self.button:GetAttribute("b" .. s[1]))))
     end
     HHT.Print(string.format("  cur attr=%q", tostring(self.button:GetAttribute("cur"))))
-    self.trace = not self.trace
-    HHT.Print("  click trace " .. (self.trace and "ON" or "OFF"))
+    HHT.Print(string.format("  button: shown=%s mouse=%s w=%.0f type1=%q action1=%q clickKeyDown=%s", tostring(self.button:IsShown()), tostring(self.button:IsMouseEnabled()),
+        self.button:GetWidth() or 0, tostring(self.button:GetAttribute("type1")), tostring(self.button:GetAttribute("action1")), tostring(GetCVar and GetCVar("ActionButtonUseKeyDown"))))
+    if not (HHT.Report and HHT.Report.capturing) then
+        self.trace = not self.trace
+        HHT.Print("  click trace " .. (self.trace and "ON" or "OFF"))
+    end
     for _, s in ipairs(STANCES) do
         local key = s.key
         local slot = self.db.hidden and self.db.hidden[key]
         local kind, id = nil, nil
         if slot then kind, id = GetActionInfo(slot) end
         HHT.Print(string.format("  %s: slot=%s kind=%s id=%s current=%s target=%s", key, tostring(slot), tostring(kind), tostring(id), tostring(slot and IsCurrentAction(slot)), CmdOf(s)))
+    end
+    for _, s in ipairs(STANCES) do
+        local i, _, info = FindBook(s)
+        HHT.Print(string.format("  place %s: onBar=%s book=%s icon=%s cursor=%s ensureIn=%.0fs", s.key, tostring(self.slotOf and self.slotOf[s.key]), tostring(i), tostring(info and info.iconID), tostring((GetCursorInfo())), math.max((self.ensureAt or 0) - GetTime(), 0)))
+    end
+    for _, c in ipairs(HIDDEN) do
+        local kind, id = GetActionInfo(c)
+        HHT.Print(string.format("  action slot %d: has=%s kind=%s id=%s tex=%s", c, tostring(HasAction(c)), tostring(kind), tostring(id), tostring(GetActionTexture(c))))
     end
     for slot = 1, NUM_PET_ACTION_SLOTS or 10 do
         local ok, name, tex, isToken, isActive = pcall(GetPetActionInfo, slot)

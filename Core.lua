@@ -378,7 +378,8 @@ function HHT:ApplyPosition(frame)
     end
     frame:ClearAllPoints()
     local dy = frame.hhtYShift and frame.hhtYShift(pos[1]) or 0
-    frame:SetPoint(pos[1], UIParent, pos[2], pos[3], pos[4] + dy)
+    local dx = frame.hhtXShift and frame.hhtXShift(pos[1]) or 0
+    frame:SetPoint(pos[1], UIParent, pos[2], pos[3] + dx, pos[4] + dy)
 end
 
 function HHT:ApplyAllPositions()
@@ -607,9 +608,11 @@ function HHT:MakeMovable(frame, m, key, label)
         HHT:EndDrag()
         self:StopMovingOrSizing()
         if not self.hht then return end
+        m.db.pos = m.db.pos or {}
+        local saved = self.hhtSavePos and self.hhtSavePos(self)
+        if saved then m.db.pos[self.hht.key] = saved; return end
         local p, _, rp, x, y = self:GetPoint(1)
         if not p then return end
-        m.db.pos = m.db.pos or {}
         m.db.pos[self.hht.key] = { p, rp, math.floor(x + 0.5), math.floor(y + 0.5) }
     end)
 
@@ -710,6 +713,9 @@ end
 function HHT.ShowSecure(f)
     f:SetAlpha(1)
     f.hhtFaded = nil
+    if f:IsShown() then return end
+    -- A frame with secure buttons cannot be shown in combat (settings previews run into this).
+    if InCombatLockdown() and f:IsProtected() then return end
     f:Show()
 end
 
@@ -941,12 +947,26 @@ function HHT:WatchBlocked()
     local f = CreateFrame("Frame")
     self.blockedFrame = f
     self.blocked = {}
+    self.blockedWhere = {}
     f:RegisterEvent("ADDON_ACTION_BLOCKED")
     f:RegisterEvent("ADDON_ACTION_FORBIDDEN")
     f:SetScript("OnEvent", function(_, _, addon, func)
         if addon ~= ADDON then return end
         local key = tostring(func)
         HHT.blocked[key] = (HHT.blocked[key] or 0) + 1
+        -- The event fires inside the blocked call, so the stack still shows which addon line caused it.
+        if not HHT.blockedWhere[key] then
+            pcall(function()
+                local stack = debugstack(2, 12, 0)
+                if HHT.IsSecret(stack) then return end
+                local lines = {}
+                for line in tostring(stack):gmatch("[^\n]+") do
+                    if line:find(ADDON, 1, true) then lines[#lines + 1] = line end
+                    if #lines >= 4 then break end
+                end
+                HHT.blockedWhere[key] = (InCombatLockdown() and "combat: " or "") .. table.concat(lines, " <- ")
+            end)
+        end
     end)
 end
 
@@ -1126,6 +1146,8 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
         for func, count in pairs(HHT.blocked or {}) do
             n = n + 1
             HHT.Print("Blocked action: " .. func .. " x" .. count)
+            local where = HHT.blockedWhere and HHT.blockedWhere[func]
+            if where and where ~= "" then HHT.Print("  from " .. where) end
         end
         if n == 0 then HHT.Print("No blocked actions.") end
     elseif msg == "trace" then

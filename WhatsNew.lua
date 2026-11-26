@@ -15,6 +15,25 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.7.4",
+        en = {
+            "A note from me: I currently have a lot of real-life work, so there were few updates lately. I will try to invest more time again as soon as I can. Thank you for your patience!",
+            "Pet stance: fixed the button doing nothing after the latest client patch. The patch removed the stances from the pet bar, so Defensive and Passive could not be triggered any more. The addon now takes over the actions it placed earlier and keeps them.",
+            "Pet training hint: the tooltip no longer shows '0 points' when the cost is unknown, and the popup only appears when your pet can really pay for the rank. The trainer costs are now built in, and the column 'Next rank' in the Pet dex shows the difference to pay.",
+            "Rare beast alert: the small 'possible' hint is compact again and no longer as wide as the full alert. Its position now matches the place you dragged the big window to.",
+            "Pet feeder: it no longer scans your bags or learns food in combat, which could block placing items.",
+            "Fixed blocked-action errors when settings previews of modules were shown in combat.",
+        },
+        de = {
+            "Eine Anmerkung von mir: Ich habe gerade viel im echten Leben zu tun, deswegen gab es zuletzt nur wenige Updates. Ich versuche, sobald es geht wieder mehr Zeit zu investieren. Danke für eure Geduld!",
+            "Begleiter-Haltung: Der Button tat nach dem letzten Client-Patch nichts mehr. Der Patch hat die Haltungen aus der Begleiterleiste entfernt, dadurch ließen sich Defensiv und Passiv nicht mehr auslösen. Das Addon übernimmt jetzt die Aktionen, die es früher platziert hat, und behält sie.",
+            "Begleiter-Training-Hinweis: Der Tooltip zeigt nicht mehr '0 Punkte', wenn der Preis unbekannt ist, und das Popup erscheint nur noch, wenn dein Begleiter den Rang wirklich bezahlen kann. Die Trainerpreise sind jetzt fest eingebaut, und die Spalte 'Nächster Rang' im Begleiter-Lexikon zeigt die Differenz, die du zahlst.",
+            "Seltenes-Tier-Hinweis: Der kleine 'möglich'-Hinweis ist wieder kompakt und nicht mehr so breit wie die volle Warnung. Seine Position passt jetzt zu der Stelle, an die du das große Fenster gezogen hast.",
+            "Begleiter-Futter: Es scannt keine Taschen und lernt kein Futter mehr im Kampf, was das Platzieren von Gegenständen blockieren konnte.",
+            "Blockierte-Aktion-Fehler behoben, wenn Einstellungs-Vorschauen von Modulen im Kampf gezeigt wurden.",
+        },
+    },
+    {
         v = "1.7.3",
         en = {
             "Pet training hint: fixed a missing hint for ranks your pet could afford. Beast Training only charges the difference to the rank the pet already has (for example 4 points for Bite rank 7 over rank 6), the hint wrongly counted the full price.",

@@ -12,6 +12,7 @@ HHT:AddGerman({
     ["(now rank %d)"] = "(jetzt Rang %d)",
     ["(new)"] = "(neu)",
     ["Needs pet level %d and %d training points."] = "Braucht Begleiter-Level %d und %d Trainingspunkte.",
+    ["Needs pet level %d."] = "Braucht Begleiter-Level %d.",
     ["Free training points: %s"] = "Freie Trainingspunkte: %s",
     ["%s is not offered in Beast Training right now."] = "%s wird in der Tierausbildung gerade nicht angeboten.",
     ["Your pet needs level %d for %s."] = "Dein Begleiter braucht Stufe %d für %s.",
@@ -37,12 +38,11 @@ local M = HHT:NewModule("pettrain", {
     defaults = { duration = 0, sound = true, alertFor = alertFor, costs = {}, colors = { border = { 0.67, 0.83, 0.45 } } },
 })
 
--- Training point costs of the pet trainer abilities are not in the data: they are read from Beast Training once.
-local SEED_COSTS = { greatstamina = { [7] = 25 } }
+-- Costs in the data are the total points of a rank; costs read from Beast Training are a fallback.
 local function CostOf(a, rank, d)
     if d and d.cost then return d.cost end
     local db = M.db
-    return (db and db.costs and db.costs[a.key] and db.costs[a.key][rank]) or (SEED_COSTS[a.key] and SEED_COSTS[a.key][rank])
+    return db and db.costs and db.costs[a.key] and db.costs[a.key][rank]
 end
 
 -- Beast Training only charges the difference to the rank the pet already has (rank 7 at 21 over rank 6 at 17 = 4).
@@ -169,7 +169,13 @@ function M:RowTip(row)
     end
     if d then
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(string.format(L("Needs pet level %d and %d training points."), d.level or 0, NetCost(it.a, it.rank, d, it.have) or 0), 1, 1, 1)
+        local cost = NetCost(it.a, it.rank, d, it.have)
+        -- Pet trainer abilities have no cost in the data until Beast Training has been opened once.
+        if cost then
+            GameTooltip:AddLine(string.format(L("Needs pet level %d and %d training points."), d.level or 0, cost), 1, 1, 1)
+        else
+            GameTooltip:AddLine(string.format(L("Needs pet level %d."), d.level or 0), 1, 1, 1)
+        end
     end
     local info = PD.PetInfo()
     if info and info.points then
@@ -244,7 +250,9 @@ function M:Missing()
             for r = PD.KnownRank(a.key), 1, -1 do
                 local d = a.byRank[r]
                 -- a rank the pet cannot pay for with its free training points is not offered
-                if d and (d.level or 0) <= info.level and (not points or (NetCost(a, r, d, have) or 0) <= points) then want = r; break end
+                -- unknown cost (trainer ability, Beast Training not opened yet) cannot be proven affordable
+                local c = NetCost(a, r, d, have)
+                if d and (d.level or 0) <= info.level and (not points or (c and c <= points)) then want = r; break end
             end
             if want and want > have then list[#list + 1] = { a = a, rank = want, have = have } end
         end

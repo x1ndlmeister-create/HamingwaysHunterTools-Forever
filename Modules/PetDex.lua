@@ -223,18 +223,21 @@ local TRAINER_LEVELS = { 1, 12, 18, 24, 30, 36, 42, 48, 54, 60 }
 -- teach = the spell the hunter learns from the pet trainer; spells = the pet's own rank spells.
 local TRAINER_DEFS = {
     { key = "greatstamina", name = "Great Stamina", spells = { 4187, 4188, 4189, 4190, 4191, 4192, 4193, 4194, 5041, 5042 },
-      teach = { 4195, 4196, 4197, 4198, 4199, 4200, 4201, 4202, 5048, 5049 } },
+      teach = { 4195, 4196, 4197, 4198, 4199, 4200, 4201, 4202, 5048, 5049 },
+      costs = { 5, 10, 15, 25, 50, 75, 100, 125, 150, 185 } },
     { key = "naturalarmor", name = "Natural Armor", spells = { 24545, 24549, 24550, 24551, 24552, 24553, 24554, 24555, 24629, 24630 },
-      teach = { 24547, 24556, 24557, 24558, 24559, 24560, 24561, 24562, 24631, 24632 } },
+      teach = { 24547, 24556, 24557, 24558, 24559, 24560, 24561, 24562, 24631, 24632 },
+      costs = { 1, 5, 10, 15, 25, 50, 75, 100, 125, 150 } },
     { key = "growl", name = "Growl", spells = { 2649, 14916, 14917, 14918, 14919, 14920, 14921 },
-      teach = { 2649, 14922, 14923, 14924, 14925, 14926, 14927 }, levels = { 1, 10, 20, 30, 40, 50, 60 } },
+      teach = { 2649, 14922, 14923, 14924, 14925, 14926, 14927 }, levels = { 1, 10, 20, 30, 40, 50, 60 },
+      costs = { 0, 0, 0, 0, 0, 0, 0 } },
 }
 local teachSpell = {}
 PD.trainerAbilities = {}
 for _, def in ipairs(TRAINER_DEFS) do
     local a = { key = def.key, name = def.name, families = {}, famSet = {}, byRank = {}, ranks = {}, all = true, trainer = true }
     for i, spell in ipairs(def.spells) do
-        local r = { rank = i, spell = spell, level = (def.levels or TRAINER_LEVELS)[i], npcs = {} }
+        local r = { rank = i, spell = spell, level = (def.levels or TRAINER_LEVELS)[i], cost = def.costs[i], npcs = {} }
         a.ranks[i], a.byRank[i] = r, r
         rankSpell[spell] = { a, i }
         teachSpell[def.teach[i]] = { a, i }
@@ -1139,7 +1142,7 @@ TABS.pet = {
         row.cells[2]:SetText(known > 0 and (known .. " / " .. a.maxRank) or "-")
         row.cells[3]:SetText(pet > 0 and (pet .. " / " .. a.maxRank) or "-")
         local nxt = a.byRank[pet + 1]
-        row.cells[4]:SetText(nxt and (L("Level") .. " " .. nxt.level .. ", " .. nxt.cost .. " TP") or "-")
+        row.cells[4]:SetText(nxt and (L("Level") .. " " .. nxt.level .. ", " .. (nxt.cost - ((pet > 0 and a.byRank[pet] and a.byRank[pet].cost) or 0)) .. " TP") or "-")
         local text, r, g, b = PetStatus(a, info, petRanks)
         row.cells[5]:SetText(text)
         row.cells[5]:SetTextColor(r, g, b)

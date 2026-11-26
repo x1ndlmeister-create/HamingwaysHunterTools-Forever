@@ -229,6 +229,9 @@ local function ApplyStage(f)
     f.modelBg:SetShown(model)
     f.model:SetShown(model)
     f:SetHeight(big and f.bigH or SMALL_H)
+    -- The small hint only needs the header, not the width of the full alert.
+    local w = big and f.fullW or f.smallW
+    if w then f:SetWidth(w) end
     HHT:ApplyPosition(f)
 end
 
@@ -349,6 +352,18 @@ function M:Build()
         if point:find("TOP") then return 0 end
         if point:find("BOTTOM") then return delta end
         return delta / 2
+    end
+    -- The saved position is the top-left corner of the whole big alert, 3D view included. The small hint sits exactly there,
+    -- whatever width the beast's alert has, and the big card moves right to make room for the 3D view.
+    f.hhtXShift = function(point)
+        if point == "TOPLEFT" and f.big and f.withModel then return MODEL_W + 8 end
+        return 0
+    end
+    f.hhtSavePos = function()
+        local l, t = f:GetLeft(), f:GetTop()
+        if not l or not t then return nil end
+        if f.big and f.withModel then l = l - (MODEL_W + 8) end
+        return { "TOPLEFT", "BOTTOMLEFT", math.floor(l + 0.5), math.floor(t + 0.5) }
     end
     f.toggle:EnableMouse(not HHT:IsUnlocked(self))
 end
@@ -866,7 +881,13 @@ function M:Show(data, preview)
     -- The width follows the widest row (or the buttons); the diet line wraps at the maximum.
     local need = math.max(bodyNeed, 78 + 8 + 54 + 8 + 70 + 8 + 96 + 8 + 40)
     local w = W
-    if not InCombatLockdown() then w = UI.PopupFit(f, need, 400, 600) else w = f:GetWidth() end
+    if not InCombatLockdown() then
+        f.smallW = UI.PopupFit(f, 0, 400, 600)
+        w = UI.PopupFit(f, need, 400, 600)
+        f.fullW = w
+    else
+        w = f:GetWidth()
+    end
     local y = place(w)
     f.withModel = withModel
     if withModel then
