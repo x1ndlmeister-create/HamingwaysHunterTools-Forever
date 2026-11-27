@@ -186,15 +186,41 @@ local FAMILY_DE = {
     spinne = "Spider", weitschreiter = "Tallstrider", schildkroete = "Turtle", warpwandler = "Warp Stalker",
     windnatter = "Wind Serpent", wolf = "Wolf", raubvogel = "Bird of Prey",
 }
+-- Spanish client names (esES / esMX), folded like Fold() does
+local FAMILY_ES = {
+    murcielago = "Bat", oso = "Bear", jabali = "Boar", carronero = "Carrion Bird", felino = "Cat", cangrejo = "Crab",
+    crocolisco = "Crocolisk", dracohalcon = "Dragonhawk", zorro = "Fox", gorila = "Gorilla", hiena = "Hyena",
+    ["raya abisal"] = "Nether Ray", raptor = "Raptor", devastador = "Ravager", escorpido = "Scorpid",
+    serpiente = "Serpent", arana = "Spider", zancaalta = "Tallstrider", tortuga = "Turtle",
+    ["acechador deformado"] = "Warp Stalker", ["serpiente alada"] = "Wind Serpent", lobo = "Wolf",
+    ["ave rapaz"] = "Bird of Prey", ["aves rapaces"] = "Bird of Prey", ["ave de rapina"] = "Bird of Prey",
+    buho = "Bird of Prey", lechuza = "Bird of Prey", ["can del nucleo"] = "Core Hound",
+}
 
 -- Lower case, umlauts to ae/oe/ue/ss, so typed text and client names compare in plain ASCII.
 local function Fold(s)
     s = tostring(s or ""):lower()
     s = s:gsub("\195\164", "ae"):gsub("\195\182", "oe"):gsub("\195\188", "ue"):gsub("\195\159", "ss")
     s = s:gsub("\195\132", "ae"):gsub("\195\150", "oe"):gsub("\195\156", "ue")
+    -- Spanish accents and ñ
+    s = s:gsub("\195\161", "a"):gsub("\195\169", "e"):gsub("\195\173", "i"):gsub("\195\179", "o"):gsub("\195\186", "u"):gsub("\195\177", "n")
+    s = s:gsub("\195\129", "a"):gsub("\195\137", "e"):gsub("\195\141", "i"):gsub("\195\147", "o"):gsub("\195\154", "u"):gsub("\195\145", "n")
     return s
 end
 PD.Fold = Fold
+
+-- Last resort for any client language: the game's own name of each family ID (HHT.FAMILY_ID, Locale.lua).
+local famClient
+local function ClientFamily(f)
+    if not famClient then
+        famClient = {}
+        for id, en in pairs(HHT.FAMILY_ID or {}) do
+            local n = HHT.ClientFamilyName and HHT.ClientFamilyName(id)
+            if n then famClient[Fold(n)] = en end
+        end
+    end
+    return famClient[f]
+end
 
 -- ---------------------------------------------------------------------------
 -- Index
@@ -267,7 +293,7 @@ end
 function PD.EnglishFamily(name)
     if type(name) ~= "string" or HHT.IsSecret(name) then return nil end
     local f = Fold(name)
-    return famEn[f] or FAMILY_DE[f]
+    return famEn[f] or FAMILY_DE[f] or FAMILY_ES[f] or ClientFamily(f)
 end
 
 function PD.FamilyIcon(f)

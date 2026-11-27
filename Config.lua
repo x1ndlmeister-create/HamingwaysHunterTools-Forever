@@ -152,7 +152,7 @@ function C:BuildGeneral(form)
     local g = HHT.db.general
     form:Header(L("Appearance"))
     form:Cycle(L("Language"), g, "lang", {
-        { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
+        { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" }, { "es", "Español" } },
         function() C:Relang() end)
     local themeRow = form:Cycle(L("Colour theme"), g, "theme", {
         { "classic", L("Bronze") }, { "dark", L("Blue") }, { "minimal", L("Graphite") } },

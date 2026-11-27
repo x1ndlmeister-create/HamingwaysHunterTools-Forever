@@ -391,7 +391,7 @@ local function BuildPage(i)
         local function Head(t) form:Place(UI.Header(form.content, L(t)), 16, 4, 6) end
         local function Bullet(t) form:Note("-  " .. L(t), 0.82, 0.82, 0.82) end
         form:Cycle(L("Language"), HHT.db.general, "lang", {
-            { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" } },
+            { "auto", L("Automatic") }, { "en", "English" }, { "de", "Deutsch" }, { "es", "Español" } },
             function() S:Relang() end)
         Head("How it works")
         Bullet("For every tool you decide if you want it, where it sits, how big it is and how it looks.")

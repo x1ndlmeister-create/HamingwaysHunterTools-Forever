@@ -5,6 +5,10 @@
 ## Author: Hamingway
 ## Category: Hunter
 ## Category-deDE: Jäger
+## Notes-esES: Kit todo en uno para cazadores de WoW Forever: temporizador de golpes, reutilizaciones, avisos y más.
+## Notes-esMX: Kit todo en uno para cazadores de WoW Forever: temporizador de golpes, reutilizaciones, avisos y más.
+## Category-esES: Cazador
+## Category-esMX: Cazador
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
 ## Version: 1.7.4
@@ -15,6 +19,7 @@ Widgets.lua
 Form.lua
 Core.lua
 Locale.lua
+Locale_esES.lua
 Layout.lua
 Spells.lua
 Icon.lua
