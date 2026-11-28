@@ -14,7 +14,11 @@ D.PORTRAIT = PORTRAIT
 
 -- t = { en = "...", de = "..." } -> the line in the current language, formatted with ...
 function D.Pick(t, ...)
-    local s = t[HHT.CurrentLang()] or t.en
+    local lang = HHT.CurrentLang()
+    local s = t[lang]
+    -- Spanish lines live in Locale_esES.lua, keyed by the English line
+    if not s and lang == "es" and HHT.Spanish and HHT.Spanish[t.en] then s = HHT.ExpandSpells(HHT.Spanish[t.en]) end
+    s = s or t.en
     if select("#", ...) > 0 then s = string.format(s, ...) end
     return s
 end

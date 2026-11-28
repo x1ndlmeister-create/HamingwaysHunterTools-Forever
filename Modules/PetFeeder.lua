@@ -96,11 +96,14 @@ local ALIAS = {
     meat = "meat", fish = "fish", fungus = "fungus", mushroom = "fungus", bread = "bread", cheese = "cheese", fruit = "fruit",
     fleisch = "meat", fisch = "fish", pilz = "fungus", pilze = "fungus", brot = "bread", obst = "fruit",
     kaese = "cheese", ["k\195\164se"] = "cheese",
+    carne = "meat", carnes = "meat", pescado = "fish", pescados = "fish", queso = "cheese", quesos = "cheese",
+    pan = "bread", panes = "bread", fruta = "fruit", frutas = "fruit", hongo = "fungus", hongos = "fungus",
+    seta = "fungus", setas = "fungus", ["champi\195\177ones"] = "fungus", ["champi\195\177\195\179n"] = "fungus",
 }
 
 local function NormDiet(name)
     name = name:lower():gsub("^%s+", ""):gsub("%s+$", "")
-    name = name:gsub("^raw ", ""):gsub("^roh%a* ", "")
+    name = name:gsub("^raw ", ""):gsub("^roh%a* ", ""):gsub("%s+crud[oa]s?$", "")
     return ALIAS[name]
 end
 

@@ -8,17 +8,99 @@ function HHT:AddGerman(tbl)
     for k, v in pairs(tbl) do de[k] = v end
 end
 
+local es = {}
+HHT.Spanish = es
+
+function HHT:AddSpanish(tbl)
+    for k, v in pairs(tbl) do es[k] = v end
+end
+
 function HHT.CurrentLang()
     local g = HHT.db and HHT.db.general
     local lang = g and g.lang or "auto"
     if lang == "auto" then
-        lang = (GetLocale and GetLocale() == "deDE") and "de" or "en"
+        local loc = GetLocale and GetLocale()
+        if loc == "deDE" then lang = "de"
+        elseif loc == "esES" or loc == "esMX" then lang = "es"
+        else lang = "en" end
     end
     return lang
 end
 
+-- A translation may hold {spell:ID:fallback}: it becomes the client's own spell name, so the text always matches
+-- the spellbook (the Spanish Forever client uses the modern names). The fallback is used if the game gives no name.
+local function ClientSpellName(id)
+    local n
+    if C_Spell and C_Spell.GetSpellName then
+        local ok, r = pcall(C_Spell.GetSpellName, id)
+        if ok then n = r end
+    end
+    if (type(n) ~= "string" or n == "") and GetSpellInfo then
+        local ok, r = pcall(GetSpellInfo, id)
+        if ok then n = r end
+    end
+    if type(n) == "string" and n ~= "" and not (HHT.IsSecret and HHT.IsSecret(n)) then return n end
+end
+
+local expanded = {}
+function HHT.ExpandSpells(s)
+    if type(s) ~= "string" or not s:find("{spell:", 1, true) then return s end
+    local done = expanded[s]
+    if done then return done end
+    local complete = true
+    local result = s:gsub("{spell:(%d+):([^}]*)}", function(id, fallback)
+        local n = ClientSpellName(tonumber(id))
+        if not n then complete = false; return fallback end
+        return n
+    end)
+    if complete then expanded[s] = result end
+    return result
+end
+
+-- Hunter pet families by creature family ID. Used to show the client's own family names and, in PetDex,
+-- as a last resort to recognise the pet's family in any client language.
+HHT.FAMILY_ID = {
+    [1] = "Wolf", [2] = "Cat", [3] = "Spider", [4] = "Bear", [5] = "Boar", [6] = "Crocolisk", [7] = "Carrion Bird",
+    [8] = "Crab", [9] = "Gorilla", [11] = "Raptor", [12] = "Tallstrider", [20] = "Scorpid", [21] = "Turtle",
+    [24] = "Bat", [25] = "Hyena", [26] = "Bird of Prey", [27] = "Wind Serpent", [30] = "Dragonhawk", [31] = "Ravager",
+    [32] = "Warp Stalker", [34] = "Nether Ray", [35] = "Serpent", [45] = "Core Hound", [50] = "Fox",
+}
+
+function HHT.ClientFamilyName(id)
+    local get = C_CreatureInfo and C_CreatureInfo.GetCreatureFamilyInfo
+    if not get then return nil end
+    local ok, info = pcall(get, id)
+    local n = ok and type(info) == "table" and info.name
+    if type(n) == "string" and n ~= "" and not (HHT.IsSecret and HHT.IsSecret(n)) then return n end
+end
+
+local familyEn, familyShown = {}, nil
+for _, en in pairs(HHT.FAMILY_ID) do familyEn[en] = true end
+local function FamilyShown(s)
+    if not familyShown then
+        local map = {}
+        for id, en in pairs(HHT.FAMILY_ID) do
+            local n = HHT.ClientFamilyName(id)
+            if n then map[en] = n end
+        end
+        -- keep an empty answer only when the API does not exist; otherwise ask again next time
+        if next(map) or not (C_CreatureInfo and C_CreatureInfo.GetCreatureFamilyInfo) then familyShown = map else return nil end
+    end
+    return familyShown[s]
+end
+
 function HHT.L(s)
-    if HHT.CurrentLang() == "de" then return de[s] or s end
+    local lang = HHT.CurrentLang()
+    if lang == "de" then return de[s] or s end
+    if lang == "es" then
+        local t = es[s]
+        if not t then return s end
+        if familyEn[s] then
+            local f = FamilyShown(s)
+            if f then return f end
+        end
+        return HHT.ExpandSpells(t)
+    end
     return s
 end
 
