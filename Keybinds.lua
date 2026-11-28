@@ -53,7 +53,8 @@ local function SpellNameById(id)
     end
 end
 
-local function ScanButton(map, btn, command)
+-- The name of the spell an action button holds (directly or through a macro).
+local function ButtonSpell(btn)
     local slot = btn.action
     if (type(slot) ~= "number" or HHT.IsSecret(slot) or slot <= 0) and btn.GetAttribute then slot = btn:GetAttribute("action") end
     if type(slot) ~= "number" or HHT.IsSecret(slot) or slot <= 0 or not HasAction(slot) then return end
@@ -63,7 +64,11 @@ local function ScanButton(map, btn, command)
     if kind == "spell" then spellId = id
     elseif kind == "macro" and GetMacroSpell then spellId = GetMacroSpell(id) end
     if type(spellId) ~= "number" then return end
-    local name = SpellNameById(spellId)
+    return SpellNameById(spellId)
+end
+
+local function ScanButton(map, btn, command)
+    local name = ButtonSpell(btn)
     if not name or map[name] then return end
     local text
     if command then
@@ -102,6 +107,42 @@ function Keys.Get(spellName)
     local stale = not map or dirty or GetTime() - builtAt > 5
     if stale and (not map or not HHT.InCombat()) then Rebuild() end
     return map[spellName]
+end
+
+-- Every key bound to an action button, per spell name: { spellName = { "1", "SHIFT-2", ... } }. Out of combat only.
+function Keys.AllBinds()
+    local out = {}
+    local function Scan(btn, command)
+        local ok, name = pcall(ButtonSpell, btn)
+        if not ok or not name then return end
+        local list = out[name] or {}
+        local function Add(cmd)
+            for _, k in ipairs({ GetBindingKey(cmd) }) do
+                if type(k) == "string" and k ~= "" then
+                    local dup = false
+                    for _, x in ipairs(list) do if x == k then dup = true end end
+                    if not dup then list[#list + 1] = k end
+                end
+            end
+        end
+        if command then Add(command) end
+        local bn = btn.GetName and btn:GetName()
+        if bn then Add("CLICK " .. bn .. ":LeftButton") end
+        if #list > 0 then out[name] = list end
+    end
+    for _, bar in ipairs(BARS) do
+        for i = 1, bar[2] do
+            local btn = _G[bar[1] .. i]
+            if btn then Scan(btn, bar[3] and (bar[3] .. i) or nil) end
+        end
+    end
+    for b = 1, 10 do
+        for i = 1, 12 do
+            local btn = _G["ElvUI_Bar" .. b .. "Button" .. i]
+            if btn then Scan(btn, nil) end
+        end
+    end
+    return out
 end
 
 local watcher = CreateFrame("Frame")

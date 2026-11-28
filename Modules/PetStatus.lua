@@ -6,6 +6,9 @@ HHT:AddGerman({
     ["Rename"] = "Umbenennen",
     ["Dismiss"] = "Wegschicken",
     ["Release"] = "Freilassen",
+    ["Cancel"] = "Abbrechen",
+    ["Release %s permanently?"] = "%s endgültig freilassen?",
+    ["This cannot be undone."] = "Das kann nicht rückgängig gemacht werden.",
     ["This pet cannot be renamed."] = "Dieser Begleiter kann nicht umbenannt werden.",
     ["Pet status"] = "Begleiter-Status",
     ["Pet portrait, health bar and happiness."] = "Begleiter-Portrait, Lebensbalken und Zufriedenheit.",
@@ -100,6 +103,41 @@ function M:OnInit()
     HHT:Every(self, 0.2, M.Tick)
 end
 
+-- Own confirm dialog: Blizzard's RELEASE_PET popup shown from addon code taints the controller GUI (action forbidden).
+local function ConfirmRelease()
+    local ok, name = pcall(UnitName, "pet")
+    local d = M.releaseDlg
+    if not d then
+        d = CreateFrame("Frame", "HamingwaysHunterToolsReleaseDlg", UIParent)
+        d:SetFrameStrata("DIALOG")
+        d:SetSize(300, 130)
+        d:SetPoint("CENTER", UIParent, "CENTER", 0, 120)
+        d:EnableMouse(true)
+        d:Hide()
+        local pal = UI.PAL.menu
+        UI.Round(d, 6, pal[1], pal[2], pal[3], pal[4], "BACKGROUND")
+        UI.Shadow(d, 0.4)
+        UI.RoundBorder(d, 6, 1, 1, 1, 0.14)
+        d.text = UI.Text(d, "", 13)
+        d.text:SetPoint("TOP", d, "TOP", 0, -18)
+        d.text:SetWidth(270)
+        d.warn = UI.Text(d, L("This cannot be undone."), 12)
+        d.warn:SetPoint("TOP", d.text, "BOTTOM", 0, -8)
+        d.warn:SetWidth(270)
+        d.warn:SetTextColor(0.95, 0.45, 0.35)
+        d.yes = UI.Button(d, 110, 26, L("Release"), function()
+            d:Hide()
+            if not pcall(PetAbandon) then pcall(StaticPopup_Show, "RELEASE_PET", name or "") end
+        end)
+        d.yes:SetPoint("BOTTOMLEFT", d, "BOTTOMLEFT", 20, 14)
+        d.no = UI.Button(d, 110, 26, L("Cancel"), function() d:Hide() end)
+        d.no:SetPoint("BOTTOMRIGHT", d, "BOTTOMRIGHT", -20, 14)
+        tinsert(UISpecialFrames, d:GetName())
+        M.releaseDlg = d
+    end
+    d.text:SetText(string.format(L("Release %s permanently?"), ok and name or ""))
+    d:Show()
+end
 -- Right-click menu on the pet bar (Rename, Dismiss, Release), like the default pet frame has.
 local function PetMenu()
     if M.menu then return M.menu end
@@ -148,10 +186,7 @@ local function PetMenu()
     dismiss:SetAttribute("type", "macro")
     dismiss:SetAttribute("macrotext", "/cast " .. HHT.Spells.CatalogName("dismissPet"))
     dismiss:HookScript("PostClick", function(_, _, down) if not down then m.Close() end end)
-    Row(3, L("Release"), false, function()
-        local ok, name = pcall(UnitName, "pet")
-        pcall(StaticPopup_Show, "RELEASE_PET", ok and name or "")
-    end)
+    Row(3, L("Release"), false, ConfirmRelease)
     M.menu = m
     return m
 end
@@ -261,8 +296,10 @@ end
 function M:SetDefaultFrame(hidden)
     local b = _G.PetFrame
     if not b then return end
+    -- The alpha is only touched while hiding and once when un-hiding; otherwise other addons that fade the pet frame would be overridden.
+    local was = M.defaultHidden
     M.defaultHidden = hidden and true or false
-    b:SetAlpha(hidden and 0 or 1)
+    if hidden then b:SetAlpha(0) elseif was then b:SetAlpha(1) end
     if M.defaultHooked then return end
     M.defaultHooked = true
     local busy = false

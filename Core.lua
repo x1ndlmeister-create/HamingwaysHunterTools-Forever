@@ -14,6 +14,14 @@ local GetTime = GetTime
 local PREFIX = "|cffabd473Hamingway's HunterTools|r: "
 function HHT.Print(msg) print(PREFIX .. tostring(msg)) end
 
+-- Highest bag index to scan: the four bag slots plus the Forever reagent bag slot.
+function HHT.LastBag()
+    local n = NUM_BAG_SLOTS or 4
+    local rb = Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag
+    if rb then return math.max(rb, n) end
+    return n + (NUM_REAGENTBAG_SLOTS or 0)
+end
+
 -- ---------------------------------------------------------------------------
 -- Secret value safety
 -- ---------------------------------------------------------------------------
@@ -1139,6 +1147,9 @@ SlashCmdList["HAMINGWAYSHUNTERTOOLS"] = function(msg)
     elseif msg == "stance" then
         local sm = HHT.modules.petstance
         if sm and sm.Debug then sm:Debug() end
+    elseif msg == "claw" then
+        local cm = HHT.modules.petclaw
+        if cm and cm.Debug then cm:Debug() end
     elseif msg == "key" then
         HHT.KeyTest()
     elseif msg == "blocked" then

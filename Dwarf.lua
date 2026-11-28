@@ -139,6 +139,8 @@ D.LINES = {
                  de = "Steht ein zähmbares Tier in Reichweite und du hast keinen Begleiter draußen? Dann zeige ich einen Knopf: Erst legt er die Eisfalle, dann zähmt er. Geht auch im Kampf." },
     petstance = { en = "One button for yer pet's stance. Pick a main stance and one to toggle with, give Shift, Ctrl and Alt their own, and bind a key. Works in combat too. A right-click picks the main stance.",
                   de = "Ein Knopf für die Haltung deines Begleiters. Wähle eine Haupthaltung und eine zum Umschalten, gib Shift, Strg und Alt eigene und binde eine Taste. Geht auch im Kampf. Ein Rechtsklick wählt die Haupthaltung." },
+    petclaw = { en = "Claw has no cooldown, so it eats yer pet's focus and delays Growl. I show a button when the focus be high enough, and in easy mode yer own attack keys fire Claw as well.",
+                de = "Klaue hat keine Abklingzeit und frisst den Fokus deines Begleiters, wodurch Knurren später kommt. Ich zeige einen Knopf, wenn der Fokus reicht, und im Easy-Modus lösen deine eigenen Angriffstasten auch Klaue aus." },
     ammo = { en = "Yer ammo. Never run dry in the middle of a fight! I'll also tell ye when there be better ammo or a better quiver to be had.",
              de = "Deine Munition. Geh niemals mitten im Kampf leer aus! Ich sage dir auch Bescheid, wenn es bessere Munition oder einen besseren Köcher gibt." },
     petwatch = { en = "I keep an eye out for rare beasts and the ones on yer wishlist, and point the way with an arrow.",

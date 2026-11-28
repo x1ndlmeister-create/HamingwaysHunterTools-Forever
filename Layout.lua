@@ -542,6 +542,52 @@ HHT.Layout = {
             "+Reset this module",
         } },
     },
+    petclaw = {
+        { "Display", {
+            "+Unlock frame",
+            "+Reset position",
+            "Show when",
+            "+Scale",
+            "Opacity",
+            "+Icon shape",
+            "+Border size",
+            "+Border alpha",
+        } },
+        { "Size & layout", {
+            "Icon size",
+        } },
+        { "Claw button", {
+            "Show the Claw button",
+            "Hide when focus is low",
+            "Dimmed opacity",
+            "Show the global cooldown",
+            "Show a ring with the pet focus",
+            "Ring width >> Show a ring with the pet focus",
+            "Focus needed for Claw",
+            "*claw notes",
+            "claw: set key",
+            "claw: clear key",
+        } },
+        { "Easy mode", {
+            "*lazy notes",
+            "Add Claw to other attacks",
+            "Replace the keys of these attacks >> Add Claw to other attacks",
+            "Attacks with Claw >> Add Claw to other attacks",
+        } },
+        { "Colors", {
+            "Ready border",
+            "Focus ring color >> Show a ring with the pet focus",
+            "+Keybind color >> Show keybinds on the icons",
+        } },
+        { "Keybinds", {
+            "+Show keybinds on the icons",
+            "+Keybind text size >> Show keybinds on the icons",
+            "+Keybind position >> Show keybinds on the icons",
+        } },
+        { "General", {
+            "+Reset this module",
+        } },
+    },
     easytame = {
         { "Display", {
             "+Unlock frame",
@@ -1023,6 +1069,9 @@ HHT.Tips = {
     ["Include ammo crafted by Engineers"] = "Also counts ammo made by Engineers as an upgrade",
     ["Keep macros up to date"] = "Updates the HHT macros automatically when something changes",
     ["Keybind color"] = "Click to change this color",
+    ["Focus ring color"] = "Click to change this color",
+    ["Ring width"] = "Thickness of the focus ring",
+    ["Show a ring with the pet focus"] = "A ring around the button that fills up with the focus of your pet.",
     ["Keybind position"] = "Where the key text sits on the icon",
     ["Keybind text size"] = "Size of the key text on the icons",
     ["Label position"] = "Where the label sits on the bar",

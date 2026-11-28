@@ -504,6 +504,25 @@ function PM:ShowBeasts(list, openMap)
     if C_Timer and C_Timer.After then C_Timer.After(0.2, function() PM:Update() end) end
 end
 
+-- Same list again takes the pins off the map, anything else replaces them.
+function PM:ToggleBeasts(list, openMap)
+    local want, n = {}, 0
+    for _, b in ipairs(list) do
+        if b.sp and next(b.sp) and not want[b] then want[b], n = true, n + 1 end
+    end
+    if n > 0 and n == #self.list then
+        local same = true
+        for _, b in ipairs(self.list) do if not want[b] then same = false break end end
+        if same then
+            self.list = {}
+            self:Update()
+            return false
+        end
+    end
+    self:ShowBeasts(list, openMap)
+    return true
+end
+
 function PM:SetWaypointAt(map, x, y, name)
     self:ClearWaypoint()
     if TomTom and TomTom.AddWaypoint then

@@ -15,6 +15,27 @@ HHT:AddGerman({
 -- Release notes, newest first. Keys: v = version, en / de = one line per change.
 local NOTES = {
     {
+        v = "1.8.0",
+        en = {
+            "New module Pet Claw: a button that shows when your pet has enough focus for Claw. It dims or hides below the limit you set, shows the global cooldown and your key, and an optional ring around it fills with the focus of your pet. It is part of the quick install.",
+            "Pet Claw easy mode: pick up to 10 attacks, for example Arcane Shot. Their keys then also fire Claw, so it no longer eats the focus your pet needs for Growl. Off by default.",
+            "Pet database: new abilities (Sonic Blast, Mine!, Pinch, Savage Rend, Tendon Rip, Web) and ranks, 32 more beasts, more teaching beasts, the speed of 631 beasts, and Trickster's Dance fixed. Leftovers of other game versions (Fire Breath, Poison Spit, Warp, Gore) are gone, and Screech and Dash now match the beasts of Forever.",
+            "Map: clicking the same beast or the 'All on map' button again takes the pins off the map.",
+            "Pet release: the Release entry in the pet menu opens its own confirmation window with a note that it cannot be undone. This also avoids the blocked-action error some players got afterwards.",
+            "Pet status no longer overrides the fading of UI addons like ForeverImmersion.",
+            "The extra reagent bag of Forever is now searched too, so pet food and ammo in it are found by the Pet feeder and the ammo tools.",
+        },
+        de = {
+            "Neues Modul Begleiter-Klaue: ein Knopf, der zeigt, wann dein Begleiter genug Fokus für Klaue hat. Unter der eingestellten Grenze wird er abgedunkelt oder ausgeblendet, zeigt den globalen Cooldown und deine Taste, und ein optionaler Ring um ihn füllt sich mit dem Fokus deines Begleiters. Teil der Schnellinstallation.",
+            "Begleiter-Klaue Easy-Modus: Wähle bis zu 10 Angriffe, zum Beispiel Arkaner Schuss. Ihre Tasten lösen dann auch Klaue aus, sodass sie nicht mehr den Fokus frisst, den dein Begleiter für Knurren braucht. Standardmäßig aus.",
+            "Tierdatenbank: neue Fähigkeiten (Schallstoß, Meins!, Kneifen, Wildes Zerfleischen, Sehnenriss, Netz) und Ränge, 32 weitere Tiere, mehr lehrende Tiere, das Tempo von 631 Tieren und ein behobener Fehler bei Gaunertanz. Überbleibsel anderer Spielversionen (Feueratem, Giftspucke, Warp, Aufspießen) sind entfernt, und Kreischen und Sprinten passen jetzt zu den Tieren von Forever.",
+            "Karte: Ein erneuter Klick auf dasselbe Tier oder den Knopf 'Alle auf Karte' nimmt die Punkte wieder von der Karte.",
+            "Begleiter entlassen: Der Eintrag im Begleiter-Menü öffnet ein eigenes Bestätigungsfenster mit dem Hinweis, dass es nicht rückgängig zu machen ist. Das vermeidet auch den Blockierte-Aktion-Fehler, den manche danach hatten.",
+            "Der Tierstatus überschreibt nicht mehr das Ausblenden von UI-Addons wie ForeverImmersion.",
+            "Die zusätzliche Reagenzientasche von Forever wird jetzt ebenfalls durchsucht, sodass Begleiter-Futter und Munition darin vom Tier füttern und den Munitions-Werkzeugen gefunden werden.",
+        },
+    },
+    {
         v = "1.7.4",
         en = {
             "A note from me: I currently have a lot of real-life work, so there were few updates lately. I will try to invest more time again as soon as I can. Thank you for your patience!",

@@ -7,7 +7,7 @@
 ## Category-deDE: Jäger
 ## X-License: GPL-3.0-or-later
 ## IconTexture: Interface\AddOns\HamingwaysHunterTools\Media\HHT_Logo
-## Version: 1.7.4
+## Version: 1.8.0
 ## SavedVariablesPerCharacter: HamingwaysHunterToolsDB
 ## SavedVariables: HamingwaysHunterToolsShared
 
@@ -36,6 +36,7 @@ Modules\Distance.lua
 Modules\PetStatus.lua
 Modules\PetFeeder.lua
 Modules\PetStance.lua
+Modules\PetClaw.lua
 Modules\AmmoList.lua
 Modules\Ammo.lua
 Modules\Tranq.lua

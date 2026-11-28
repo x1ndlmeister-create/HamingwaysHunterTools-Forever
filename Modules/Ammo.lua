@@ -191,7 +191,7 @@ function M:Scan()
     end
 
     if C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemInfo then
-        for bag = 0, (NUM_BAG_SLOTS or 4) do
+        for bag = 0, HHT.LastBag() do
             local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
             n = okN and HHT.SafeNumber(n) or 0
             for slot = 1, n do

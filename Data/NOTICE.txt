@@ -6,6 +6,8 @@ PetData.lua is extended with beast lists from the OneForAll addon (GPL-3) and sp
 
 StableMasterData.lua, FoodVendorData.lua and TrainerData.lua are derived from Questie data (partly GPL-3).
 TrainerData.lua also uses the pet trainer list of the OneForAll addon (GPL-3).
+PetData.lua also includes the Forever pet abilities and their teaching beasts from the OneForAll addon (GPL-3), spell IDs from the game client data (wago.tools).
+PetSpeedData.lua: Classic base attack speeds from CMaNGOS classic-db, Forever beasts and gaps from the speeds listed on wowfdb.com (game data is Blizzard's property).
 PetFamilyData.lua values (diet, modifiers) come from wow-petopia.com via the OneForAll addon (GPL-3).
 
 MIT License

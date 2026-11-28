@@ -311,7 +311,7 @@ function M:Scan()
     local byId, list = {}, {}
     local learnedSet = self.db.learnedSet[DietKey(diets)]
     if next(diets) and C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemInfo then
-        for bag = 0, (NUM_BAG_SLOTS or 4) do
+        for bag = 0, HHT.LastBag() do
             local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
             n = okN and HHT.SafeNumber(n) or 0
             for slot = 1, n do
@@ -643,7 +643,7 @@ function M:UnknownFoods()
     local out, seen = {}, {}
     if not (C_Container and C_Container.GetContainerNumSlots and C_Container.GetContainerItemInfo) then return out end
     local instant = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
-    for bag = 0, (NUM_BAG_SLOTS or 4) do
+    for bag = 0, HHT.LastBag() do
         local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
         n = okN and HHT.SafeNumber(n) or 0
         for slot = 1, n do
@@ -855,7 +855,7 @@ function M:ProbeScan(api)
     local diets = self.diets or PetDiets()
     local items = {}
     local seen = {}
-    for bag = 0, (NUM_BAG_SLOTS or 4) do
+    for bag = 0, HHT.LastBag() do
         local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
         n = okN and HHT.SafeNumber(n) or 0
         for slot = 1, n do

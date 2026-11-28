@@ -1743,7 +1743,7 @@ local function Build()
 
     win.btnMap = UI.Button(win, 140, 22, L("Show on map"), function()
         local b = Selected()
-        if b and HHT.PetMap then HHT.PetMap:ShowBeasts({ b }, true) end
+        if b and HHT.PetMap then HHT.PetMap:ToggleBeasts({ b }, true) end
     end)
     win.btnMap:SetPoint("BOTTOMLEFT", win, "BOTTOMLEFT", 12, 34)
     win.btnWay = UI.Button(win, 110, 22, L("Waypoint"), function()
@@ -1755,7 +1755,7 @@ local function Build()
     end)
     win.btnWay:SetPoint("LEFT", win.btnMap, "RIGHT", 6, 0)
     win.btnAll = UI.Button(win, 170, 22, L("All results on map"), function()
-        if HHT.PetMap then HHT.PetMap:ShowBeasts(win.items or {}, true) end
+        if HHT.PetMap then HHT.PetMap:ToggleBeasts(win.items or {}, true) end
     end)
     win.btnAll:SetPoint("LEFT", win.btnWay, "RIGHT", 6, 0)
     win.btnClear = UI.Button(win, 130, 22, L("Clear pins"), function()

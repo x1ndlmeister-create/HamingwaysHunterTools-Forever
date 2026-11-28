@@ -38,7 +38,7 @@ HHT:AddGerman({
     ["+%d more (see the pet database)"] = "+%d weitere (siehe Begleiter-Datenbank)",
     ["All on map"] = "Alle auf Karte",
     ["For: %s"] = "Für: %s",
-    ["Click: show on map"] = "Klick: auf Karte zeigen",
+    ["Click: show on map (again: hide)"] = "Klick: auf Karte zeigen (nochmal: ausblenden)",
     ["Right-click: arrow"] = "Rechtsklick: Pfeil",
     ["Shift-click: waypoint"] = "Shift-Klick: Wegpunkt",
 })
@@ -91,7 +91,7 @@ function M:Build()
     StyleButton(f.target, L("Target"))
 
     f.map = UI.Button(f, 56, 24, L("Map"), function()
-        if f.beast and HHT.PetMap then HHT.PetMap:ShowBeasts({ f.beast }, true) end
+        if f.beast and HHT.PetMap then HHT.PetMap:ToggleBeasts({ f.beast }, true) end
     end)
     f.map:SetPoint("LEFT", f.target, "RIGHT", 8, 0)
 
@@ -312,7 +312,7 @@ function M:BuildZone()
                     GameTooltip:AddLine(HHT.PetDex.AbilityName(best.a) .. " " .. best.rank, 0.4, 0.93, 0.4)
                     GameTooltip:AddLine(string.format(L("For: %s"), table.concat(best.fits or {}, ", ")), 0.8, 0.8, 0.8, true)
                 end
-                GameTooltip:AddLine(L("Click: show on map"), 0.5, 0.8, 1)
+                GameTooltip:AddLine(L("Click: show on map (again: hide)"), 0.5, 0.8, 1)
                 GameTooltip:AddLine(L("Right-click: arrow"), 0.5, 0.8, 1)
                 GameTooltip:AddLine(L("Shift-click: waypoint"), 0.5, 0.8, 1)
             end
@@ -337,7 +337,7 @@ function M:BuildZone()
                 local pw = HHT.PetWatch
                 if pw and pw.Track then pw.Track(b) end
             else
-                pm:ShowBeasts({ b }, true)
+                pm:ToggleBeasts({ b }, true)
             end
         end)
         r:Hide()
@@ -350,7 +350,7 @@ function M:BuildZone()
         if not (pm and z.list) then return end
         local t = {}
         for _, e in ipairs(z.list) do t[#t + 1] = e.beast end
-        pm:ShowBeasts(t, true)
+        pm:ToggleBeasts(t, true)
     end)
     z.mapAll:SetPoint("BOTTOMLEFT", z, "BOTTOMLEFT", 16, 14)
     z.snooze = UI.Button(z, 100, 24, L("Snooze 15 min"), function()

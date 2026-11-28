@@ -27,7 +27,7 @@ local CATS = {
     { id = "alerts", name = "Alerts & buffs", icon = "bell-ring",
       keys = { "warnings", "aspects", "summons", "raidbuffs", "consumables" } },
     { id = "pets", name = "Pets", icon = "paw-print",
-      keys = { "pet", "feeder", "petstance", "petdex", "petnearby", "easytame", "pettrain", "petwatch", "petguide" } },
+      keys = { "pet", "feeder", "petstance", "petclaw", "petdex", "petnearby", "easytame", "pettrain", "petwatch", "petguide" } },
     { id = "ammo", name = "Ammo & map", icon = "map",
       keys = { "ammo", "ammovendors", "foodvendors", "stablemasters", "trainers", "mapbutton" } },
     { id = "tools", name = "Tools", icon = "wrench", keys = { "macros" } },
@@ -41,7 +41,7 @@ local ICONS = {
     threat = "shield-alert", distance = "ruler", pet = "heart-pulse", feeder = "drumstick", ammo = "crosshair",
     tranq = "moon", macros = "scroll-text", petdex = "book-open", petwatch = "binoculars", petnearby = "radar",
     pettrain = "graduation-cap", ammovendors = "store", stablemasters = "house", foodvendors = "utensils",
-    easytame = "crosshair", petstance = "paw-print",
+    easytame = "crosshair", petstance = "paw-print", petclaw = "paw-print",
     trainers = "book-open-check", mapbutton = "map-pin", petguide = "compass",
 }
 
@@ -53,7 +53,7 @@ end
 local PREVIEW = {
     swing = true, castbar = true, distance = true, threat = true, warnings = true, debuffs = true, procs = true,
     summons = true, ammo = true, pet = true, feeder = true, petnearby = true, petwatch = true, pettrain = true,
-    cooldowns = true, tranq = true, petguide = true, aspects = true, easytame = true, petstance = true,
+    cooldowns = true, tranq = true, petguide = true, aspects = true, easytame = true, petstance = true, petclaw = true,
 }
 
 function HHT.CommonOptions(m, form)

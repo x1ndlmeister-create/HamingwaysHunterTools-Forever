@@ -314,7 +314,7 @@ function M:Build()
     StyleButton(f.target, L("Target"))
 
     f.map = UI.Button(f, 54, 24, L("Map"), function()
-        if f.beast and PM() then PM():ShowBeasts({ f.beast }, true) end
+        if f.beast and PM() then PM():ToggleBeasts({ f.beast }, true) end
     end)
     f.map:SetPoint("LEFT", f.target, "RIGHT", 8, 0)
 
